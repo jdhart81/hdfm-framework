@@ -18,6 +18,14 @@ __author__ = "Justin Hart"
 __email__ = "viridisnorthllc@gmail.com"
 
 from .landscape import Landscape, SyntheticLandscape, Patch
+from .species import (
+    SpeciesGuild,
+    SPECIES_GUILDS,
+    DEFAULT_GUILD,
+    get_guild,
+    list_guilds,
+    print_guild_summary
+)
 from .entropy import (
     calculate_entropy,
     movement_entropy,
@@ -40,7 +48,11 @@ from .optimization import (
 from .validation import (
     validate_network,
     run_comparative_analysis,
-    convergence_test
+    convergence_test,
+    monte_carlo_validation,
+    statistical_comparison,
+    print_validation_summary,
+    validate_dendritic_optimality
 )
 from .visualization import (
     plot_landscape,
@@ -60,7 +72,15 @@ __all__ = [
     'ClimateScenario',
     'OptimizationResult',
     'NetworkTopology',
-    
+
+    # Species parameters
+    'SpeciesGuild',
+    'SPECIES_GUILDS',
+    'DEFAULT_GUILD',
+    'get_guild',
+    'list_guilds',
+    'print_guild_summary',
+
     # Functions
     'calculate_entropy',
     'movement_entropy',
@@ -72,7 +92,11 @@ __all__ = [
     'validate_network',
     'run_comparative_analysis',
     'convergence_test',
-    
+    'monte_carlo_validation',
+    'statistical_comparison',
+    'print_validation_summary',
+    'validate_dendritic_optimality',
+
     # Visualization
     'plot_landscape',
     'plot_network',

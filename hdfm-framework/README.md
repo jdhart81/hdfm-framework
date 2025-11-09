@@ -20,6 +20,30 @@ Forest corridor networks are critical for biodiversity conservation and climate 
 
 This framework enables passive, automated corridor establishment at unprecedented scale and minimal cost.
 
+## ⚠️ Implementation Status
+
+**Current Version:** 0.1.0 (Foundational Release)
+**Paper Coverage:** ~50-55% of features fully implemented
+
+This is an **actively developed** framework. Core dendritic optimization and validation tools are production-ready, but several advanced features from the papers are planned for future releases.
+
+**What Works Now:**
+- ✅ Dendritic network (MST) optimization
+- ✅ Basic entropy framework (H_mov + penalties)
+- ✅ Alternative topology comparisons
+- ✅ Monte Carlo validation
+- ✅ Backwards climate optimization structure
+- ✅ **NEW:** Species-specific parameters (Table 2 from paper)
+
+**Coming Soon (v0.2.0, ~2-3 weeks):**
+- 🔴 Width-dependent entropy calculations
+- 🔴 Dual entropy formulations (H_rate)
+- 🔴 Landscape allocation constraints (20-30%)
+- 🔴 Width optimization algorithms
+
+**See [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for complete feature status and workarounds.**
+**See [`PAPER_IMPLEMENTATION_REVIEW.md`](PAPER_IMPLEMENTATION_REVIEW.md) for detailed gap analysis.**
+
 ## Key Features
 
 - 🌲 **Landscape entropy calculation** with movement, connectivity, and topology terms
@@ -81,6 +105,30 @@ corridor_sequence = optimizer.optimize()
 
 # Get present-day implementation plan
 current_network = corridor_sequence[0]
+```
+
+### Use species-specific parameters (NEW in v0.1.0)
+
+```python
+from hdfm import SPECIES_GUILDS, print_guild_summary
+
+# View all available species guilds (Table 2 from paper)
+print_guild_summary()
+
+# Get species-specific parameters
+small_mammals = SPECIES_GUILDS['small_mammals']
+large_carnivores = SPECIES_GUILDS['large_carnivores']
+
+# Calculate movement success at different corridor widths
+print(f"Small mammals at 150m: {small_mammals.movement_success(150):.2%}")
+print(f"Large carnivores at 350m: {large_carnivores.movement_success(350):.2%}")
+
+# Find required width for target success
+width = small_mammals.required_width_for_success(0.85)
+print(f"Width for 85% success: {width:.0f}m")
+
+# Available guilds: 'small_mammals', 'medium_mammals',
+#                  'large_carnivores', 'long_lived'
 ```
 
 ### Reproduce paper validation
@@ -191,6 +239,7 @@ Run validation: `python examples/synthetic_landscape_validation.py`
 hdfm-framework/
 ├── hdfm/                          # Core package
 │   ├── landscape.py               # Landscape representation and graph construction
+│   ├── species.py                 # Species-specific parameters (NEW in v0.1.0)
 │   ├── entropy.py                 # Entropy calculations (H_mov, C, F, D terms)
 │   ├── network.py                 # Network topology algorithms (MST, alternatives)
 │   ├── optimization.py            # Backwards optimization algorithm
@@ -203,6 +252,12 @@ hdfm-framework/
 │   └── climate_scenarios.py
 ├── tests/                         # Unit tests with invariant verification
 │   ├── test_entropy.py
+├── PAPER_IMPLEMENTATION_REVIEW.md # Detailed gap analysis (NEW)
+├── KNOWN_LIMITATIONS.md           # Implementation status & roadmap (NEW)
+├── README.md                      # This file
+├── QUICKSTART.md                  # 5-minute getting started guide
+├── CONTRIBUTING.md                # Contribution guidelines
+└── requirements.txt               # Python dependencies
 │   ├── test_network.py
 │   └── test_optimization.py
 ├── docs/                          # Extended documentation
