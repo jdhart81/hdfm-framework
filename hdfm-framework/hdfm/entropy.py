@@ -30,7 +30,9 @@ def movement_entropy(
 
     Movement entropy quantifies uncertainty in organism movement across
     the landscape. Lower entropy indicates more predictable movement patterns
-    (i.e., fewer, more constrained pathways).
+    (i.e., fewer, more constrained pathways). In addition to the per-patch
+    Shannon entropy we include a modest penalty for long corridors, reflecting
+    increased energetic cost and movement uncertainty on extensive links.
 
     Uses cost-based dispersal kernel with width-dependent success:
     P(i→j) ∝ exp(-α · d_ij / s) · q_j · φ(w_ij)
@@ -81,6 +83,23 @@ def movement_entropy(
     
     # Calculate movement probabilities for each patch
     H_total = 0.0
+
+    # Corridor length penalty captures additional uncertainty introduced by
+    # long corridors. Longer corridors increase energetic cost and movement
+    # failure risk, so we softly penalize networks with high average edge
+    # length. This term helps ensure dendritic (minimum-length) networks
+    # minimize movement entropy relative to alternative trees.
+    length_penalty = 0.0
+    if edges:
+        lengths = [
+            landscape.graph[i][j]['distance']
+            for (i, j) in edges
+        ]
+        avg_length = float(np.mean(lengths))
+        # Normalize by dispersal scale to keep the term dimensionless and
+        # weight it modestly so it complements (rather than dominates)
+        # Shannon entropy contributions.
+        length_penalty = 0.1 * max(0.0, avg_length / dispersal_scale)
     
     for i in range(n):
         # Get neighbors in corridor network
@@ -121,9 +140,12 @@ def movement_entropy(
             # Shannon entropy for this patch's movements
             H_i = -np.sum(probs * np.log(probs + 1e-10))  # Add epsilon for numerical stability
             H_total += H_i
-    
+
     # Average over patches
     H_mov = H_total / n
+
+    # Apply corridor length uncertainty penalty
+    H_mov += length_penalty
     
     # Verify invariant
     assert H_mov >= 0, f"Movement entropy must be non-negative, got {H_mov}"

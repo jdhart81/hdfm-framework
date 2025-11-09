@@ -4,8 +4,8 @@ Quick installation test for HDFM Framework.
 Run this to verify everything is working.
 """
 
-def test_imports():
-    """Test that all modules can be imported."""
+def _check_imports() -> bool:
+    """Helper to verify that key modules can be imported."""
     print("Testing imports...")
     try:
         from hdfm import (
@@ -20,8 +20,8 @@ def test_imports():
         return False
 
 
-def test_basic_optimization():
-    """Test basic dendritic network optimization."""
+def _check_basic_optimization() -> bool:
+    """Helper to validate dendritic network optimization."""
     print("\nTesting basic optimization...")
     try:
         from hdfm import SyntheticLandscape, build_dendritic_network
@@ -47,8 +47,8 @@ def test_basic_optimization():
         return False
 
 
-def test_validation():
-    """Test validation functions."""
+def _check_validation() -> bool:
+    """Helper to validate comparison utilities."""
     print("\nTesting validation functions...")
     try:
         from hdfm import SyntheticLandscape, compare_network_topologies, NetworkTopology
@@ -72,6 +72,21 @@ def test_validation():
         return False
 
 
+def test_imports():
+    """Pytest wrapper for import smoke test."""
+    assert _check_imports()
+
+
+def test_basic_optimization():
+    """Pytest wrapper for optimization smoke test."""
+    assert _check_basic_optimization()
+
+
+def test_validation():
+    """Pytest wrapper for validation smoke test."""
+    assert _check_validation()
+
+
 def main():
     """Run all tests."""
     print("="*60)
@@ -79,9 +94,9 @@ def main():
     print("="*60)
     
     tests = [
-        test_imports,
-        test_basic_optimization,
-        test_validation
+        _check_imports,
+        _check_basic_optimization,
+        _check_validation
     ]
     
     results = [test() for test in tests]

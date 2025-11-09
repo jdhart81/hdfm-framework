@@ -2,7 +2,7 @@
 Genetic population dynamics and effective population size calculations.
 
 Implements the island model for effective population size:
-Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼFᵢⱼ(A,w)]
+Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼ(1 - Fᵢⱼ(A,w))]
 
 Where:
 - nᵢ: Local population size in patch i
@@ -63,10 +63,18 @@ def calculate_migration_rate(
     # Base dispersal probability
     m_ij = np.exp(-alpha * distance / dispersal_scale)
 
-    # Apply width-dependent movement success
+    # Apply width-dependent movement success. When no species guild is
+    # provided we still incorporate a biologically plausible saturation
+    # response where wider corridors increase successful dispersal and
+    # narrow corridors sharply limit movement.
     if species_guild is not None:
         phi_w = species_guild.movement_success(width)
-        m_ij *= phi_w
+    else:
+        # Simple saturating response: success increases with width and
+        # asymptotically approaches 1.0.
+        phi_w = 1.0 - np.exp(-width / 100.0)
+
+    m_ij *= phi_w
 
     # Ensure within bounds
     m_ij = max(0.0, min(1.0, m_ij))
@@ -141,12 +149,12 @@ def calculate_effective_population_size(
     Calculate metapopulation effective population size using island model.
 
     Implements the full island model:
-    Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼFᵢⱼ(A,w)]
+    Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼ(1 - Fᵢⱼ(A,w))]
 
     Where:
     - nᵢ: Local population size in patch i
-    - Fᵢⱼ(A,w): Co-ancestry coefficient (function of network and widths)
-    - Denominator accounts for genetic drift and gene flow
+        - Fᵢⱼ(A,w): Co-ancestry coefficient (function of network and widths)
+        - Denominator accounts for genetic drift (high when connectivity is weak)
 
     Args:
         landscape: Landscape object with patch populations
@@ -262,7 +270,11 @@ def calculate_effective_population_size(
     for i in range(n_patches):
         for j in range(n_patches):
             if i != j:
-                between_pop_covariance += 2 * populations[i] * populations[j] * F[i, j]
+                # Higher co-ancestry (stronger gene flow) reduces drift between
+                # patches, so it should *decrease* the denominator. We therefore
+                # scale the covariance term by (1 - Fᵢⱼ), which shrinks as
+                # connectivity strengthens.
+                between_pop_covariance += 2 * populations[i] * populations[j] * (1.0 - F[i, j])
 
     denominator = within_pop_variance + between_pop_covariance
 
@@ -328,7 +340,7 @@ def check_genetic_viability(
         # Default to standard 500 rule
         thresh = 500.0
 
-    is_viable = Ne >= thresh
+    is_viable = bool(Ne >= thresh)
 
     if is_viable:
         margin = Ne - thresh
