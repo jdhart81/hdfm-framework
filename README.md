@@ -1,4 +1,4 @@
-# Hierarchical Dendritic Forest Management (HDFM) Framework
+
 
 ![HDFM Logo](ChatGPT%20Image%20Nov%209,%202025,%2008_20_21%20AM.png)
 
