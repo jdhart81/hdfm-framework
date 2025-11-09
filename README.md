@@ -45,6 +45,9 @@ pip install -e .
 
 # Test the installation
 python test_installation.py
+
+# Optional: Install GIS extensions for real-world data integration
+pip install -e ".[gis]"  # Adds geopandas, rasterio, shapely support
 ```
 
 ### Run Your First Example (2 minutes)
@@ -71,6 +74,9 @@ print(f"Number of corridors: {len(network.edges)}")
 # Run the full validation suite from the paper
 cd hdfm-framework
 python examples/synthetic_landscape_validation.py
+
+# Or use the convenience command (after installation)
+hdfm-validate
 ```
 
 This validates that dendritic networks minimize entropy compared to alternative topologies (Gabriel graphs, Delaunay triangulations, etc.).
@@ -86,11 +92,11 @@ The main Python package with production-ready algorithms:
 | Module | Purpose | Key Features |
 |--------|---------|--------------|
 | **landscape.py** | Landscape representation | Patch networks, distance matrices, graph construction |
-| **species.py** | Species-specific parameters | Movement success, corridor width requirements (Table 2 from paper) |
-| **entropy.py** | Entropy calculations | Movement entropy (H_mov), connectivity, topology, disturbance penalties |
+| **species.py** | Species-specific parameters | Movement success, corridor width requirements (Table 2 from paper), 4 predefined guilds, helper functions (`get_guild`, `list_guilds`, `print_guild_summary`) |
+| **entropy.py** | Entropy calculations | Movement entropy (H_mov), connectivity, topology, disturbance penalties, dual formulations (H_rate) |
 | **network.py** | Network topology algorithms | Dendritic (MST) construction, alternative topologies, comparisons |
-| **optimization.py** | Optimization algorithms | Backwards climate optimization, dendritic optimizer |
-| **validation.py** | Validation tools | Monte Carlo validation, statistical comparisons |
+| **optimization.py** | Optimization algorithms | Backwards climate optimization, width optimizer, allocation constraint checking |
+| **validation.py** | Validation tools | Monte Carlo validation, statistical comparisons, optimality validation, summary reporting |
 | **visualization.py** | Plotting & graphics | Network plots, entropy surfaces, optimization traces |
 
 ### 📚 Examples (`hdfm-framework/examples/`)
@@ -297,6 +303,7 @@ The framework is designed for integration with modern conservation technologies:
 - **Operating System**: Linux, macOS, or Windows
 - **RAM**: 4GB minimum (8GB+ recommended for large landscapes)
 - **Dependencies**: NumPy, SciPy, NetworkX, Matplotlib, Pandas, scikit-learn
+- **Optional GIS Extensions**: GeoPandas, Rasterio, Shapely (install with `pip install -e ".[gis]"`)
 
 See [requirements.txt](hdfm-framework/requirements.txt) for exact versions.
 
@@ -364,7 +371,7 @@ This is permissive open-source software - you can use it for research, commercia
 **Author**: Justin Hart
 **Organization**: Viridis LLC
 **Contact**: viridisnorthllc@gmail.com
-**Version**: 0.1.0
+**Version**: 0.2.0
 **Status**: Research prototype / Active development
 
 ## Next Steps
@@ -379,6 +386,6 @@ Ready to get started?
 
 ---
 
-**Note**: This is version 0.1.0 - a foundational release with core algorithms. See the [roadmap](hdfm-framework/KNOWN_LIMITATIONS.md) for upcoming features.
+**Note**: This is version 0.2.0 - a foundational release with core algorithms. See the [roadmap](hdfm-framework/KNOWN_LIMITATIONS.md) for upcoming features.
 
 For complete technical documentation, API reference, and detailed examples, see **[hdfm-framework/README.md](hdfm-framework/README.md)**.
