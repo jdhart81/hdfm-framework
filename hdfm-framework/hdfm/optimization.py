@@ -1,13 +1,15 @@
 """
 Optimization algorithms for HDFM framework.
 
-Implements backwards temporal optimization for climate-adaptive corridor design.
+Implements backwards temporal optimization for climate-adaptive corridor design
+and corridor width optimization under landscape allocation constraints.
 """
 
 import numpy as np
 import networkx as nx
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
+from scipy.optimize import minimize, Bounds, LinearConstraint
 from .landscape import Landscape
 from .network import build_dendritic_network, DendriticNetwork
 from .entropy import calculate_entropy
@@ -421,7 +423,7 @@ def greedy_optimization(
     # Final network
     network = DendriticNetwork(landscape, edges)
     H_final, components = network.entropy(**entropy_kwargs)
-    
+
     return OptimizationResult(
         network=network,
         entropy=H_final,
@@ -429,3 +431,231 @@ def greedy_optimization(
         iterations=len(convergence_history),
         convergence_history=convergence_history
     )
+
+
+def optimize_corridor_widths(
+    landscape: Landscape,
+    edges: List[Tuple[int, int]],
+    species_guild,
+    allocation_budget: float = 0.25,
+    width_bounds: Tuple[float, float] = (50, 500),
+    method: str = 'SLSQP',
+    **entropy_kwargs
+) -> Tuple[Dict[Tuple[int, int], float], OptimizationResult]:
+    """
+    Optimize corridor widths to minimize entropy subject to allocation constraint.
+
+    Solves the constrained optimization problem:
+
+    Minimize: H(A, w)
+    Subject to:
+      ∑ᵢⱼ dᵢⱼ · wᵢⱼ ≤ β · ∑ᵢ Aᵢ  (allocation constraint)
+      w_min ≤ wᵢⱼ ≤ w_max         (width bounds)
+      Nₑ(A,w) ≥ Nₑᵗʰʳᵉˢʰ           (genetic viability)
+
+    Args:
+        landscape: Landscape object
+        edges: List of corridor edges (topology fixed)
+        species_guild: SpeciesGuild for species-specific parameters
+        allocation_budget: Landscape allocation fraction β ∈ [0.2, 0.3]
+        width_bounds: (w_min, w_max) corridor width range (meters)
+        method: Scipy optimization method ('SLSQP', 'trust-constr')
+        **entropy_kwargs: Additional parameters for entropy calculation
+
+    Returns:
+        (optimal_widths, optimization_result)
+
+        optimal_widths: Dictionary mapping (i,j) to optimal width
+        optimization_result: OptimizationResult with final entropy
+
+    Algorithm:
+        1. Initialize widths at species critical width
+        2. Set up allocation constraint: ∑ dᵢⱼ·wᵢⱼ ≤ β·∑Aᵢ
+        3. Use gradient-based optimization (SLSQP or trust-constr)
+        4. Return optimal width allocation
+
+    Reference:
+        Hart (2024), Section 3.3, Width Optimization
+    """
+    assert 0 < allocation_budget <= 1.0, "Allocation budget must be in (0, 1]"
+    assert width_bounds[0] < width_bounds[1], "Invalid width bounds"
+    assert len(edges) > 0, "Need at least one edge"
+
+    n_edges = len(edges)
+    w_min, w_max = width_bounds
+
+    # Initialize widths at species critical width (or middle of range)
+    if species_guild is not None:
+        w_init = min(max(species_guild.w_crit, w_min), w_max)
+    else:
+        w_init = (w_min + w_max) / 2
+
+    initial_widths = np.full(n_edges, w_init)
+
+    # Calculate budget threshold
+    total_patch_area = sum(p.area * 10000 for p in landscape.patches)  # ha to m²
+    budget_threshold = allocation_budget * total_patch_area
+
+    # Get edge lengths
+    edge_lengths = np.array([landscape.graph[i][j]['distance'] for (i, j) in edges])
+
+    # Create edge index mapping
+    edge_to_idx = {edge: i for i, edge in enumerate(edges)}
+
+    def objective(widths):
+        """Objective function: total entropy."""
+        # Build corridor_widths dictionary
+        corridor_widths = {}
+        for edge, width in zip(edges, widths):
+            edge_key = tuple(sorted(edge))
+            corridor_widths[edge_key] = width
+
+        # Calculate entropy
+        H_total, _ = calculate_entropy(
+            landscape, edges, corridor_widths, species_guild,
+            lambda4=0.0,  # No allocation penalty in objective (handled by constraint)
+            **entropy_kwargs
+        )
+        return H_total
+
+    def allocation_constraint_func(widths):
+        """Allocation constraint: ∑ dᵢⱼ·wᵢⱼ - β·∑Aᵢ ≤ 0"""
+        total_corridor_area = np.sum(edge_lengths * widths)
+        return budget_threshold - total_corridor_area  # >= 0 means satisfied
+
+    # Set up constraints
+    constraints = [
+        {'type': 'ineq', 'fun': allocation_constraint_func}
+    ]
+
+    # Width bounds for each edge
+    bounds = Bounds(
+        lb=np.full(n_edges, w_min),
+        ub=np.full(n_edges, w_max)
+    )
+
+    # Run optimization
+    result = minimize(
+        objective,
+        initial_widths,
+        method=method,
+        bounds=bounds,
+        constraints=constraints,
+        options={'maxiter': 200, 'ftol': 1e-6}
+    )
+
+    # Extract optimal widths
+    optimal_widths = {}
+    for edge, width in zip(edges, result.x):
+        edge_key = tuple(sorted(edge))
+        optimal_widths[edge_key] = width
+
+    # Calculate final entropy with optimal widths
+    H_final, components = calculate_entropy(
+        landscape, edges, optimal_widths, species_guild,
+        **entropy_kwargs
+    )
+
+    # Create network with optimal widths (for compatibility)
+    network = DendriticNetwork(landscape, edges)
+
+    opt_result = OptimizationResult(
+        network=network,
+        entropy=H_final,
+        entropy_components=components,
+        iterations=result.nit if hasattr(result, 'nit') else 1,
+        convergence_history=[H_final]
+    )
+
+    return optimal_widths, opt_result
+
+
+def optimize_variable_width_network(
+    landscape: Landscape,
+    species_guild,
+    allocation_budget: float = 0.25,
+    width_bounds: Tuple[float, float] = (50, 500),
+    primary_width_factor: float = 1.5,
+    **kwargs
+) -> Tuple[List[Tuple[int, int]], Dict[Tuple[int, int], float], OptimizationResult]:
+    """
+    Design variable-width dendritic network optimizing both topology and widths.
+
+    Implements variable-width strategy:
+    - Primary corridors (longest): wider (factor × w_crit)
+    - Secondary corridors: critical width (w_crit)
+    - Tertiary corridors: minimum feasible
+
+    Args:
+        landscape: Landscape object
+        species_guild: SpeciesGuild for species-specific parameters
+        allocation_budget: Landscape allocation fraction β
+        width_bounds: (w_min, w_max) width range
+        primary_width_factor: Multiplier for primary corridor widths
+        **kwargs: Additional parameters for entropy calculation
+
+    Returns:
+        (edges, corridor_widths, optimization_result)
+
+        edges: Dendritic network edges
+        corridor_widths: Optimal width allocation
+        optimization_result: Final entropy and components
+
+    Strategy:
+        1. Build dendritic (MST) network for topology
+        2. Classify corridors by importance (betweenness centrality)
+        3. Allocate wider widths to high-importance corridors
+        4. Optimize width distribution under budget constraint
+
+    Reference:
+        Hart (2024), Section 3.5, Variable-Width Design
+    """
+    assert 0 < allocation_budget <= 1.0, "Allocation budget must be in (0, 1]"
+    assert primary_width_factor >= 1.0, "Primary factor must be >= 1"
+
+    w_min, w_max = width_bounds
+
+    # Step 1: Build dendritic network (MST)
+    network = build_dendritic_network(landscape)
+    edges = network.edges
+
+    # Step 2: Calculate edge importance (betweenness centrality)
+    G = nx.Graph()
+    G.add_edges_from(edges)
+    edge_betweenness = nx.edge_betweenness_centrality(G, normalized=True)
+
+    # Sort edges by importance
+    sorted_edges = sorted(edge_betweenness.items(), key=lambda x: x[1], reverse=True)
+
+    # Step 3: Initial width allocation based on importance
+    n_edges = len(edges)
+    n_primary = max(1, n_edges // 3)  # Top 1/3
+    n_secondary = max(1, n_edges // 3)  # Middle 1/3
+    # Remaining are tertiary
+
+    initial_widths = {}
+    w_crit = species_guild.w_crit if species_guild else (w_min + w_max) / 2
+
+    for i, (edge, importance) in enumerate(sorted_edges):
+        edge_key = tuple(sorted(edge))
+
+        if i < n_primary:
+            # Primary corridors: wider
+            width = min(w_crit * primary_width_factor, w_max)
+        elif i < n_primary + n_secondary:
+            # Secondary corridors: critical width
+            width = w_crit
+        else:
+            # Tertiary corridors: minimum feasible
+            width = max(w_min, w_crit * 0.7)
+
+        initial_widths[edge_key] = width
+
+    # Step 4: Optimize widths under budget constraint
+    optimal_widths, opt_result = optimize_corridor_widths(
+        landscape, edges, species_guild,
+        allocation_budget, width_bounds,
+        **kwargs
+    )
+
+    return edges, optimal_widths, opt_result

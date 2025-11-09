@@ -2,18 +2,21 @@
 Hierarchical Dendritic Forest Management (HDFM) Framework
 
 A computational toolkit for entropy-minimizing corridor network optimization
-with backwards climate adaptation.
+with backwards climate adaptation and width-dependent movement analysis.
 
 Core components:
 - Landscape representation and graph construction
-- Information-theoretic entropy calculation
+- Width-dependent information-theoretic entropy calculation
 - Dendritic network optimization (MST-based)
-- Backwards temporal optimization
+- Corridor width optimization under allocation constraints
+- Effective population size calculation (island model)
+- Backwards temporal optimization for climate adaptation
+- Species-specific movement parameters
 - Synthetic landscape validation
 - Visualization tools
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __author__ = "Justin Hart"
 __email__ = "viridisnorthllc@gmail.com"
 
@@ -29,9 +32,13 @@ from .species import (
 from .entropy import (
     calculate_entropy,
     movement_entropy,
+    entropy_rate,
+    stationary_distribution,
     connectivity_constraint,
+    effective_population_size,
     forest_topology_penalty,
-    disturbance_response_penalty
+    disturbance_response_penalty,
+    landscape_allocation_constraint
 )
 from .network import (
     DendriticNetwork,
@@ -43,7 +50,9 @@ from .optimization import (
     DendriticOptimizer,
     BackwardsOptimizer,
     ClimateScenario,
-    OptimizationResult
+    OptimizationResult,
+    optimize_corridor_widths,
+    optimize_variable_width_network
 )
 from .validation import (
     validate_network,
@@ -81,14 +90,24 @@ __all__ = [
     'list_guilds',
     'print_guild_summary',
 
-    # Functions
+    # Entropy functions
     'calculate_entropy',
     'movement_entropy',
+    'entropy_rate',
+    'stationary_distribution',
     'connectivity_constraint',
+    'effective_population_size',
     'forest_topology_penalty',
     'disturbance_response_penalty',
+    'landscape_allocation_constraint',
+
+    # Network and optimization functions
     'build_dendritic_network',
     'compare_network_topologies',
+    'optimize_corridor_widths',
+    'optimize_variable_width_network',
+
+    # Validation functions
     'validate_network',
     'run_comparative_analysis',
     'convergence_test',
