@@ -13,7 +13,7 @@ Core components:
 - Visualization tools
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Justin Hart"
 __email__ = "viridisnorthllc@gmail.com"
 
@@ -28,6 +28,7 @@ from .species import (
 )
 from .entropy import (
     calculate_entropy,
+    calculate_entropy_rate,
     movement_entropy,
     connectivity_constraint,
     forest_topology_penalty,
@@ -42,8 +43,10 @@ from .network import (
 from .optimization import (
     DendriticOptimizer,
     BackwardsOptimizer,
+    WidthOptimizer,
     ClimateScenario,
-    OptimizationResult
+    OptimizationResult,
+    check_allocation_constraint
 )
 from .validation import (
     validate_network,
@@ -69,6 +72,7 @@ __all__ = [
     'DendriticNetwork',
     'DendriticOptimizer',
     'BackwardsOptimizer',
+    'WidthOptimizer',
     'ClimateScenario',
     'OptimizationResult',
     'NetworkTopology',
@@ -83,10 +87,12 @@ __all__ = [
 
     # Functions
     'calculate_entropy',
+    'calculate_entropy_rate',
     'movement_entropy',
     'connectivity_constraint',
     'forest_topology_penalty',
     'disturbance_response_penalty',
+    'check_allocation_constraint',
     'build_dendritic_network',
     'compare_network_topologies',
     'validate_network',
