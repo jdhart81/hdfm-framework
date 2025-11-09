@@ -9,6 +9,8 @@ Core components:
 - Information-theoretic entropy calculation
 - Dendritic network optimization (MST-based)
 - Backwards temporal optimization
+- Genetic population dynamics and effective population size (Nₑ) tracking
+- Robustness analysis with looped topologies and redundancy scoring
 - Synthetic landscape validation
 - Visualization tools
 """
@@ -63,6 +65,23 @@ from .visualization import (
     plot_entropy_surface,
     plot_optimization_trace
 )
+from .genetics import (
+    calculate_effective_population_size,
+    calculate_migration_rate,
+    calculate_coancestry_coefficient,
+    check_genetic_viability,
+    calculate_inbreeding_coefficient,
+    calculate_genetic_diversity_loss
+)
+from .robustness import (
+    RobustnessMetrics,
+    calculate_two_edge_connectivity,
+    calculate_edge_redundancy_scores,
+    calculate_failure_probability,
+    add_strategic_loops,
+    calculate_robustness_metrics,
+    pareto_frontier_analysis
+)
 
 __all__ = [
     # Core classes
@@ -76,6 +95,7 @@ __all__ = [
     'ClimateScenario',
     'OptimizationResult',
     'NetworkTopology',
+    'RobustnessMetrics',
 
     # Species parameters
     'SpeciesGuild',
@@ -85,16 +105,36 @@ __all__ = [
     'list_guilds',
     'print_guild_summary',
 
-    # Functions
+    # Entropy functions
     'calculate_entropy',
     'calculate_entropy_rate',
     'movement_entropy',
     'connectivity_constraint',
     'forest_topology_penalty',
     'disturbance_response_penalty',
+
+    # Genetic functions
+    'calculate_effective_population_size',
+    'calculate_migration_rate',
+    'calculate_coancestry_coefficient',
+    'check_genetic_viability',
+    'calculate_inbreeding_coefficient',
+    'calculate_genetic_diversity_loss',
+
+    # Robustness functions
+    'calculate_two_edge_connectivity',
+    'calculate_edge_redundancy_scores',
+    'calculate_failure_probability',
+    'add_strategic_loops',
+    'calculate_robustness_metrics',
+    'pareto_frontier_analysis',
+
+    # Network and optimization functions
     'check_allocation_constraint',
     'build_dendritic_network',
     'compare_network_topologies',
+
+    # Validation functions
     'validate_network',
     'run_comparative_analysis',
     'convergence_test',
