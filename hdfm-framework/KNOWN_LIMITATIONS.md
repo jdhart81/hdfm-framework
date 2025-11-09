@@ -94,12 +94,12 @@ Implements: `H(L) = H_mov + λ₁C(L) + λ₂F(L) + λ₃D(L)`
 - Climate scenario modeling ✅
 - Temporal trajectory (2025→2100) ✅
 - Multi-year network adjustment ✅
-- Width optimization over time 🔴 Missing
+- Automated width scheduling 🔶 Pending integration with `WidthOptimizer`
 
 **Code:** `hdfm/optimization.py:157-363`
 
 ### 7. Species-Specific Parameters
-**Status:** ✅ **NEW - IMPLEMENTED in v0.1.0**
+**Status:** ✅ **IMPLEMENTED**
 
 - All 4 guilds from Table 2 (Hart 2024)
 - Dispersal parameters (α)
@@ -228,7 +228,7 @@ result = optimizer.optimize()
 ## 🔴 PLANNED FEATURES (Not Yet Implemented)
 
 ### 1. Full Effective Population Size Nₑ(A,w)
-**Status:** 🔴 **PLANNED for v0.2.0**
+**Status:** 🔴 **PLANNED for v0.3.0**
 **Priority:** HIGH
 
 **What's Missing:**
@@ -249,7 +249,7 @@ mᵢⱼ(A,w) = σ · pᵢⱼ(A,w) / (1 + σ · pᵢⱼ(A,w))
 
 **Workaround:** Use connectivity constraint as proxy for genetic viability
 
-**Target Release:** v0.2.0
+**Target Release:** v0.3.0
 
 ---
 
@@ -282,19 +282,20 @@ While critical features are being implemented, scientists can use these workarou
 ### For Width-Dependent Analysis:
 
 ```python
-from hdfm import SPECIES_GUILDS
+from hdfm import calculate_entropy, SPECIES_GUILDS
 
-# Get species-specific parameters
 guild = SPECIES_GUILDS['small_mammals']
+corridor_widths = {(0, 1): 160, (1, 2): 220}
 
-# Calculate movement success manually
-def custom_dispersal_prob(distance_km, width_m, guild):
-    import numpy as np
-    distance_effect = np.exp(-guild.alpha * distance_km)
-    width_effect = guild.movement_success(width_m)
-    return distance_effect * width_effect
+H_total, components = calculate_entropy(
+    landscape=landscape,
+    edges=network.edges,
+    corridor_widths=corridor_widths,
+    species_guild=guild
+)
 
-# Use in custom entropy calculations
+print("Width-aware entropy:", H_total)
+print("Movement component:", components['H_mov'])
 ```
 
 ### For Multi-Species Planning:

@@ -34,7 +34,7 @@ else:
 
 setup(
     name='hdfm-framework',
-    version='0.1.0',
+    version='0.2.0',
     author='Justin Hart',
     author_email='viridisnorthllc@gmail.com',
     description='Computational framework for entropy-minimizing corridor network optimization',

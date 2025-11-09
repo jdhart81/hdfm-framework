@@ -1,31 +1,13 @@
-# HDFM Framework Dependencies
+# HDFM Framework Runtime Dependencies
 
 # Core scientific computing
 numpy>=1.20.0
 scipy>=1.7.0
 networkx>=2.6.0
 
-# Visualization
-matplotlib>=3.3.0
-
-# Data handling
+# Data handling and visualization
 pandas>=1.3.0
-
-# Machine learning (for future extensions)
-scikit-learn>=0.24.0
-
-# Testing
-pytest>=6.2.0
-pytest-cov>=2.12.0
-
-# Documentation
-sphinx>=4.0.0
-sphinx-rtd-theme>=0.5.0
-
-# Development tools
-black>=21.0
-flake8>=3.9.0
-mypy>=0.900
+matplotlib>=3.3.0
 
 # Spatial analysis (optional, for future GIS integration)
 # Uncomment if needed:
