@@ -152,6 +152,45 @@ required_width = large_carnivores.required_width_for_success(0.85)
 print(f"Need {required_width:.0f}m width for 85% movement success")
 ```
 
+**Optimize corridor widths with budget constraints:**
+```python
+from hdfm import WidthOptimizer, SPECIES_GUILDS, build_dendritic_network
+
+# Build dendritic network
+network = build_dendritic_network(landscape)
+
+# Optimize widths for small mammals with 25% landscape allocation
+guild = SPECIES_GUILDS['small_mammals']
+optimizer = WidthOptimizer(
+    landscape=landscape,
+    edges=network.edges,
+    species_guild=guild,
+    beta=0.25  # 25% landscape budget
+)
+
+result = optimizer.optimize()
+print(f"Optimized entropy: {result.entropy:.3f}")
+```
+
+**Calculate entropy rate for heterogeneous landscapes:**
+```python
+from hdfm import calculate_entropy_rate, SPECIES_GUILDS
+
+# Calculate H_rate with stationary distribution
+guild = SPECIES_GUILDS['medium_mammals']
+corridor_widths = {edge: 200 for edge in network.edges}
+
+H_rate, components = calculate_entropy_rate(
+    landscape=landscape,
+    edges=network.edges,
+    corridor_widths=corridor_widths,
+    species_guild=guild
+)
+
+print(f"Entropy rate: {H_rate:.3f}")
+print(f"Stationary distribution: {components['stationary_dist']}")
+```
+
 ### For Conservation Planners
 
 **Design climate-adaptive corridors:**
@@ -201,8 +240,10 @@ class MyTopology(NetworkTopology):
 
 ### Core Capabilities
 
-- 🌲 **Landscape entropy calculation** - Full entropy framework (H_mov + λ₁·C + λ₂·F + λ₃·D)
+- 🌲 **Landscape entropy calculation** - Full entropy framework (H_mov + λ₁·C + λ₂·F + λ₃·D) with width-dependent terms
 - 🌳 **Dendritic network construction** - Minimum spanning tree (MST) optimization
+- 📏 **Width optimization** - Corridor width allocation under landscape budget constraints (20-30%)
+- 🔄 **Dual entropy formulations** - H_rate with stationary distribution for heterogeneous landscapes
 - ⏮️ **Backwards climate optimization** - Design from future to present
 - 📊 **Comparative topology analysis** - Test dendritic vs. 5+ alternative topologies
 - 🎨 **Visualization suite** - Network plots, entropy surfaces, optimization traces
@@ -222,7 +263,7 @@ The framework reproduces theoretical predictions from the paper:
 
 ### Implementation Status
 
-**Current Version: 0.1.0** (~50-55% of paper features)
+**Current Version: 0.2.0** (~75-80% of paper features)
 
 ✅ **Fully Implemented:**
 - Dendritic network (MST) optimization
@@ -231,12 +272,10 @@ The framework reproduces theoretical predictions from the paper:
 - Monte Carlo validation
 - Backwards climate optimization structure
 - Species-specific parameters (Table 2 from paper)
-
-🔴 **Coming Soon (v0.2.0):**
-- Width-dependent entropy calculations
-- Dual entropy formulations (H_rate)
-- Landscape allocation constraints (20-30%)
-- Width optimization algorithms
+- **Width-dependent entropy calculations** with φ(w) term
+- **Dual entropy formulations (H_rate)** with stationary distribution
+- **Landscape allocation constraints (20-30%)** enforcement
+- **Width optimization algorithms** under budget constraints
 
 See [KNOWN_LIMITATIONS.md](hdfm-framework/KNOWN_LIMITATIONS.md) for complete status and workarounds.
 

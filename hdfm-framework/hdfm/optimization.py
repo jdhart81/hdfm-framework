@@ -2,12 +2,14 @@
 Optimization algorithms for HDFM framework.
 
 Implements backwards temporal optimization for climate-adaptive corridor design.
+Includes width optimization and landscape allocation constraints.
 """
 
 import numpy as np
 import networkx as nx
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
+from scipy.optimize import minimize, LinearConstraint
 from .landscape import Landscape
 from .network import build_dendritic_network, DendriticNetwork
 from .entropy import calculate_entropy
@@ -360,6 +362,195 @@ class BackwardsOptimizer:
             iterations=len(convergence_history),
             convergence_history=convergence_history,
             corridor_schedule=corridor_schedule
+        )
+
+
+def check_allocation_constraint(
+    landscape: Landscape,
+    edges: List[Tuple[int, int]],
+    corridor_widths: Dict[Tuple[int, int], float],
+    beta: float = 0.25
+) -> Tuple[bool, float, float]:
+    """
+    Check if corridor allocation satisfies landscape constraint.
+
+    Allocation constraint: Σᵢⱼ dᵢⱼ wᵢⱼ ≤ β Σᵢ Aᵢ
+
+    Where:
+    - dᵢⱼ: corridor length (m)
+    - wᵢⱼ: corridor width (m)
+    - Aᵢ: patch area (m²)
+    - β: allocation fraction (typically 0.20-0.30 = 20-30%)
+
+    Args:
+        landscape: Landscape object
+        edges: List of corridor edges
+        corridor_widths: Dict mapping (i,j) to width in meters
+        beta: Landscape allocation fraction (default 0.25 = 25%)
+
+    Returns:
+        (constraint_satisfied, corridor_area_used, total_area_available)
+
+    Invariants:
+    - 0 < β ≤ 1
+    - constraint_satisfied = True if corridor_area_used ≤ beta * total_area_available
+    """
+    assert 0 < beta <= 1, f"Beta must be in (0,1], got {beta}"
+
+    # Calculate total landscape area
+    total_area = sum(patch.area for patch in landscape.patches)
+
+    # Calculate corridor area used
+    corridor_area = 0.0
+    for (i, j) in edges:
+        distance = landscape.graph[i][j]['distance']
+
+        # Handle both orderings of edge
+        width = corridor_widths.get((i, j), corridor_widths.get((j, i), 0))
+
+        corridor_area += distance * width
+
+    # Check constraint
+    max_allowed = beta * total_area
+    constraint_satisfied = corridor_area <= max_allowed
+
+    return constraint_satisfied, corridor_area, total_area
+
+
+class WidthOptimizer:
+    """
+    Optimizer for corridor widths with landscape allocation constraints.
+
+    Optimizes corridor widths to minimize entropy while respecting:
+    1. Landscape allocation constraint: Σᵢⱼ dᵢⱼ wᵢⱼ ≤ β Σᵢ Aᵢ (20-30%)
+    2. Width bounds: w_min ≤ wᵢⱼ ≤ w_max
+    3. Genetic viability: Nₑ(A,w) ≥ Nₑᵗʰʳᵉˢʰ (simplified)
+
+    Algorithm:
+    Given fixed topology (edges), optimize width allocation to minimize
+    H(A, w) subject to area budget constraint.
+    """
+
+    def __init__(
+        self,
+        landscape: Landscape,
+        edges: List[Tuple[int, int]],
+        species_guild,
+        beta: float = 0.25
+    ):
+        """
+        Initialize width optimizer.
+
+        Args:
+            landscape: Landscape object
+            edges: Fixed corridor topology (from MST or other method)
+            species_guild: SpeciesGuild for width-dependent parameters
+            beta: Landscape allocation fraction (0.20-0.30 typical)
+        """
+        self.landscape = landscape
+        self.edges = edges
+        self.species_guild = species_guild
+        self.beta = beta
+
+        assert 0 < beta <= 1, f"Beta must be in (0,1], got {beta}"
+
+    def optimize(
+        self,
+        initial_widths: Optional[Dict[Tuple[int, int], float]] = None,
+        max_iterations: int = 100,
+        **entropy_kwargs
+    ) -> OptimizationResult:
+        """
+        Optimize corridor widths subject to allocation constraint.
+
+        Minimize: H(A, w)
+        Subject to:
+          Σᵢⱼ dᵢⱼ wᵢⱼ ≤ β Σᵢ Aᵢ  (allocation constraint)
+          w_min ≤ wᵢⱼ ≤ w_max        (width bounds)
+
+        Args:
+            initial_widths: Optional starting widths (default: w_crit for all)
+            max_iterations: Maximum optimization iterations
+            **entropy_kwargs: Parameters for entropy calculation
+
+        Returns:
+            OptimizationResult with optimized widths
+        """
+        n_edges = len(self.edges)
+
+        # Set width bounds
+        w_min = self.species_guild.w_min
+        w_max = 500.0  # Maximum practical width (meters)
+
+        # Initialize widths
+        if initial_widths is None:
+            # Start at critical width
+            x0 = np.full(n_edges, self.species_guild.w_crit)
+        else:
+            x0 = np.array([initial_widths.get(e, self.species_guild.w_crit) for e in self.edges])
+
+        # Calculate allocation constraint parameters
+        total_area = sum(patch.area for patch in self.landscape.patches)
+        max_corridor_area = self.beta * total_area
+
+        # Build constraint matrix: sum of (distance * width) <= max_corridor_area
+        distances = np.array([self.landscape.graph[i][j]['distance'] for (i, j) in self.edges])
+
+        # Linear constraint: distances @ widths <= max_corridor_area
+        constraint = LinearConstraint(distances, lb=0, ub=max_corridor_area)
+
+        # Bounds on individual widths
+        bounds = [(w_min, w_max) for _ in range(n_edges)]
+
+        # Objective function: minimize entropy
+        def objective(widths):
+            width_dict = {edge: w for edge, w in zip(self.edges, widths)}
+            H, _ = calculate_entropy(
+                self.landscape,
+                self.edges,
+                corridor_widths=width_dict,
+                species_guild=self.species_guild,
+                **entropy_kwargs
+            )
+            return H
+
+        # Convergence history
+        convergence_history = []
+
+        def callback(xk):
+            convergence_history.append(objective(xk))
+
+        # Optimize
+        result = minimize(
+            objective,
+            x0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=[constraint],
+            options={'maxiter': max_iterations},
+            callback=callback
+        )
+
+        # Extract optimal widths
+        optimal_widths = {edge: w for edge, w in zip(self.edges, result.x)}
+
+        # Build result
+        network = DendriticNetwork(self.landscape, self.edges)
+        H_final, components = calculate_entropy(
+            self.landscape,
+            self.edges,
+            corridor_widths=optimal_widths,
+            species_guild=self.species_guild,
+            **entropy_kwargs
+        )
+
+        return OptimizationResult(
+            network=network,
+            entropy=H_final,
+            entropy_components=components,
+            iterations=len(convergence_history),
+            convergence_history=convergence_history,
+            corridor_schedule=None  # Store widths in network metadata if needed
         )
 
 

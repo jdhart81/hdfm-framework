@@ -21,34 +21,43 @@ def movement_entropy(
     landscape: Landscape,
     edges: List[Tuple[int, int]],
     dispersal_scale: float = 1000.0,
-    alpha: float = 2.0
+    alpha: float = 2.0,
+    corridor_widths: Dict[Tuple[int, int], float] = None,
+    species_guild = None
 ) -> float:
     """
-    Calculate movement entropy based on dispersal kernel.
-    
+    Calculate movement entropy based on dispersal kernel with optional width effects.
+
     Movement entropy quantifies uncertainty in organism movement across
     the landscape. Lower entropy indicates more predictable movement patterns
     (i.e., fewer, more constrained pathways).
-    
-    Uses cost-based dispersal kernel:
-    P(i→j) ∝ exp(-α · d_ij / s) · q_j
-    
-    Where d_ij is corridor distance, s is dispersal scale, q_j is patch quality.
-    
+
+    Uses cost-based dispersal kernel with width-dependent success:
+    P(i→j) ∝ exp(-α · d_ij / s) · q_j · φ(w_ij)
+
+    Where:
+    - d_ij is corridor distance
+    - s is dispersal scale
+    - q_j is patch quality
+    - φ(w_ij) is width-dependent movement success (if widths provided)
+
     Args:
         landscape: Landscape object
         edges: List of corridor edges
         dispersal_scale: Characteristic dispersal distance (meters)
         alpha: Dispersal cost parameter
-        
+        corridor_widths: Optional dict mapping (i,j) edges to widths (meters)
+        species_guild: Optional SpeciesGuild for width-dependent calculations
+
     Returns:
         Movement entropy H_mov (nats)
-        
+
     Invariants:
     - H_mov >= 0
     - H_mov decreases with fewer/shorter corridors
     - H_mov = 0 only if movement is deterministic (single path)
-    
+    - With widths: narrower corridors increase entropy
+
     Reference:
         Shannon entropy: H = -Σ p_i log(p_i)
     """
@@ -86,9 +95,22 @@ def movement_entropy(
         for j in neighbors:
             d_ij = G[i][j]['distance']
             q_j = landscape.patches[j].quality
-            
-            # Dispersal probability
+
+            # Base dispersal probability
             p_ij = np.exp(-alpha * d_ij / dispersal_scale) * q_j
+
+            # Apply width-dependent movement success if available
+            if corridor_widths is not None and species_guild is not None:
+                # Find edge (handle both orderings)
+                patch_i_id = landscape.patches[i].id
+                patch_j_id = landscape.patches[j].id
+                edge_key = (patch_i_id, patch_j_id) if (patch_i_id, patch_j_id) in corridor_widths else (patch_j_id, patch_i_id)
+
+                if edge_key in corridor_widths:
+                    width = corridor_widths[edge_key]
+                    phi_w = species_guild.movement_success(width)
+                    p_ij *= phi_w
+
             probs.append(p_ij)
         
         # Normalize
@@ -304,14 +326,16 @@ def calculate_entropy(
     lambda2: float = 1.0,  # Forest topology weight
     lambda3: float = 1.0,  # Disturbance response weight
     dispersal_scale: float = 1000.0,
-    alpha: float = 2.0
+    alpha: float = 2.0,
+    corridor_widths: Dict[Tuple[int, int], float] = None,
+    species_guild = None
 ) -> Tuple[float, Dict[str, float]]:
     """
     Calculate total landscape entropy.
-    
+
     Implements core HDFM objective function:
     H(L) = H_mov + λ₁·C(L) + λ₂·F(L) + λ₃·D(L)
-    
+
     Args:
         landscape: Landscape object
         edges: List of corridor edges
@@ -320,24 +344,26 @@ def calculate_entropy(
         lambda3: Weight for disturbance response penalty
         dispersal_scale: Characteristic dispersal distance (meters)
         alpha: Dispersal cost parameter
-        
+        corridor_widths: Optional dict mapping (i,j) edges to widths (meters)
+        species_guild: Optional SpeciesGuild for width-dependent calculations
+
     Returns:
         (total_entropy, component_dict)
-        
+
         where component_dict contains:
         - 'H_mov': Movement entropy
         - 'C': Connectivity penalty
         - 'F': Forest topology penalty
         - 'D': Disturbance response penalty
         - 'H_total': Total entropy
-        
+
     Invariants:
     - H_total >= 0
     - All components >= 0
     - Dendritic networks minimize H_total
     """
     # Calculate components
-    H_mov = movement_entropy(landscape, edges, dispersal_scale, alpha)
+    H_mov = movement_entropy(landscape, edges, dispersal_scale, alpha, corridor_widths, species_guild)
     C = connectivity_constraint(landscape, edges)
     F = forest_topology_penalty(landscape, edges)
     D = disturbance_response_penalty(landscape, edges)
@@ -360,6 +386,117 @@ def calculate_entropy(
     return H_total, components
 
 
+def calculate_entropy_rate(
+    landscape: Landscape,
+    edges: List[Tuple[int, int]],
+    dispersal_scale: float = 1000.0,
+    alpha: float = 2.0,
+    corridor_widths: Dict[Tuple[int, int], float] = None,
+    species_guild = None
+) -> Tuple[float, Dict[str, float]]:
+    """
+    Calculate entropy rate with stationary distribution (H_rate).
+
+    This is the dual entropy formulation that weights patches by their
+    stationary distribution (area × quality) rather than equally. Better
+    for heterogeneous landscapes where some patches are more important.
+
+    H_rate(A,w,π) = -Σᵢ πᵢ Σⱼ pᵢⱼ(A,w) log[pᵢⱼ(A,w)]
+
+    Where πᵢ = (Aᵢ qᵢ) / (Σₖ Aₖ qₖ) is the stationary distribution.
+
+    Args:
+        landscape: Landscape object
+        edges: List of corridor edges
+        dispersal_scale: Characteristic dispersal distance (meters)
+        alpha: Dispersal cost parameter
+        corridor_widths: Optional dict mapping (i,j) edges to widths (meters)
+        species_guild: Optional SpeciesGuild for width-dependent calculations
+
+    Returns:
+        (H_rate, component_dict) where component_dict contains:
+        - 'H_rate': Entropy rate
+        - 'stationary_dist': Stationary distribution π
+
+    Invariants:
+    - H_rate >= 0
+    - Σ πᵢ = 1.0
+    - H_rate accounts for patch importance
+
+    Reference:
+        Hart (2024), Section 2.3: Dual entropy formulations
+    """
+    n = landscape.n_patches
+
+    # Calculate stationary distribution: πᵢ = (Aᵢ qᵢ) / (Σₖ Aₖ qₖ)
+    weights = np.array([patch.area * patch.quality for patch in landscape.patches])
+    pi = weights / weights.sum()
+
+    # Build corridor network graph
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+
+    id_to_idx = {patch.id: i for i, patch in enumerate(landscape.patches)}
+
+    for (i, j) in edges:
+        idx_i = id_to_idx[i]
+        idx_j = id_to_idx[j]
+        distance = landscape.graph[i][j]['distance']
+        G.add_edge(idx_i, idx_j, distance=distance)
+
+    # Calculate entropy rate
+    H_rate = 0.0
+
+    for i in range(n):
+        neighbors = list(G.neighbors(i))
+
+        if len(neighbors) == 0:
+            # Isolated patch - no contribution
+            continue
+
+        # Calculate transition probabilities from patch i
+        probs = []
+        for j in neighbors:
+            d_ij = G[i][j]['distance']
+            q_j = landscape.patches[j].quality
+
+            # Base dispersal probability
+            p_ij = np.exp(-alpha * d_ij / dispersal_scale) * q_j
+
+            # Apply width-dependent movement success if available
+            if corridor_widths is not None and species_guild is not None:
+                patch_i_id = landscape.patches[i].id
+                patch_j_id = landscape.patches[j].id
+                edge_key = (patch_i_id, patch_j_id) if (patch_i_id, patch_j_id) in corridor_widths else (patch_j_id, patch_i_id)
+
+                if edge_key in corridor_widths:
+                    width = corridor_widths[edge_key]
+                    phi_w = species_guild.movement_success(width)
+                    p_ij *= phi_w
+
+            probs.append(p_ij)
+
+        # Normalize
+        probs = np.array(probs)
+        if probs.sum() > 0:
+            probs = probs / probs.sum()
+
+            # Shannon entropy for this patch's movements, weighted by stationary distribution
+            H_i = -np.sum(probs * np.log(probs + 1e-10))
+            H_rate += pi[i] * H_i
+
+    # Verify invariants
+    assert H_rate >= 0, f"Entropy rate must be non-negative, got {H_rate}"
+    assert abs(pi.sum() - 1.0) < 1e-6, f"Stationary distribution must sum to 1, got {pi.sum()}"
+
+    components = {
+        'H_rate': H_rate,
+        'stationary_dist': pi
+    }
+
+    return H_rate, components
+
+
 def entropy_gradient(
     landscape: Landscape,
     edges: List[Tuple[int, int]],
@@ -367,36 +504,36 @@ def entropy_gradient(
 ) -> Dict[Tuple[int, int], float]:
     """
     Calculate entropy gradient for each potential edge.
-    
+
     Estimates ∂H/∂e_ij for each edge, indicating how adding/removing
     that edge would change total entropy.
-    
+
     Args:
         landscape: Landscape object
         edges: Current corridor edges
         **kwargs: Additional parameters for calculate_entropy
-        
+
     Returns:
         Dictionary mapping (i,j) edge to entropy gradient
-        
+
     Usage:
         Used for greedy optimization and sensitivity analysis
     """
     current_entropy, _ = calculate_entropy(landscape, edges, **kwargs)
-    
+
     gradients = {}
-    
+
     # Check adding each missing edge
     current_edge_set = set(edges)
-    
+
     for i, patch_i in enumerate(landscape.patches):
         for patch_j in landscape.patches[i+1:]:
             edge = (patch_i.id, patch_j.id)
-            
+
             if edge not in current_edge_set:
                 # Test adding this edge
                 new_edges = edges + [edge]
                 new_entropy, _ = calculate_entropy(landscape, new_edges, **kwargs)
                 gradients[edge] = new_entropy - current_entropy
-    
+
     return gradients
