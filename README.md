@@ -1,3 +1,6 @@
+<div align="center">
+  <img src="Project logo.png" alt="HDFM Framework Logo" width="400"/>
+</div>
 
 # Hierarchical Dendritic Forest Management (HDFM) Framework
 
