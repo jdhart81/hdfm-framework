@@ -15,7 +15,7 @@ import networkx as nx
 class Patch:
     """
     Represents a single habitat patch in the landscape.
-    
+
     Attributes:
         id: Unique patch identifier
         x: X-coordinate (meters)
@@ -24,12 +24,14 @@ class Patch:
         quality: Habitat quality [0, 1]
         species_richness: Optional species count
         carrying_capacity: Optional population capacity
-    
+        population: Optional local population size (nᵢ) for genetic calculations
+
     Invariants:
         - 0 <= quality <= 1
         - area > 0
         - species_richness >= 0 if not None
         - carrying_capacity >= 0 if not None
+        - population >= 0 if not None
     """
     id: int
     x: float
@@ -38,6 +40,7 @@ class Patch:
     quality: float = 1.0
     species_richness: Optional[int] = None
     carrying_capacity: Optional[int] = None
+    population: Optional[float] = None
     
     def __post_init__(self):
         """Validate patch attributes."""
@@ -47,6 +50,8 @@ class Patch:
             assert self.species_richness >= 0, "Species richness must be non-negative"
         if self.carrying_capacity is not None:
             assert self.carrying_capacity >= 0, "Carrying capacity must be non-negative"
+        if self.population is not None:
+            assert self.population >= 0, "Population must be non-negative"
     
     def distance_to(self, other: 'Patch') -> float:
         """Calculate Euclidean distance to another patch."""

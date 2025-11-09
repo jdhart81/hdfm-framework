@@ -36,10 +36,8 @@ The framework now ships with the full entropy toolchain described in the paper, 
 - ✅ Alternative topology comparisons & Monte Carlo validation
 - ✅ Backwards climate optimization workflow
 - ✅ Species-specific parameter library (Table 2 from paper)
-
-**Active Development:**
-- 🔶 Full effective population size coupling (exact `Nₑ` tracking)
-- 🔶 Robustness analysis with looped topologies and redundancy scoring
+- ✅ Full effective population size coupling (exact `Nₑ` tracking with island model)
+- ✅ Robustness analysis with looped topologies and redundancy scoring
 
 Refer to [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for detailed feature status and practical workarounds, and [`PAPER_IMPLEMENTATION_REVIEW.md`](PAPER_IMPLEMENTATION_REVIEW.md) for the paper-to-code crosswalk.
 
@@ -48,6 +46,8 @@ Refer to [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for detailed feature sta
 - 🌲 **Landscape entropy calculation** with movement, connectivity, and topology terms
 - 🔀 **Dendritic network construction** via minimum spanning trees
 - ⏮️ **Backwards optimization algorithm** for climate-adaptive corridor design
+- 🧬 **Genetic population dynamics** with full Nₑ tracking using island model
+- 🔒 **Robustness analysis** with looped topologies, redundancy scoring, and failure probability
 - 📊 **Synthetic landscape validation** reproducing paper results
 - 📈 **Comparative topology analysis** (Gabriel graphs, Delaunay, k-NN, etc.)
 - 🎨 **Visualization tools** for networks, entropy landscapes, and optimization traces
@@ -133,6 +133,70 @@ print(f"Width for 85% success: {width:.0f}m")
 
 # Available guilds: 'small_mammals', 'medium_mammals',
 #                  'large_carnivores', 'long_lived'
+```
+
+### Calculate effective population size (Nₑ)
+
+```python
+from hdfm import (
+    calculate_effective_population_size,
+    check_genetic_viability,
+    SPECIES_GUILDS
+)
+
+# Assign populations to patches
+for patch in landscape.patches:
+    patch.population = patch.area * 10.0 * patch.quality
+
+# Define corridor widths
+corridor_widths = {edge: 150.0 for edge in network.edges}
+
+# Calculate Nₑ using island model
+guild = SPECIES_GUILDS['medium_mammals']
+Ne, components = calculate_effective_population_size(
+    landscape, network.edges, corridor_widths,
+    dispersal_scale=8300.0,  # 8.3 km
+    alpha=0.12,
+    species_guild=guild
+)
+
+print(f"Effective population size: Nₑ = {Ne:.1f}")
+print(f"Total census population: N = {components['N_total']:.1f}")
+
+# Check genetic viability
+viable, threshold, message = check_genetic_viability(Ne, species_guild=guild)
+print(f"Genetic viability: {message}")
+```
+
+### Analyze network robustness
+
+```python
+from hdfm import (
+    calculate_robustness_metrics,
+    add_strategic_loops,
+    pareto_frontier_analysis
+)
+
+# Analyze MST robustness
+metrics_mst = calculate_robustness_metrics(landscape, network.edges)
+print(f"MST - ρ₂: {metrics_mst.two_edge_connectivity:.3f}")
+print(f"MST - P_fail: {metrics_mst.failure_probability:.3f}")
+
+# Add strategic loops to improve robustness
+edges_robust = add_strategic_loops(
+    landscape, network.edges,
+    n_loops=5,
+    criterion='betweenness'
+)
+
+# Analyze improved robustness
+metrics_robust = calculate_robustness_metrics(landscape, edges_robust)
+print(f"With loops - ρ₂: {metrics_robust.two_edge_connectivity:.3f}")
+print(f"With loops - P_fail: {metrics_robust.failure_probability:.3f}")
+
+# Explore entropy-robustness tradeoff
+results = pareto_frontier_analysis(landscape, max_loops=10)
+print(f"Pareto-optimal configurations: {len(results['pareto_points'])}")
 ```
 
 ### Reproduce paper validation
