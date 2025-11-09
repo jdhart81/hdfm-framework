@@ -8,7 +8,7 @@ Thank you for your interest in contributing to the Hierarchical Dendritic Forest
 
 If you find a bug or have a suggestion:
 
-1. Check if the issue already exists in [GitHub Issues](https://github.com/yourusername/hdfm-framework/issues)
+1. Check if the issue already exists in [GitHub Issues](https://github.com/jdhart81/hdfm-framework/issues)
 2. If not, create a new issue with:
    - Clear description of the problem or suggestion
    - Steps to reproduce (for bugs)

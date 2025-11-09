@@ -40,7 +40,7 @@ setup(
     description='Computational framework for entropy-minimizing corridor network optimization',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/hdfm-framework',
+    url='https://github.com/jdhart81/hdfm-framework',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',

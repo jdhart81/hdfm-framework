@@ -57,7 +57,7 @@ This is an **actively developed** framework. Core dendritic optimization and val
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/hdfm-framework.git
+git clone https://github.com/jdhart81/hdfm-framework.git
 cd hdfm-framework
 
 # Install dependencies
