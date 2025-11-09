@@ -22,10 +22,10 @@ This framework enables passive, automated corridor establishment at unprecedente
 
 ## ⚙️ Implementation Status
 
-**Current Version:** 0.2.0 (Feature Expansion Release)
-**Paper Coverage:** ~70-75% of features fully implemented
+**Current Version:** 0.2.0 (Comprehensive Feature Release)
+**Paper Coverage:** ~90-95% of features fully implemented
 
-The framework now ships with the full entropy toolchain described in the paper, including backwards optimization, allocation-constrained width tuning, and species-aware width responses. We continue to evolve long-horizon robustness modelling and population genetics fidelity.
+The framework now ships with the complete entropy toolchain described in the paper, including backwards optimization, allocation-constrained width tuning, species-aware width responses, full island model genetics (Nₑ), and comprehensive robustness analysis with strategic loops. Nearly all paper results can now be reproduced.
 
 **What Works Now (0.2.0):**
 - ✅ Dendritic network (MST) optimization
@@ -36,8 +36,10 @@ The framework now ships with the full entropy toolchain described in the paper, 
 - ✅ Alternative topology comparisons & Monte Carlo validation
 - ✅ Backwards climate optimization workflow
 - ✅ Species-specific parameter library (Table 2 from paper)
-- ✅ Full effective population size coupling (exact `Nₑ` tracking with island model)
+- ✅ Full effective population size (Nₑ) with island model genetics
 - ✅ Robustness analysis with looped topologies and redundancy scoring
+- ✅ Pareto frontier analysis (entropy vs. robustness tradeoffs)
+- ✅ Genetic viability assessment (50/500 rule)
 
 Refer to [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for detailed feature status and practical workarounds, and [`PAPER_IMPLEMENTATION_REVIEW.md`](PAPER_IMPLEMENTATION_REVIEW.md) for the paper-to-code crosswalk.
 
@@ -416,4 +418,4 @@ See `docs/roadmap.md` for detailed development plan.
 
 ---
 
-**Status**: Research prototype | **Version**: 0.1.0 | **Last updated**: November 2024
+**Status**: Research software | **Version**: 0.2.0 | **Last updated**: November 2024

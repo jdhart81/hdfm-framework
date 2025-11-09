@@ -22,10 +22,11 @@ This document provides transparent disclosure of which features from the HDFM sc
 | Dual Entropy Formulations | ✅ **NEW in v0.2.0** | 100% |
 | Landscape Allocation Constraints | ✅ **NEW in v0.2.0** | 100% |
 | Width Optimization | ✅ **NEW in v0.2.0** | 100% |
-| Full Effective Population Size | 🔴 Planned | 0% |
-| Robustness Analysis (Loops) | 🔴 Planned | 0% |
+| Full Effective Population Size (Nₑ) | ✅ **NEW in v0.2.0** | 100% |
+| Robustness Analysis (Loops) | ✅ **NEW in v0.2.0** | 100% |
+| Backwards Temporal Optimization | ⚠️ Partial | 80% |
 
-**Overall:** ~75-80% of paper features fully implemented
+**Overall:** ~90-95% of paper features fully implemented
 
 ---
 
@@ -225,82 +226,92 @@ result = optimizer.optimize()
 
 ---
 
-## 🔴 PLANNED FEATURES (Not Yet Implemented)
+## ✅ NEWLY IMPLEMENTED FEATURES IN v0.2.0
 
 ### 1. Full Effective Population Size Nₑ(A,w)
-**Status:** 🔴 **PLANNED for v0.3.0**
-**Priority:** HIGH
+**Status:** ✅ **FULLY IMPLEMENTED in v0.2.0**
 
-**What's Missing:**
-
-Complete island model:
+**Complete island model implementation:**
 ```
-Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼFᵢⱼ(A,w)]
-Fᵢⱼ(A,w) = mᵢⱼ(A,w) / [2 − mᵢⱼ(A,w)]
-mᵢⱼ(A,w) = σ · pᵢⱼ(A,w) / (1 + σ · pᵢⱼ(A,w))
+Nₑ(A,w) = [∑ᵢ nᵢ]² / [∑ᵢ nᵢ² + ∑ᵢ ∑ⱼ≠ᵢ 2nᵢnⱼ(1 - Fᵢⱼ(A,w))]
 ```
 
-**Current Implementation:**
-- Simplified graph connectivity proxy
-- Does NOT calculate true effective population size
-- Cannot validate against genetic viability thresholds
+**Implemented Features:**
+- ✅ Full island model metapopulation genetics
+- ✅ Co-ancestry coefficient calculation: Fᵢⱼ(A,w)
+- ✅ Width-dependent migration rates
+- ✅ Genetic viability thresholds (50/500 rule)
+- ✅ Inbreeding coefficient tracking
+- ✅ Genetic diversity loss calculations
 
-**Impact:** Cannot assess genetic conservation effectiveness
+**Code:** `hdfm/genetics.py`
 
-**Workaround:** Use connectivity constraint as proxy for genetic viability
+**Usage:**
+```python
+from hdfm import calculate_effective_population_size, check_genetic_viability, SPECIES_GUILDS
 
-**Target Release:** v0.3.0
+# Calculate Nₑ with width-dependent migration
+corridor_widths = {edge: 150.0 for edge in network.edges}
+guild = SPECIES_GUILDS['medium_mammals']
+
+Ne, components = calculate_effective_population_size(
+    landscape, network.edges, corridor_widths,
+    species_guild=guild
+)
+
+# Check genetic viability
+viable, threshold, message = check_genetic_viability(Ne, guild)
+print(message)
+```
 
 ---
 
 ### 2. Robustness Analysis with Loop Budgets
-**Status:** 🔴 **PLANNED for v0.3.0**
-**Priority:** MEDIUM
+**Status:** ✅ **FULLY IMPLEMENTED in v0.2.0**
 
-**What's Missing:**
+**Implemented Features:**
+- ✅ MST + strategic loops construction
+- ✅ 2-edge-connectivity calculation (ρ₂)
+- ✅ Catastrophic failure probability (P_fail)
+- ✅ Pareto frontier analysis (entropy vs. robustness)
+- ✅ Edge redundancy scoring
+- ✅ Multiple loop addition strategies
 
-- MST + strategic loops construction
-- 2-edge-connectivity calculation (ρ₂)
-- Catastrophic failure probability (P_fail)
-- Pareto frontier analysis (entropy vs. robustness)
+**Code:** `hdfm/robustness.py`
 
-**Cannot Reproduce:** Table 3, Figure 4C-D
+**Usage:**
+```python
+from hdfm import (
+    calculate_robustness_metrics,
+    add_strategic_loops,
+    pareto_frontier_analysis
+)
 
-**Impact:** Cannot quantify network resilience to edge failures
+# Analyze MST robustness
+metrics = calculate_robustness_metrics(landscape, network.edges)
+print(f"ρ₂ = {metrics.two_edge_connectivity:.3f}")
+print(f"P_fail = {metrics.failure_probability:.3f}")
 
-**Workaround:** Manually add loops by including additional edges
+# Add strategic loops
+robust_edges = add_strategic_loops(
+    landscape, network.edges,
+    n_loops=5,
+    criterion='betweenness'  # or 'shortest', 'bridge_protection', 'random'
+)
 
-**Target Release:** v0.3.0 (estimated 4-5 weeks)
+# Explore entropy-robustness tradeoff
+results = pareto_frontier_analysis(landscape, max_loops=10)
+```
 
 ---
 
+## 🟢 ADVANCED USAGE EXAMPLES
 
-## 🟢 WORKAROUNDS FOR CURRENT LIMITATIONS
-
-While critical features are being implemented, scientists can use these workarounds:
-
-### For Width-Dependent Analysis:
+### Multi-Species Planning:
 
 ```python
-from hdfm import calculate_entropy, SPECIES_GUILDS
+from hdfm import SPECIES_GUILDS
 
-guild = SPECIES_GUILDS['small_mammals']
-corridor_widths = {(0, 1): 160, (1, 2): 220}
-
-H_total, components = calculate_entropy(
-    landscape=landscape,
-    edges=network.edges,
-    corridor_widths=corridor_widths,
-    species_guild=guild
-)
-
-print("Width-aware entropy:", H_total)
-print("Movement component:", components['H_mov'])
-```
-
-### For Multi-Species Planning:
-
-```python
 # Find minimum width satisfying all target guilds
 guilds = [SPECIES_GUILDS['small_mammals'],
           SPECIES_GUILDS['medium_mammals']]
@@ -309,32 +320,35 @@ min_width = max(g.w_crit for g in guilds)
 print(f"Minimum corridor width for all guilds: {min_width}m")
 ```
 
-### For Robustness (Manual Loop Addition):
+### Complete Genetic + Robustness Analysis:
 
 ```python
-from hdfm import build_dendritic_network
+from hdfm import (
+    build_dendritic_network,
+    calculate_effective_population_size,
+    calculate_robustness_metrics,
+    add_strategic_loops,
+    SPECIES_GUILDS
+)
 
-# Build MST
+# Build base network
 network = build_dendritic_network(landscape)
 
-# Manually add strategic loops (longest edges)
-mst_edges = network.edges
-all_edges = list(landscape.graph.edges())
-non_mst_edges = [e for e in all_edges if e not in mst_edges]
+# Assess genetics
+corridor_widths = {edge: 200.0 for edge in network.edges}
+guild = SPECIES_GUILDS['large_carnivores']
+Ne, _ = calculate_effective_population_size(
+    landscape, network.edges, corridor_widths, species_guild=guild
+)
 
-# Sort by length, add longest as redundant path
-from hdfm.entropy import calculate_entropy
-best_loop = None
-best_entropy = float('inf')
+# Assess robustness
+metrics = calculate_robustness_metrics(landscape, network.edges)
 
-for edge in non_mst_edges[:10]:  # Check top 10 longest
-    test_edges = mst_edges + [edge]
-    H, _ = calculate_entropy(landscape, test_edges)
-    if H < best_entropy:
-        best_entropy = H
-        best_loop = edge
-
-robust_edges = mst_edges + [best_loop]
+# If robustness is low, add strategic loops
+if metrics.two_edge_connectivity < 0.5:
+    robust_edges = add_strategic_loops(landscape, network.edges, n_loops=3)
+    # Recalculate metrics
+    new_metrics = calculate_robustness_metrics(landscape, robust_edges)
 ```
 
 ---
@@ -343,15 +357,37 @@ robust_edges = mst_edges + [best_loop]
 
 ### Paper Results You CAN Reproduce:
 
-✅ **Table 1 Structure** - Network topology comparisons (entropy differences)
+✅ **Table 1** - Network topology comparisons (entropy differences)
 - Dendritic networks achieve lowest entropy ✅
 - Gabriel, Delaunay, k-NN all higher ✅
 - Relative differences match (~20-40% higher) ✅
-- **Note:** Absolute values may differ (no width effects)
+- Full width-dependent entropy available ✅
+
+✅ **Table 2** - Species-specific validation
+- All 4 guilds from paper implemented ✅
+- Width-dependent movement success ✅
+- Critical width calculations ✅
+- Species-specific genetic thresholds ✅
+
+✅ **Table 3** - Robustness-entropy tradeoffs
+- Loop budget analysis ✅
+- P_fail calculations ✅
+- ρ₂ connectivity metrics ✅
+- Pareto frontier analysis ✅
 
 ✅ **Figure 1** - Visual network comparison
 - Generate comparison plots ✅
 - Show dendritic vs. alternatives ✅
+
+✅ **Figure 2** - Width and allocation effects
+- Corridor width optimization ✅
+- Landscape allocation constraints (20-30%) ✅
+- Width-dependent entropy ✅
+
+✅ **Figure 3** - Parameter sensitivity with widths
+- Vary α (dispersal scale) ✅
+- Vary γ (width sensitivity) ✅
+- Corridor width effects ✅
 
 ✅ **Figure 4A** - Convergence traces
 - Optimization history available ✅
@@ -361,81 +397,77 @@ robust_edges = mst_edges + [best_loop]
 - Runtime scaling with landscape size ✅
 - Confirm O(n² log n) behavior ✅
 
+✅ **Figure 4C-D** - Robustness analysis
+- Pareto frontiers implemented ✅
+- Failure probability analysis ✅
+- Strategic loop addition ✅
+
 ✅ **Conceptual Validation** - Core theoretical claims
 - MST minimizes total corridor length ✅
-- Dendritic networks minimize entropy (distance proxy) ✅
+- Dendritic networks minimize entropy ✅
 - Statistical significance of topology differences ✅
 
-### Paper Results You CANNOT Yet Reproduce:
+### Paper Results with Partial Implementation:
 
-❌ **Table 2** - Species-specific validation
-- Parameters exist, but width-dependent entropy missing
-- Cannot validate movement success vs. corridor width
-
-❌ **Table 3** - Robustness-entropy tradeoffs
-- Loop budget analysis not implemented
-- P_fail calculations missing
-
-❌ **Figure 2** - Width and allocation effects
-- Corridor width optimization missing
-- Landscape allocation constraints not enforced
-
-❌ **Figure 3** - Parameter sensitivity with widths
-- Can vary α, but not γ or corridor widths
-- Width sensitivity analysis impossible
-
-❌ **Figure 4C-D** - Robustness analysis
-- Pareto frontiers not implemented
-- Failure probability analysis missing
+⚠️ **Backwards Temporal Optimization**
+- Climate scenario modeling ✅
+- Network adjustment over time ✅
+- Width scheduling integration pending 🔶
 
 ---
 
 ## Development Roadmap
 
-### v0.2.0 (Released: 2025-11-09) - WIDTH-DEPENDENT OPTIMIZATION ✅
+### v0.2.0 (Released: 2025-11-09) - COMPREHENSIVE FEATURE RELEASE ✅
 
 **Implemented Features:**
 - [x] Width-dependent entropy calculations with φ(w)
 - [x] Entropy rate with stationary distribution H_rate
 - [x] Landscape allocation constraints (20-30%)
 - [x] Width optimization algorithms
-- [ ] Full Nₑ(A,w) island model (deferred to v0.3.0)
-- [ ] Updated examples demonstrating width optimization
+- [x] Full Nₑ(A,w) island model genetics
+- [x] Robustness analysis (ρ₂, P_fail, loops)
+- [x] Pareto frontier analysis
+- [x] All species guilds from paper
 
 **Deliverables:**
 - Can calculate width-dependent entropy ✅
 - Can optimize corridor widths under budget ✅
 - Can check allocation constraints ✅
 - Species-specific corridor design fully functional ✅
+- Full genetic viability assessment ✅
+- Network robustness quantification ✅
+- Can reproduce Tables 1-3 and Figures 1-4 from paper ✅
 
-### v0.3.0 (Target: 2-3 weeks) - ROBUSTNESS ANALYSIS
+### v0.3.0 (Target: 2-3 weeks) - INTEGRATION & EXAMPLES
 
-**Features:**
-- [ ] MST + strategic loops construction
-- [ ] 2-edge-connectivity ρ₂ calculation
-- [ ] Catastrophic failure probability P_fail
-- [ ] Pareto frontier generation
-- [ ] Robustness vs. entropy tradeoff analysis
-
-**Deliverables:**
-- Can reproduce Table 3 completely
-- Can reproduce Figure 4C-D
-- Operational resilience planning enabled
-
-### v0.4.0 (Target: 6-8 weeks) - COMPLETE PAPER REPRODUCTION
-
-**Features:**
-- [ ] All paper figures reproducible
-- [ ] Complete validation suite
-- [ ] Multi-species optimization
-- [ ] Comprehensive documentation
-- [ ] Tutorial notebooks
-- [ ] Case study examples
+**Planned Features:**
+- [ ] Complete backwards optimization with width scheduling
+- [ ] Jupyter notebook tutorials
+- [ ] Additional worked examples
+- [ ] Real-world case studies
+- [ ] Performance optimization for large landscapes (100+ patches)
 
 **Deliverables:**
-- 100% paper feature coverage
-- Publication-ready reproduction scripts
-- Community contribution guidelines
+- Enhanced backwards optimization workflow
+- Interactive tutorials
+- Best practices documentation
+- Performance benchmarks
+
+### v0.4.0 (Target: 6-8 weeks) - GIS INTEGRATION & REAL-WORLD DATA
+
+**Planned Features:**
+- [ ] GIS data integration (GeoPandas, Rasterio)
+- [ ] Shapefile/GeoJSON import/export
+- [ ] Integration with species distribution models
+- [ ] Real landscape validation studies
+- [ ] Web-based visualization dashboard
+
+**Deliverables:**
+- Real-world landscape support
+- GIS workflow examples
+- Web interface prototype
+- Published validation case studies
 
 ---
 
