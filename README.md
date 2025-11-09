@@ -1,6 +1,5 @@
 
-
-![HDFM Logo](ChatGPT%20Image%20Nov%209,%202025,%2008_20_21%20AM.png)
+# Hierarchical Dendritic Forest Management (HDFM) Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
