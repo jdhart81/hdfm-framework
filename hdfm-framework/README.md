@@ -20,29 +20,28 @@ Forest corridor networks are critical for biodiversity conservation and climate 
 
 This framework enables passive, automated corridor establishment at unprecedented scale and minimal cost.
 
-## ⚠️ Implementation Status
+## ⚙️ Implementation Status
 
-**Current Version:** 0.1.0 (Foundational Release)
-**Paper Coverage:** ~50-55% of features fully implemented
+**Current Version:** 0.2.0 (Feature Expansion Release)
+**Paper Coverage:** ~70-75% of features fully implemented
 
-This is an **actively developed** framework. Core dendritic optimization and validation tools are production-ready, but several advanced features from the papers are planned for future releases.
+The framework now ships with the full entropy toolchain described in the paper, including backwards optimization, allocation-constrained width tuning, and species-aware width responses. We continue to evolve long-horizon robustness modelling and population genetics fidelity.
 
-**What Works Now:**
+**What Works Now (0.2.0):**
 - ✅ Dendritic network (MST) optimization
-- ✅ Basic entropy framework (H_mov + penalties)
-- ✅ Alternative topology comparisons
-- ✅ Monte Carlo validation
-- ✅ Backwards climate optimization structure
-- ✅ **NEW:** Species-specific parameters (Table 2 from paper)
+- ✅ Width-aware entropy framework (`H_mov`, penalties, and φ(w))
+- ✅ Dual entropy formulations (`H_total`, `H_rate`)
+- ✅ Landscape allocation constraints (20–30% budgets)
+- ✅ Width optimization algorithms (see `WidthOptimizer`)
+- ✅ Alternative topology comparisons & Monte Carlo validation
+- ✅ Backwards climate optimization workflow
+- ✅ Species-specific parameter library (Table 2 from paper)
 
-**Coming Soon (v0.2.0, ~2-3 weeks):**
-- 🔴 Width-dependent entropy calculations
-- 🔴 Dual entropy formulations (H_rate)
-- 🔴 Landscape allocation constraints (20-30%)
-- 🔴 Width optimization algorithms
+**Active Development:**
+- 🔶 Full effective population size coupling (exact `Nₑ` tracking)
+- 🔶 Robustness analysis with looped topologies and redundancy scoring
 
-**See [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for complete feature status and workarounds.**
-**See [`PAPER_IMPLEMENTATION_REVIEW.md`](PAPER_IMPLEMENTATION_REVIEW.md) for detailed gap analysis.**
+Refer to [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for detailed feature status and practical workarounds, and [`PAPER_IMPLEMENTATION_REVIEW.md`](PAPER_IMPLEMENTATION_REVIEW.md) for the paper-to-code crosswalk.
 
 ## Key Features
 
@@ -60,12 +59,17 @@ This is an **actively developed** framework. Core dendritic optimization and val
 git clone https://github.com/jdhart81/hdfm-framework.git
 cd hdfm-framework
 
-# Install dependencies
+# Install runtime dependencies
 pip install -r requirements.txt
 
-# Install package
+# Optional: install docs/tests/tooling extras
+pip install -r requirements-dev.txt
+
+# Install package in editable mode
 pip install -e .
 ```
+
+`requirements.txt` now contains only the runtime dependencies needed to use the framework. Use `requirements-dev.txt` when you want the full testing, documentation, and linting toolchain.
 
 ## Quick Start
 
@@ -107,7 +111,7 @@ corridor_sequence = optimizer.optimize()
 current_network = corridor_sequence[0]
 ```
 
-### Use species-specific parameters (NEW in v0.1.0)
+### Use species-specific parameters
 
 ```python
 from hdfm import SPECIES_GUILDS, print_guild_summary
