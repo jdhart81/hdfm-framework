@@ -1,7 +1,7 @@
 # Known Limitations and Implementation Status
 
-**Last Updated:** 2025-11-09
-**Version:** 0.2.0
+**Last Updated:** 2025-12-09
+**Version:** 0.2.1
 
 ## Overview
 
@@ -24,9 +24,9 @@ This document provides transparent disclosure of which features from the HDFM sc
 | Width Optimization | ✅ **NEW in v0.2.0** | 100% |
 | Full Effective Population Size (Nₑ) | ✅ **NEW in v0.2.0** | 100% |
 | Robustness Analysis (Loops) | ✅ **NEW in v0.2.0** | 100% |
-| Backwards Temporal Optimization | ⚠️ Partial | 80% |
+| Backwards Temporal Optimization | ✅ **COMPLETE in v0.2.1** | 100% |
 
-**Overall:** ~90-95% of paper features fully implemented
+**Overall:** ~95-100% of paper features fully implemented
 
 ---
 
@@ -90,14 +90,44 @@ Implements: `H(L) = H_mov + λ₁C(L) + λ₂F(L) + λ₃D(L)`
 **Code:** `hdfm/validation.py`
 
 ### 6. Backwards Temporal Optimization
-**Status:** ⚠️ **PARTIALLY IMPLEMENTED**
+**Status:** ✅ **FULLY IMPLEMENTED in v0.2.1**
 
 - Climate scenario modeling ✅
 - Temporal trajectory (2025→2100) ✅
 - Multi-year network adjustment ✅
-- Automated width scheduling 🔶 Pending integration with `WidthOptimizer`
+- Automated width scheduling ✅ Integrated with `WidthOptimizer`
+- Width schedule output by year ✅
+- Species-specific width optimization at each time step ✅
 
-**Code:** `hdfm/optimization.py:157-363`
+**Code:** `hdfm/optimization.py:163-514`
+
+**Usage:**
+```python
+from hdfm import BackwardsOptimizer, ClimateScenario, SPECIES_GUILDS
+
+# Create climate scenario
+scenario = ClimateScenario(
+    years=[2025, 2050, 2075, 2100],
+    temperature_changes=[0.0, 1.5, 2.5, 3.5],
+    precipitation_changes=[0.0, -5.0, -10.0, -15.0]
+)
+
+# Optimize with width scheduling
+optimizer = BackwardsOptimizer(
+    landscape=landscape,
+    scenario=scenario,
+    species_guild=SPECIES_GUILDS['medium_mammals'],
+    beta=0.25,  # 25% landscape allocation
+    optimize_widths=True
+)
+
+result = optimizer.optimize()
+
+# Access temporal schedules
+print(f"Corridor schedule: {result.corridor_schedule}")
+print(f"Width schedule by year: {result.width_schedule}")
+print(f"Present-day widths: {result.optimal_widths}")
+```
 
 ### 7. Species-Specific Parameters
 **Status:** ✅ **IMPLEMENTED**
@@ -407,12 +437,12 @@ if metrics.two_edge_connectivity < 0.5:
 - Dendritic networks minimize entropy ✅
 - Statistical significance of topology differences ✅
 
-### Paper Results with Partial Implementation:
+### Paper Results - All Fully Implemented:
 
-⚠️ **Backwards Temporal Optimization**
+✅ **Backwards Temporal Optimization** (Complete in v0.2.1)
 - Climate scenario modeling ✅
 - Network adjustment over time ✅
-- Width scheduling integration pending 🔶
+- Width scheduling integration ✅
 
 ---
 
@@ -439,17 +469,28 @@ if metrics.two_edge_connectivity < 0.5:
 - Network robustness quantification ✅
 - Can reproduce Tables 1-3 and Figures 1-4 from paper ✅
 
-### v0.3.0 (Target: 2-3 weeks) - INTEGRATION & EXAMPLES
+### v0.2.1 (Released: 2025-12-09) - BACKWARDS OPTIMIZATION COMPLETE ✅
+
+**Implemented Features:**
+- [x] Complete backwards optimization with width scheduling
+- [x] Width schedule output by year
+- [x] Species-specific width optimization at each time step
+- [x] Integration of WidthOptimizer into BackwardsOptimizer
+
+**Deliverables:**
+- Enhanced backwards optimization workflow with width scheduling ✅
+- Temporal corridor width schedules ✅
+- Full climate-adaptive corridor design ✅
+
+### v0.3.0 (Target: Future) - INTEGRATION & EXAMPLES
 
 **Planned Features:**
-- [ ] Complete backwards optimization with width scheduling
 - [ ] Jupyter notebook tutorials
 - [ ] Additional worked examples
 - [ ] Real-world case studies
 - [ ] Performance optimization for large landscapes (100+ patches)
 
 **Deliverables:**
-- Enhanced backwards optimization workflow
 - Interactive tutorials
 - Best practices documentation
 - Performance benchmarks
@@ -498,5 +539,5 @@ See `CONTRIBUTING.md` for details.
 
 This document will be updated with each release to reflect current implementation status. We commit to honest disclosure of what is and isn't implemented to enable informed use of this framework.
 
-**Last Verified:** 2025-11-09
-**Next Review:** With v0.2.0 release
+**Last Verified:** 2025-12-09
+**Next Review:** With v0.3.0 release

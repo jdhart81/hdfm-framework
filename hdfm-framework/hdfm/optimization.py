@@ -76,7 +76,7 @@ class ClimateScenario:
 class OptimizationResult:
     """
     Results from network optimization.
-    
+
     Attributes:
         network: Optimized DendriticNetwork
         entropy: Final entropy value
@@ -84,6 +84,8 @@ class OptimizationResult:
         iterations: Number of iterations to convergence
         convergence_history: Entropy at each iteration
         corridor_schedule: Optional temporal schedule for corridor establishment
+        width_schedule: Optional temporal schedule for corridor widths by year
+        optimal_widths: Optional dictionary of optimized corridor widths
     """
     network: DendriticNetwork
     entropy: float
@@ -91,6 +93,8 @@ class OptimizationResult:
     iterations: int
     convergence_history: List[float]
     corridor_schedule: Optional[List[List[Tuple[int, int]]]] = None
+    width_schedule: Optional[Dict[int, Dict[Tuple[int, int], float]]] = None
+    optimal_widths: Optional[Dict[Tuple[int, int], float]] = None
 
 
 class DendriticOptimizer:
@@ -159,42 +163,54 @@ class DendriticOptimizer:
 class BackwardsOptimizer:
     """
     Backwards temporal optimization for climate-adaptive corridor design.
-    
+
     Optimizes corridor networks by working backwards from desired 2100 state
     to present implementation, accounting for climate change trajectory.
-    
+    Includes integrated width scheduling for temporal corridor width optimization.
+
     Algorithm:
     1. Start at final year (e.g., 2100) with target connectivity
-    2. Optimize network for climate conditions at that time
-    3. Work backwards through time, adjusting network at each step
-    4. Ensure corridors established at optimal times for development
-    
+    2. Optimize network topology and corridor widths for climate conditions
+    3. Work backwards through time, adjusting network and widths at each step
+    4. Ensure corridors established at optimal times with appropriate widths
+
     Invariants:
     - Maintains connectivity at each time step
     - Minimizes entropy at target year
     - Convergence within max_iterations
     - Each corridor appears at optimal establishment time
+    - Corridor widths satisfy allocation constraints at each time step
     """
-    
+
     def __init__(
         self,
         landscape: Landscape,
         scenario: ClimateScenario,
-        target_connectivity: float = 0.95
+        target_connectivity: float = 0.95,
+        species_guild=None,
+        beta: float = 0.25,
+        optimize_widths: bool = True
     ):
         """
         Initialize backwards optimizer.
-        
+
         Args:
             landscape: Landscape object
             scenario: ClimateScenario defining temporal trajectory
             target_connectivity: Target connectivity level at final year
+            species_guild: Optional SpeciesGuild for width-dependent optimization
+            beta: Landscape allocation fraction for width constraints (0.20-0.30 typical)
+            optimize_widths: Whether to optimize corridor widths at each time step
         """
         self.landscape = landscape
         self.scenario = scenario
         self.target_connectivity = target_connectivity
-        
+        self.species_guild = species_guild
+        self.beta = beta
+        self.optimize_widths = optimize_widths
+
         assert 0 < target_connectivity <= 1, "Target connectivity must be in (0,1]"
+        assert 0 < beta <= 1, f"Beta must be in (0,1], got {beta}"
     
     def _modify_landscape_for_climate(
         self,
@@ -229,6 +245,84 @@ class BackwardsOptimizer:
         from .landscape import Landscape
         return Landscape(modified_patches)
     
+    def _optimize_widths_for_year(
+        self,
+        landscape: Landscape,
+        edges: List[Tuple[int, int]],
+        initial_widths: Optional[Dict[Tuple[int, int], float]] = None,
+        max_iterations: int = 50,
+        **entropy_kwargs
+    ) -> Dict[Tuple[int, int], float]:
+        """
+        Optimize corridor widths for a specific time step.
+
+        Args:
+            landscape: Climate-modified landscape for this year
+            edges: Fixed corridor topology
+            initial_widths: Optional starting widths from previous time step
+            max_iterations: Maximum optimization iterations
+            **entropy_kwargs: Parameters for entropy calculation
+
+        Returns:
+            Dictionary mapping edges to optimal widths
+        """
+        if self.species_guild is None:
+            # Return default widths if no species guild specified
+            return {edge: 200.0 for edge in edges}
+
+        n_edges = len(edges)
+        if n_edges == 0:
+            return {}
+
+        # Set width bounds
+        w_min = self.species_guild.w_min
+        w_max = 500.0  # Maximum practical width (meters)
+
+        # Initialize widths
+        if initial_widths is None:
+            x0 = np.full(n_edges, self.species_guild.w_crit)
+        else:
+            x0 = np.array([initial_widths.get(e, initial_widths.get((e[1], e[0]), self.species_guild.w_crit))
+                          for e in edges])
+
+        # Calculate allocation constraint parameters
+        total_area = sum(patch.area for patch in landscape.patches)
+        max_corridor_area = self.beta * total_area
+
+        # Build constraint matrix: sum of (distance * width) <= max_corridor_area
+        distances = np.array([landscape.graph[i][j]['distance'] for (i, j) in edges])
+
+        # Linear constraint: distances @ widths <= max_corridor_area
+        constraint = LinearConstraint(distances, lb=0, ub=max_corridor_area)
+
+        # Bounds on individual widths
+        bounds = [(w_min, w_max) for _ in range(n_edges)]
+
+        # Objective function: minimize entropy
+        def objective(widths):
+            width_dict = {edge: w for edge, w in zip(edges, widths)}
+            H, _ = calculate_entropy(
+                landscape,
+                edges,
+                corridor_widths=width_dict,
+                species_guild=self.species_guild,
+                **entropy_kwargs
+            )
+            return H
+
+        # Optimize
+        result = minimize(
+            objective,
+            x0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=[constraint],
+            options={'maxiter': max_iterations}
+        )
+
+        # Extract optimal widths
+        return {edge: w for edge, w in zip(edges, result.x)}
+
     def optimize(
         self,
         max_iterations: int = 50,
@@ -236,73 +330,94 @@ class BackwardsOptimizer:
         **entropy_kwargs
     ) -> OptimizationResult:
         """
-        Run backwards optimization algorithm.
-        
+        Run backwards optimization algorithm with integrated width scheduling.
+
         Args:
             max_iterations: Maximum iterations per time step
             tolerance: Convergence tolerance for entropy
             **entropy_kwargs: Parameters for entropy calculation
-            
+
         Returns:
-            OptimizationResult with temporal corridor schedule
-            
+            OptimizationResult with temporal corridor schedule and width schedule
+
         Algorithm:
         1. Initialize at final year with MST
-        2. For each previous time step:
+        2. Optimize corridor widths for final year (if enabled)
+        3. For each previous time step:
            a. Modify landscape for climate at that time
            b. Re-optimize network maintaining previous structure
-           c. Check for convergence
-        3. Return corridor establishment schedule
+           c. Optimize corridor widths for this time step
+           d. Check for convergence
+        4. Return corridor establishment schedule and width schedule
         """
         years = self.scenario.years
         n_steps = len(years)
-        
-        # Store networks at each time step
+
+        # Store networks and widths at each time step
         networks_by_year = {}
+        widths_by_year = {}
         convergence_history = []
-        
+
         # Start at final year (2100)
         final_year = years[-1]
         final_landscape = self._modify_landscape_for_climate(final_year)
         final_network = build_dendritic_network(final_landscape)
-        
+
         networks_by_year[final_year] = final_network
-        
-        H_final, _ = final_network.entropy(**entropy_kwargs)
+
+        # Optimize widths for final year if enabled
+        if self.optimize_widths and self.species_guild is not None:
+            widths_by_year[final_year] = self._optimize_widths_for_year(
+                final_landscape,
+                final_network.edges,
+                max_iterations=max_iterations,
+                **entropy_kwargs
+            )
+            H_final, _ = calculate_entropy(
+                final_landscape,
+                final_network.edges,
+                corridor_widths=widths_by_year[final_year],
+                species_guild=self.species_guild,
+                **entropy_kwargs
+            )
+        else:
+            widths_by_year[final_year] = {edge: 200.0 for edge in final_network.edges}
+            H_final, _ = final_network.entropy(**entropy_kwargs)
+
         convergence_history.append(H_final)
-        
+
         # Work backwards through time
         for i in range(n_steps - 2, -1, -1):
             year = years[i]
-            
+
             # Get landscape at this time
             landscape_t = self._modify_landscape_for_climate(year)
-            
+
             # Start with structure from next time step
             next_network = networks_by_year[years[i+1]]
             current_edges = next_network.edges.copy()
-            
-            # Iterative refinement
+
+            # Iterative refinement of topology
             best_entropy = float('inf')
             no_improvement_count = 0
-            
+
             for iteration in range(max_iterations):
                 # Try local modifications
                 improved = False
-                
+
                 # Try swapping edges
                 for j, (u, v) in enumerate(current_edges):
                     # Try replacing this edge
                     test_edges = current_edges[:j] + current_edges[j+1:]
-                    
+
                     # Find edges that would maintain connectivity
                     G_test = nx.Graph()
                     G_test.add_nodes_from(range(self.landscape.n_patches))
-                    
+
                     id_to_idx = {patch.id: idx for idx, patch in enumerate(self.landscape.patches)}
                     for (a, b) in test_edges:
                         G_test.add_edge(id_to_idx[a], id_to_idx[b])
-                    
+
                     # If disconnected, try to reconnect
                     if not nx.is_connected(G_test):
                         components = list(nx.connected_components(G_test))
@@ -310,58 +425,92 @@ class BackwardsOptimizer:
                             # Find shortest edge between components
                             min_dist = float('inf')
                             best_edge = None
-                            
+
                             comp1_ids = [self.landscape.patches[idx].id for idx in components[0]]
                             comp2_ids = [self.landscape.patches[idx].id for idx in components[1]]
-                            
+
                             for id1 in comp1_ids:
                                 for id2 in comp2_ids:
                                     dist = self.landscape.graph[id1][id2]['distance']
                                     if dist < min_dist:
                                         min_dist = dist
                                         best_edge = (id1, id2)
-                            
+
                             if best_edge:
                                 test_edges.append(best_edge)
-                    
+
                     # Evaluate
                     if len(test_edges) == len(current_edges):
                         H_test, _ = calculate_entropy(landscape_t, test_edges, **entropy_kwargs)
-                        
+
                         if H_test < best_entropy - tolerance:
                             best_entropy = H_test
                             current_edges = test_edges
                             improved = True
                             break
-                
+
                 if not improved:
                     no_improvement_count += 1
                     if no_improvement_count >= 3:
                         break
                 else:
                     no_improvement_count = 0
-            
+
             # Store network for this year
             network_t = DendriticNetwork(landscape_t, current_edges)
             networks_by_year[year] = network_t
-            
-            H_t, _ = network_t.entropy(**entropy_kwargs)
+
+            # Optimize widths for this year if enabled
+            if self.optimize_widths and self.species_guild is not None:
+                # Use widths from next time step as initial values
+                prev_widths = widths_by_year.get(years[i+1], None)
+                widths_by_year[year] = self._optimize_widths_for_year(
+                    landscape_t,
+                    current_edges,
+                    initial_widths=prev_widths,
+                    max_iterations=max_iterations,
+                    **entropy_kwargs
+                )
+                H_t, _ = calculate_entropy(
+                    landscape_t,
+                    current_edges,
+                    corridor_widths=widths_by_year[year],
+                    species_guild=self.species_guild,
+                    **entropy_kwargs
+                )
+            else:
+                widths_by_year[year] = {edge: 200.0 for edge in current_edges}
+                H_t, _ = network_t.entropy(**entropy_kwargs)
+
             convergence_history.append(H_t)
-        
+
         # Build corridor schedule (ordered by establishment year)
         corridor_schedule = [networks_by_year[year].edges for year in years]
-        
+
         # Return result for present day
         present_network = networks_by_year[years[0]]
-        H_present, components = present_network.entropy(**entropy_kwargs)
-        
+        present_widths = widths_by_year[years[0]]
+
+        if self.optimize_widths and self.species_guild is not None:
+            H_present, components = calculate_entropy(
+                self._modify_landscape_for_climate(years[0]),
+                present_network.edges,
+                corridor_widths=present_widths,
+                species_guild=self.species_guild,
+                **entropy_kwargs
+            )
+        else:
+            H_present, components = present_network.entropy(**entropy_kwargs)
+
         return OptimizationResult(
             network=present_network,
             entropy=H_present,
             entropy_components=components,
             iterations=len(convergence_history),
             convergence_history=convergence_history,
-            corridor_schedule=corridor_schedule
+            corridor_schedule=corridor_schedule,
+            width_schedule=widths_by_year,
+            optimal_widths=present_widths
         )
 
 
