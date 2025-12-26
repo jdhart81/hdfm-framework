@@ -82,6 +82,40 @@ from .robustness import (
     calculate_robustness_metrics,
     pareto_frontier_analysis
 )
+from .graph_theory import (
+    # Strahler ordering
+    StrahlerResult,
+    compute_strahler_order,
+    compute_corridor_widths_strahler,
+
+    # Branching entropy
+    compute_branching_entropy,
+    compute_branching_entropy_from_orders,
+
+    # Augmented dendritic networks
+    AugmentedNetwork,
+    build_augmented_dendritic_network,
+    compute_cyclomatic_complexity,
+
+    # ECA and connectivity
+    compute_equivalent_connected_area,
+
+    # Resilience simulation (Table 1)
+    ResilienceResult,
+    monte_carlo_resilience_simulation,
+    generate_table_1,
+
+    # Edge criticality
+    compute_edge_criticality,
+    identify_critical_edges,
+
+    # Resistance-weighted landscape
+    ResistanceWeightedLandscape,
+
+    # Proposition verification
+    verify_proposition_3_1,
+    verify_proposition_3_3
+)
 
 __all__ = [
     # Core classes
@@ -148,4 +182,23 @@ __all__ = [
     'plot_network',
     'plot_entropy_surface',
     'plot_optimization_trace',
+
+    # Graph theory (paper validation)
+    'StrahlerResult',
+    'compute_strahler_order',
+    'compute_corridor_widths_strahler',
+    'compute_branching_entropy',
+    'compute_branching_entropy_from_orders',
+    'AugmentedNetwork',
+    'build_augmented_dendritic_network',
+    'compute_cyclomatic_complexity',
+    'compute_equivalent_connected_area',
+    'ResilienceResult',
+    'monte_carlo_resilience_simulation',
+    'generate_table_1',
+    'compute_edge_criticality',
+    'identify_critical_edges',
+    'ResistanceWeightedLandscape',
+    'verify_proposition_3_1',
+    'verify_proposition_3_3',
 ]
