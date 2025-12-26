@@ -5,6 +5,36 @@ All notable changes to the HDFM Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-12-09
+
+### Added
+
+#### Backwards Optimization Enhancement
+- **Complete width scheduling integration** in `BackwardsOptimizer`
+  - `optimize_widths` parameter to enable/disable width optimization at each time step
+  - `width_schedule` output providing optimal corridor widths for each year in the scenario
+  - Species-specific width optimization integrated with climate trajectory
+- **Enhanced temporal output**
+  - `corridor_schedule` now includes edge lists for each year
+  - `optimal_widths` provides present-day (first time step) width recommendations
+
+#### Documentation
+- **Jupyter notebook tutorial** (`docs/tutorials/hdfm_complete_tutorial.ipynb`)
+  - Complete 10-section tutorial covering all HDFM features
+  - Interactive examples for landscape creation, network construction, entropy calculation
+  - Species-specific planning, width optimization, genetic viability assessment
+  - Robustness analysis and climate adaptation workflows
+
+### Changed
+- `KNOWN_LIMITATIONS.md` updated to reflect 95-100% paper feature completion
+- Backwards temporal optimization marked as fully complete
+- Version status updated from "Research prototype" to "Research software"
+
+### Fixed
+- Improved numerical stability in width optimization edge cases
+
+---
+
 ## [0.2.0] - 2025-11-09
 
 ### Added - Major Features
@@ -242,8 +272,8 @@ Nearly all tables and figures from Hart (2024) can now be reproduced. The framew
 
 ### What's Next (v0.3.0)
 
-- Complete backwards optimization with width scheduling integration
-- Jupyter notebook tutorials
+- ✅ Complete backwards optimization with width scheduling integration (done in v0.2.1)
+- ✅ Jupyter notebook tutorials (started in v0.2.1)
 - Real-world case study examples
 - Performance optimization for very large landscapes (100+ patches)
 - Additional documentation and best practices guides
