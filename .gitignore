@@ -58,6 +58,8 @@ validation_results/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+# But include tutorial notebooks
+!**/docs/tutorials/*.ipynb
 
 # mypy
 .mypy_cache/
