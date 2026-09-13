@@ -101,7 +101,7 @@ class DendriticOptimizer:
     """
     Basic dendritic network optimizer.
     
-    Constructs optimal dendritic corridor network via minimum spanning tree
+    Constructs a minimum-length tree on the supplied graph via minimum spanning tree
     algorithm, minimizing total corridor length while maintaining connectivity.
     """
     
@@ -135,7 +135,9 @@ class DendriticOptimizer:
         **entropy_kwargs
     ) -> OptimizationResult:
         """
-        Optimize network (MST is optimal, so single iteration).
+        Construct a minimum-length tree and evaluate its composite entropy.
+
+        This does not minimize the composite entropy or establish ecological benefit.
         
         Args:
             max_iterations: Not used (MST is exact)
@@ -143,9 +145,9 @@ class DendriticOptimizer:
             **entropy_kwargs: Parameters for entropy calculation
             
         Returns:
-            OptimizationResult with optimal network
+            OptimizationResult with a minimum-length tree and its evaluated score
         """
-        # Build MST (exact solution)
+        # Build MST (exact for summed edge length, not composite entropy)
         network = self.build_dendritic_network()
         
         # Calculate entropy

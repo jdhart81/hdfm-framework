@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {comparisonGroups,comparisonCsv} from '../public/comparison.mjs';
+const s=(revision,method,name='Scenario')=>({id:'id',revision,name,result:{method,parameters:{waterWidth:50,roadWidth:6},metrics:{boundaryHa:10}}});
+test('comparisons never mix different input revisions or calculation methods',()=>{const groups=comparisonGroups([s(1,'a'),s(2,'a'),s(1,'b'),s(1,'a')]);assert.equal(groups.length,3);assert.equal(groups[0].scenarios.length,2);});
+test('CSV escapes user content and includes assumptions and method',()=>{const group=comparisonGroups([s(1,'method-v1','=SUM(1,2)'),s(1,'method-v1','A "quoted" name')])[0];const csv=comparisonCsv(group);assert.ok(csv.includes("'="));assert.ok(csv.includes('A ""quoted"" name'));assert.ok(csv.includes('method-v1'));assert.ok(csv.includes('Assumed full road width'));});

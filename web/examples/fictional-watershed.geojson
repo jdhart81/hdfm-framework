@@ -1,0 +1,289 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0.025,
+              0
+            ],
+            [
+              0.025,
+              0.025
+            ],
+            [
+              0,
+              0.025
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "boundary-1",
+        "name": "Example planning boundary",
+        "dfm_layer": "boundary",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.017,
+              0.014
+            ],
+            [
+              0.024,
+              0.013
+            ],
+            [
+              0.024,
+              0.021
+            ],
+            [
+              0.021,
+              0.022
+            ],
+            [
+              0.017,
+              0.014
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "forest-1",
+        "name": "Example existing forest",
+        "dfm_layer": "forest",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.001,
+              0.016
+            ],
+            [
+              0.006,
+              0.015
+            ],
+            [
+              0.007,
+              0.022
+            ],
+            [
+              0.002,
+              0.023
+            ],
+            [
+              0.001,
+              0.016
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "forest-2",
+        "name": "Example upland forest",
+        "dfm_layer": "forest",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.001,
+              0.001
+            ],
+            [
+              0.007,
+              0.001
+            ],
+            [
+              0.007,
+              0.004
+            ],
+            [
+              0.003,
+              0.006
+            ],
+            [
+              0.001,
+              0.001
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "units-1",
+        "name": "Example management unit",
+        "dfm_layer": "units",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.007,
+            0.025
+          ],
+          [
+            0.01,
+            0.02
+          ],
+          [
+            0.014,
+            0.016
+          ],
+          [
+            0.013,
+            0.01
+          ],
+          [
+            0.017,
+            0.005
+          ],
+          [
+            0.02,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "waterways-1",
+        "name": "Example main waterway",
+        "dfm_layer": "waterways",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.024,
+            0.024
+          ],
+          [
+            0.02,
+            0.02
+          ],
+          [
+            0.014,
+            0.016
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "waterways-2",
+        "name": "Example tributary",
+        "dfm_layer": "waterways",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0,
+            0.004
+          ],
+          [
+            0.005,
+            0.008
+          ],
+          [
+            0.008,
+            0.015
+          ],
+          [
+            0.009,
+            0.022
+          ],
+          [
+            0.014,
+            0.025
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "roads-1",
+        "name": "Example existing access",
+        "dfm_layer": "roads",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.005,
+            0.008
+          ],
+          [
+            0.011,
+            0.005
+          ],
+          [
+            0.016,
+            0.004
+          ],
+          [
+            0.023,
+            0.006
+          ]
+        ]
+      },
+      "properties": {
+        "dfm_id": "roads-2",
+        "name": "Example access branch",
+        "dfm_layer": "roads",
+        "dfm_source": "DFM illustrative dataset — fictional geometry at equatorial coordinates",
+        "dfm_evidence": "Illustrative example"
+      }
+    }
+  ],
+  "dfm_project": {
+    "name": "Fictional watershed",
+    "sources": {}
+  }
+}

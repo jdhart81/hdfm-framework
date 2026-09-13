@@ -1,0 +1,3 @@
+import {api} from './api.mjs';
+import assets from './assets.generated.json';
+export default {async fetch(req,env){const url=new URL(req.url);if(url.pathname.startsWith('/api/'))return api(req,env);if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405});let path=url.pathname; if(path==='/')path='/index.html';if(path==='/map'||path==='/workspace')path='/map.html';const a=assets[path];if(!a)return new Response('Not found',{status:404});const bytes=Uint8Array.from(atob(a.body),c=>c.charCodeAt(0));return new Response(req.method==='HEAD'?null:bytes,{headers:{'Content-Type':a.type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'}});}};

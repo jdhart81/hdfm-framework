@@ -1,3 +1,5 @@
+> **Historical research documentation.** Read the [current status and limitations](../docs/RESEARCH_STATUS.md) before relying on the examples or claims below.
+
 # HDFM Framework Repository - Complete Summary
 
 **Created**: November 2024  

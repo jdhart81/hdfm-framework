@@ -27,14 +27,14 @@ class DendriticNetwork:
     """
     Represents a dendritic corridor network.
     
-    A dendritic network is a tree structure (acyclic, connected graph)
-    that minimizes total corridor length while maintaining connectivity.
+    A dendritic network is a tree structure (acyclic, connected graph).
+    The MST factory minimizes summed edge length; arbitrary input edges do not.
     
     Invariants:
     - Network is connected (all patches reachable)
     - Network is acyclic (no loops/cycles)
     - Has exactly n-1 edges for n patches
-    - Minimizes total corridor length among connected topologies
+    - The MST factory minimizes summed edge length on the supplied graph
     """
     
     def __init__(self, landscape: Landscape, edges: List[Tuple[int, int]]):

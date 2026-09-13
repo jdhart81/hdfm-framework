@@ -171,22 +171,18 @@ class TestTotalEntropy:
         
         assert np.isclose(H_total, expected), "Total entropy must equal component sum"
     
-    def test_dendritic_minimizes_entropy(self):
-        """Property: Dendritic network should minimize entropy vs alternatives."""
-        landscape = SyntheticLandscape(n_patches=10, random_seed=42)
-        
-        # Dendritic network
-        dendritic = build_dendritic_network(landscape)
-        H_dendritic, _ = calculate_entropy(landscape, dendritic.edges)
-        
-        # Alternative: Random spanning tree
-        import networkx as nx
-        random_tree = nx.random_spanning_tree(landscape.graph)
-        random_edges = list(random_tree.edges())
-        H_random, _ = calculate_entropy(landscape, random_edges)
-        
-        # Dendritic should be at least as good
-        assert H_dendritic <= H_random + 0.1, "Dendritic should minimize or tie with random tree"
+    def test_mst_minimizes_length_not_composite_entropy(self):
+        """A fixed counterexample separates the MST guarantee from entropy."""
+        landscape = SyntheticLandscape(n_patches=4, random_seed=0)
+        mst = build_dendritic_network(landscape)
+        alternative = [(0, 1), (0, 2), (0, 3)]
+        distances = landscape.distance_matrix()
+        mst_length = sum(distances[i, j] for i, j in mst.edges)
+        alternative_length = sum(distances[i, j] for i, j in alternative)
+        mst_entropy, _ = calculate_entropy(landscape, mst.edges)
+        alternative_entropy, _ = calculate_entropy(landscape, alternative)
+        assert mst_length <= alternative_length
+        assert alternative_entropy < mst_entropy
 
 
 class TestLandscapeProperties:

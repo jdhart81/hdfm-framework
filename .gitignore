@@ -68,3 +68,6 @@ dmypy.json
 
 # Project specific
 *.docx
+
+# The reusable website includes its supplied branding and vendored map icons.
+!web/public/**/*.png
