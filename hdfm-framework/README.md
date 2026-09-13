@@ -1,3 +1,5 @@
+> **Experimental research toolkit.** The [current research status](../docs/RESEARCH_STATUS.md) supersedes older completion and validation language. For the working planning service, see [web/](../web/README.md).
+
 # Hierarchical Dendritic Forest Management (HDFM) Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
