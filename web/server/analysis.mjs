@@ -1,10 +1,10 @@
 import * as t from '@turf/turf';
-import {normalize,fc,mergePolygons,riparianStudy} from '../public/map-core.mjs';
+import {normalize,empty,fc,mergePolygons,riparianStudy} from '../public/map-core.mjs';
 export const VERSION='dfm-geometric-0.3.0';
 export function validate(data){
  if(!data || typeof data!=='object')throw Error('A map is required.');
  const features=Object.values(data).flat();
- if(!features.length)return Object.fromEntries(['boundary','forest','units','retention','buffer','waterways','roads','waterbody'].map(k=>[k,[]]));
+ if(!features.length)return empty();
  return normalize(fc(features),'project','User supplied',t);
 }
 export function assess(state,sources={}){

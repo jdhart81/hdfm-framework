@@ -171,9 +171,14 @@ The initial dataset is explicitly fictional. Files are processed in the current 
 
 The website now includes owner-scoped persistent projects, revision conflict protection, source records, drawing and GeoJSON import, source-completeness checks, immutable geometric scenarios, comparison tables and map overlays, report export and full input snapshots. Roads and waterways are required for scenario creation. Forest retention is the intersection of the proposal and existing forest after road-surface and supplied open-water exclusions. Widths are assumptions, not policy prescriptions.
 
-Current hosted stack: Leaflet + Turf frontend, separate Turf analysis module, Worker API, D1 storage. Independent Node/SQLite single-owner service and optional PostgreSQL adapter are included. PostGIS spatial processing, Python jobs, OpenLayers migration, automatic authoritative data ingestion, public signup, teams and billing are not implemented or activated. See ../web/README.md for deployment modes, verified checks and limits.
+Current hosted stack: MapLibre + Turf frontend, separate Turf analysis module, Worker API, D1 storage. Independent Node/SQLite single-owner service and optional PostgreSQL adapter are included. PostGIS spatial processing, Python jobs, automatic authoritative data ingestion, public signup, teams and billing are not implemented or activated. See ../web/README.md for deployment modes, verified checks and limits.
 
 
 ### 0.3.0 follow-up
 
 Scenario comparisons are separated by input revision and method version, with CSV export. Forest data is required for new assessments. An offline command executes the same bounded geometric analysis. Public source lives in web/; hosted accounts, billing and large-scale spatial processing remain separate future work.
+
+
+### 0.4.0 connected GIS follow-up
+
+MapLibre 6.9.0 now renders USGS aerial/topographic and dated NASA MODIS imagery, with coordinate navigation and opt-in locate/follow/stop GPS controls. Fresh fixes can be explicitly saved as field observations with accuracy and timestamps. Backgrounds do not populate road/water/forest inputs. Manual ECAD evidence export preserves source identity in notes and rejects unsupported geometry; shared project synchronization, raster ingestion and offline imagery remain future work. Automated checks and remote tile delivery passed; physical GPS and interactive renderer validation remain pending.
