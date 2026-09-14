@@ -37,4 +37,4 @@ export async function api(req,env){
  fail('Route or method not supported.',404);
  }catch(e){if(!e.status&&/SQL|database|D1|constraint/i.test(e.message))return json({error:'Storage could not complete the request. Your map has been kept; try again.'},503);return json({error:e.message},e.status||400);}
 }
-function validSources(s={}){const out={};for(const [k,v]of Object.entries(s)){if(!['boundary','forest','units','retention','waterways','roads','waterbody'].includes(k))continue;out[k]={title:clean(v.title,300),url:clean(v.url,1000),date:clean(v.date,30),license:clean(v.license,300),notes:clean(v.notes,1500)};}return out;}
+function validSources(s={}){const out={};for(const [k,v]of Object.entries(s)){if(!['boundary','forest','units','retention','waterways','roads','waterbody','observations'].includes(k))continue;out[k]={title:clean(v.title,300),url:clean(v.url,1000),date:clean(v.date,30),license:clean(v.license,300),notes:clean(v.notes,1500)};}return out;}

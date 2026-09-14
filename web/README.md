@@ -14,7 +14,7 @@ Open-source landscape planning workspace, built around existing roads and waterw
 
 ## Run locally
 
-Requires Node 20 or newer.
+Requires Node 22 or newer.
 
 ```sh
 npm ci
@@ -30,7 +30,7 @@ Alternatively `docker compose up --build` provides the same loopback-only worksp
 
 The current Sites deployment serves a bundled Worker with a D1 database. Authentication uses the platform's authenticated user ID, and every API query is scoped to that owner. Mutations require a same-origin JSON request. The original informational website and mapping UI are preserved. Sites applies the committed Drizzle migrations before deployment. Never expose the Worker through a route that bypasses the Sites authenticated gateway or trusts browser-supplied identity headers.
 
-The public `.openai/hosting.json` contains logical bindings only. Register your own Site before publishing; the Viridis deployment identity is kept outside this public source. Run `npm run db:generate` after a schema change, inspect the SQL, then build with the Sites build script. Do not edit migrations already deployed.
+Register your own Sites project and put its identity in `.openai/hosting.json`; the public template intentionally contains no Viridis project ID. Run `npm run db:generate` after a schema change, inspect the SQL, then build with the Sites build script. Do not edit migrations already deployed.
 
 ## Independent service
 
@@ -38,7 +38,7 @@ The same Node API supports an optional PostgreSQL database: apply `db/postgres.s
 
 For external single-owner hosting, set `PUBLIC_ORIGIN` to the exact HTTPS origin, `DFM_PASSWORD` to a strong secret, and `HOST` as required. Put the service behind a TLS reverse proxy. Browser sign-in uses username `dfm`. Never expose unauthenticated local mode. This single-owner option is not a substitute for multi-tenant SaaS authentication.
 
-The frontend remains Leaflet for continuity. The analysis module and storage interface are separate from the map renderer. Moving to OpenLayers, Python and PostGIS for large datasets remains a future backend/renderer migration, not a capability claimed by this release.
+The frontend uses MapLibre GL JS 6.9.0. Analysis and storage remain separate from rendering. PostGIS spatial processing, GDAL raster ingestion and terrain analysis are future integrations.
 
 ## API
 
@@ -59,11 +59,11 @@ Imports support 2,000 features and 20,000 coordinates, under 5 degrees across an
 
 No customer billing, checkout, subscriptions, team invitations, public signup, external automatic data ingestion, guaranteed backup service or usage-based invoicing is enabled. A private pilot can support preparing and delivering landscape assessments. Enabling commercial service needs a chosen account/payment provider, agreed offer, public access decision and verified customer workflow. No revenue or customer validation is claimed.
 
-Production dependencies passed `npm audit --omit=dev` on 2026-09-13. Automated tests cover ownership isolation, cross-origin rejection, stale-save conflicts, input validation, reproducible scenario storage, area units, clipping and overlap/exclusion calculations. Browser testing covers saving a fictional project and viewing scenario results.
+Production dependencies passed `npm audit --omit=dev` on 2026-09-13. Automated tests cover ownership isolation, cross-origin rejection, stale-save conflicts, input validation, reproducible scenario storage, area units, clipping and overlap/exclusion calculations. Earlier browser testing covered saving a fictional project and viewing scenario results. Release 0.4.0 adds automated GIS checks and successful USGS/NASA tile delivery checks; the new renderer and physical GPS workflow have not yet been tested interactively on a field device.
 
 ## License and data
 
-Application code is MIT licensed; vendored Leaflet and Turf retain their own notices in `public/vendor`. The illustrative geometry is fictional. Dataset permissions are independent of code licensing. Optional OpenStreetMap tiles use the attribution shown in the map; production-scale tile service is not provisioned here. User-supplied project branding is retained separately and is not offered as a trademark license.
+Application code is MIT licensed; vendored MapLibre, Leaflet and Turf retain their own notices in `public/vendor`. The illustrative geometry is fictional. Dataset permissions are independent of code licensing. Optional OpenStreetMap tiles use the attribution shown in the map; production-scale tile service is not provisioned here. User-supplied project branding is retained separately and is not offered as a trademark license.
 
 
 ## Release 0.3.0 — reproducible assessment handoffs
@@ -79,3 +79,13 @@ npm run analyze -- examples/fictional-watershed.geojson assessment.json 50 6
 Arguments are input path, new output path, waterway buffer distance each side (m), and assumed full road width (m). The command also accepts a downloaded full scenario record and recalculates from its input snapshot. It refuses to overwrite an existing file. Limits and scientific caveats are the same as the hosted calculation. The sample contains fictional geometry.
 
 The assessment-pilot page describes a proposed scoped service and opens an email draft. It does not accept payments or submit an order. The public source repository is https://github.com/jdhart81/hdfm-framework/tree/main/web.
+
+
+## Release 0.4.0 — connected GIS and field observations
+
+- MapLibre replaces the elementary renderer; start with an empty map and connected imagery, then open a saved project or load explicitly fictional example data.
+- USGS aerial imagery and topographic maps provide detailed U.S. context. NASA MODIS true color provides dated regional satellite context with a date selector. These are remotely delivered imagery, not a real-time satellite video feed; acquisition age, resolution, clouds and coverage vary. Overzoom does not add detail. Background imagery never silently becomes an analytical road, waterway or forest layer.
+- Coordinate navigation accepts latitude, longitude in WGS84. Device location is off until requested. Locate, follow and stop controls show horizontal accuracy and observation time, reject stale fixes, and require an explicit action to add a field point. Saving the project uploads that point; location tracking alone does not. Browser location requires HTTPS (or localhost) and user permission, and is not survey-grade GPS.
+- ECAD evidence export preserves original IDs, layer and source records in notes. It targets ECAD's existing manual GeoJSON import for points, lines and single-ring polygons. Unsupported multipart geometry, holes and oversized files are rejected without silent simplification. ECAD assigns new feature IDs; this is not shared storage or bidirectional synchronization.
+
+Imagery comes from [USGS](https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer) and [NASA GIBS](https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml); provider attribution remains on the map. Imagery and tile terms are separate from the software license. No bulk/offline imagery download is implemented. Road and waterway geometry must still be imported or drawn with recorded provenance.
