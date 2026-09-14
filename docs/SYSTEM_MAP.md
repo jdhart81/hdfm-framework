@@ -182,3 +182,8 @@ Scenario comparisons are separated by input revision and method version, with CS
 ### 0.4.0 connected GIS follow-up
 
 MapLibre 6.9.0 now renders USGS aerial/topographic and dated NASA MODIS imagery, with coordinate navigation and opt-in locate/follow/stop GPS controls. Fresh fixes can be explicitly saved as field observations with accuracy and timestamps. Backgrounds do not populate road/water/forest inputs. Manual ECAD evidence export preserves source identity in notes and rejects unsupported geometry; shared project synchronization, raster ingestion and offline imagery remain future work. Automated checks and remote tile delivery passed; physical GPS and interactive renderer validation remain pending.
+
+
+### 0.5.0 dimensioned deliverables
+
+Saved scenarios now launch a separate corridor-plan generator: boundary-clipped waterway and roadside proposals, numbered centerlines, per-section lengths and nominal width schedule, unioned corridor area, scale bar, north arrow and source attribution. Printable HTML embeds the map and can be saved as PDF; GeoJSON and plan records preserve geometry and assumptions. Custom north-up Web Mercator PNG/JPEG imagery can be registered by known bounds; automatic image feature extraction, GeoTIFF/DEM analysis and contour-following routes are not implemented. Roadside widths begin outside the assumed road surface. These proposal areas are distinct from measured existing forest and the earlier retention-scenario metric.
