@@ -9,7 +9,11 @@ export function normalize(data,kind,source,turf){
  const result=empty();const ids=Object.fromEntries(Object.keys(TYPES).map(k=>[k,new Set()]));let vertices=0;
  for(let i=0;i<features.length;i++){
   const f=features[i];const k=kind==='project'?f?.properties?.dfm_layer:kind;
-  if(!TYPES[k]||!TYPES[k].geometry.includes(f?.geometry?.type))throw Error(`Feature ${i+1}: expected ${TYPES[k]?.geometry.join(' or ')||'a recognized dfm_layer'}.`);
+  if(!TYPES[k]||!TYPES[k].geometry.includes(f?.geometry?.type)) {
+   const valid = Object.keys(TYPES).join(', ');
+   if (!TYPES[k]) throw Error(`Feature ${i+1} has invalid dfm_layer "${k}". Expected one of: ${valid}.`);
+   throw Error(`Feature ${i+1} (${k}): expected ${TYPES[k].geometry.join(' or ')}.`);
+  }
   if(f.type!=='Feature'||!f.geometry.coordinates?.length)throw Error(`Feature ${i+1} has no geometry.`);
   const coord=c=>{if(!Array.isArray(c)||!c.length)throw Error('Empty coordinates are not supported.');if(typeof c[0]==='number'){vertices++;if(c.length<2||c.some(x=>!Number.isFinite(x))||Math.abs(c[0])>180||Math.abs(c[1])>85)throw Error('Use finite longitude/latitude coordinates between ±180° and ±85°.');}else c.forEach(coord);};coord(f.geometry.coordinates);
   if(vertices>20000)throw Error('Simplify the file to at most 20,000 coordinates.');
