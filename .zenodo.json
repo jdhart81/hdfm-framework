@@ -1,0 +1,22 @@
+{
+  "title": "Dendritic Forest Management (HDFM framework)",
+  "upload_type": "software",
+  "description": "Open-source landscape planning around roads and waterways: reproducible geometric assessments, a self-hosted web workspace and experimental Hierarchical Dendritic Forest Management research tools.",
+  "creators": [
+    {
+      "name": "Hart, Justin D.",
+      "affiliation": "Viridis LLC",
+      "orcid": "0009-0008-3082-2482"
+    }
+  ],
+  "license": "mit",
+  "keywords": [
+    "forest management",
+    "landscape planning",
+    "conservation",
+    "GIS",
+    "riparian buffers",
+    "reproducible research"
+  ],
+  "access_right": "open"
+}

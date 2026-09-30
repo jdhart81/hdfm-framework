@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "Dendritic Forest Management (HDFM framework)"
+type: software
+authors:
+  - family-names: Hart
+    given-names: "Justin D."
+    affiliation: "Viridis LLC, Columbia Falls, Montana, USA"
+    orcid: "https://orcid.org/0009-0008-3082-2482"
+repository-code: "https://github.com/jdhart81/hdfm-framework"
+abstract: "Open-source landscape planning around roads and waterways: reproducible geometric assessments, a self-hosted web workspace and experimental Hierarchical Dendritic Forest Management research tools."
+license: MIT
+keywords:
+  - "forest management"
+  - "landscape planning"
+  - "conservation"
+  - "GIS"
+  - "riparian buffers"
+  - "reproducible research"
