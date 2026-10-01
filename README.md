@@ -2,6 +2,8 @@
 
 # Dendritic Forest Management
 
+[![DFM checks](https://github.com/jdhart81/hdfm-framework/actions/workflows/dfm-checks.yml/badge.svg)](https://github.com/jdhart81/hdfm-framework/actions/workflows/dfm-checks.yml)
+
 **Open-source landscape planning, beginning with existing roads and waterways.**
 
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
