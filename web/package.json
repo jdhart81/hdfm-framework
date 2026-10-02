@@ -21,6 +21,6 @@
   "devDependencies": {
     "drizzle-kit": "0.31.4",
     "drizzle-orm": "0.45.2",
-    "esbuild": "0.25.9"
+    "esbuild": "0.28.1"
   }
 }
