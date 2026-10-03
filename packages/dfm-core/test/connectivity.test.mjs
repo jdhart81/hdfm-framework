@@ -275,3 +275,12 @@ test('review new-1: road width_m is range-checked; null pinchFraction uses the d
   ok.params.pinchFraction = null;
   assert.equal((await checkConnectivity(ok)).status, 'pass');
 });
+
+test('sync SHA-256 matches the platform implementation; sync and async checks agree', async () => {
+  const {sha256Hex, checkConnectivitySync} = await import('../src/index.mjs');
+  const {createHash} = await import('node:crypto');
+  for (const text of ['', 'abc', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'é∂ƒ — woodlot', 'x'.repeat(100000)])
+    assert.equal(sha256Hex(text), createHash('sha256').update(text).digest('hex'));
+  const input = woodlot({treatments: ['harvest-3']});
+  assert.equal(canonicalJSON(checkConnectivitySync(input)), canonicalJSON(await checkConnectivity(input)));
+});

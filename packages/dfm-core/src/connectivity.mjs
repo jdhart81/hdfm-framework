@@ -30,8 +30,8 @@
 // the cores (what remains of them) touch the same connected part of the habitat
 // eroded by minWidthM / 2, within that radius.
 
-import * as turf from '@turf/turf';
-import {canonicalHash} from './hash.mjs';
+import * as turf from './turf.mjs';
+import {canonicalHashSync} from './hash.mjs';
 
 export const ENGINE_VERSION = 'dfm-connectivity-0.1.0';
 export const CORE_CLASSES = ['old-growth-candidate', 'old-growth-verified', 'riparian-core', 'reserve'];
@@ -264,11 +264,12 @@ function consentStatus(input) {
  * @param {object} input - {coreAreas, retained, roads?, water?, crossings?, treatments?, parcels?, params}
  *   params: {minWidthM, minWidthSource, roadWidthM?, pinchFraction? (default 0.1)}
  *   treatments are the PROPOSED units; the current state is checked without them.
- * @returns {Promise<object>} check result (schema: dfm-schema/connectivity-result.schema.json)
+ * Synchronous: safe to call inside a host's synchronous command handler.
+ * @returns {object} check result (schema: dfm-schema/connectivity-result.schema.json)
  */
-export async function checkConnectivity(input) {
+export function checkConnectivitySync(input) {
   const {errors, warnings, cores} = validateInput(input);
-  const base = {engine: ENGINE_VERSION, inputChecksum: await canonicalHash(input ?? null), parameters: input?.params ?? null};
+  const base = {engine: ENGINE_VERSION, inputChecksum: canonicalHashSync(input ?? null), parameters: input?.params ?? null};
   if (errors.length) return {...base, status: 'incomplete', reasons: errors, warnings};
   try {
     const p = input.params, treatments = input.treatments ?? [];
@@ -339,3 +340,6 @@ export async function checkConnectivity(input) {
     return {...base, status: 'incomplete', reasons: [`Geometry engine error: ${e.message}`], warnings: [...new Set(warnings)]};
   }
 }
+
+/** Promise-returning form of checkConnectivitySync. */
+export const checkConnectivity = async input => checkConnectivitySync(input);

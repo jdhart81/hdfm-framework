@@ -7,8 +7,9 @@ Pure analysis functions for Dendritic Forest Management (DFM). No storage, no ne
 ## Corridor connectivity check
 
 ```js
-import {checkConnectivity} from '@viridis/dfm-core';
+import {checkConnectivity, checkConnectivitySync} from '@viridis/dfm-core';
 
+// checkConnectivitySync gives the same result without a Promise, for synchronous command handlers.
 const result = await checkConnectivity({
   coreAreas,   // polygons: properties.dfm_id, core_class (old-growth-candidate | old-growth-verified | riparian-core | reserve), evidence_id?
   retained,    // polygons: retained habitat (riparian buffers, corridors, retained stands)
@@ -33,7 +34,9 @@ The check compares the current state (no proposed treatments) with the proposed 
 
 Inputs of the wrong geometry type, projected coordinates, extents over 0.5° and unsupported values return `incomplete` with reasons. Polygon operations retry on a 1 mm grid when edges nearly coincide.
 
-All lengths are meters and all areas square meters. Results include the engine version and a SHA-256 checksum of the canonical input, so a stored result can be reproduced.
+All lengths are meters and all areas square meters. Results include the engine version and a SHA-256 checksum of the canonical input (computed in plain JS, identical to Node's `crypto`), so a stored result can be reproduced.
+
+Dependencies are individual Turf.js 7 modules, so a bundle includes only what the check uses (about 100 KB gzipped, mostly the polygon clipping and buffering libraries).
 
 ## Landscape Package
 
