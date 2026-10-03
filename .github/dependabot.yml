@@ -25,6 +25,7 @@ updates:
 - package-ecosystem: npm
   directories:
   - /web
+  - /packages/dfm-core
   - /apps/site
   schedule:
     interval: monthly

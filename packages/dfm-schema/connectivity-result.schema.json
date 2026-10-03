@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/connectivity-result.schema.json",
+  "title": "DFM connectivity check result",
+  "type": "object",
+  "required": [
+    "engine",
+    "inputChecksum",
+    "status",
+    "reasons",
+    "warnings"
+  ],
+  "properties": {
+    "engine": {
+      "type": "string"
+    },
+    "inputChecksum": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail",
+        "incomplete"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "parameters": {},
+    "cores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "coreClass",
+          "areaM2",
+          "remainingM2"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "coreClass": {
+            "type": "string"
+          },
+          "areaM2": {
+            "type": "number"
+          },
+          "remainingM2": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "linkedBefore": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pair"
+      }
+    },
+    "linkedAfter": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pair"
+      }
+    },
+    "lostLinks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "causes",
+          "contributing"
+        ],
+        "properties": {
+          "a": {
+            "type": "string"
+          },
+          "b": {
+            "type": "string"
+          },
+          "causes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contributing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "overlaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "unit",
+          "overlapM2",
+          "permitted"
+        ],
+        "properties": {
+          "unit": {
+            "type": "string"
+          },
+          "overlapM2": {
+            "type": "number"
+          },
+          "permitted": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "pinchedLinks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pair"
+      }
+    },
+    "consent": {
+      "type": "object",
+      "properties": {
+        "committedM2": {
+          "type": "number"
+        },
+        "proposedM2": {
+          "type": "number"
+        }
+      }
+    },
+    "areas": {
+      "type": "object"
+    },
+    "geometry": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "pair": {
+      "type": "object",
+      "required": [
+        "a",
+        "b"
+      ],
+      "properties": {
+        "a": {
+          "type": "string"
+        },
+        "b": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "status": {
+        "enum": [
+          "pass",
+          "fail"
+        ]
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "cores",
+      "linkedBefore",
+      "linkedAfter",
+      "lostLinks",
+      "overlaps",
+      "pinchedLinks",
+      "consent",
+      "geometry",
+      "limitations"
+    ]
+  }
+}

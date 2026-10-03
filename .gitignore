@@ -71,3 +71,6 @@ dmypy.json
 
 # The reusable website includes its supplied branding and vendored map icons.
 !web/public/**/*.png
+
+# Node packages
+node_modules/
