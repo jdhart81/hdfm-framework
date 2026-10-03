@@ -1,4 +1,4 @@
-import {validate,assess,analyze} from './analysis.mjs';
+import {validate,assess,analyze,checkCorridors} from './analysis.mjs';
 const json=(x,status=200)=>Response.json(x,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 const fail=(m,s=400)=>{throw Object.assign(Error(m),{status:s});};
 // User-input failures (plain Error from validation/geometry) become 400s; programming errors stay internal.
@@ -31,6 +31,7 @@ export async function api(req,env){
  }
  if(parts.length===3&&method==='DELETE'){await db.prepare('DELETE FROM scenarios WHERE project=? AND owner=?').bind(id,owner).run();const r=await db.prepare('DELETE FROM projects WHERE id=? AND owner=?').bind(id,owner).run();if(r.meta.changes!==1)fail('Project not found.',404);return json({deleted:id});}
  if(parts[3]==='scenarios'&&parts[4]&&parts.length===5&&method==='DELETE'){const r=await db.prepare('DELETE FROM scenarios WHERE id=? AND project=? AND owner=?').bind(parts[4],id,owner).run();if(r.meta.changes!==1)fail('Scenario not found.',404);return json({deleted:parts[4]});}
+ if(parts[3]==='connectivity'&&parts.length===4&&method==='POST'){const b=await body(req);if(b.revision!==p.revision)fail('Save or reopen the latest project before checking corridors.',409);const out=input(()=>checkCorridors(JSON.parse(p.data),b,{name:p.name,sources:JSON.parse(p.sources)}));return json({...out,revision:p.revision});}
  if(parts[3]==='validation'&&method==='GET')return json({issues:assess(JSON.parse(p.data),JSON.parse(p.sources)),revision:p.revision});
  if(parts[3]==='scenarios'&&method==='GET'){const r=await db.prepare('SELECT id,name,revision,result,created FROM scenarios WHERE project=? AND owner=? ORDER BY created DESC').bind(id,owner).all();return json(r.results.map(s=>({...s,result:JSON.parse(s.result)})));}
  if(parts[3]==='scenarios'&&method==='POST'){

@@ -104,3 +104,16 @@ Waterway width comes from the saved scenario and is measured each side of the ce
 The image registration option accepts north-up EPSG:3857 PNG/JPEG images under 12 MB / 16 million pixels, with known outer bounds supplied in WGS84 west/south/east/north order. The image must cover the property. It is held locally in the browser and embedded in the printable export; it is not uploaded to project storage. The companion record stores its filename, source/registration notes and bounds, not image bytes. Unreferenced screenshots, rotated imagery, other CRSs and GeoTIFF ingestion require preprocessing. A contour map is visual context; no DEM drainage or contour-following routing is calculated.
 
 Sheets support at most 120 clipped centerline sections. Inspect label overlap, image alignment and source rights before delivery. USGS backgrounds are intended for U.S. coverage; NASA imagery is regional/coarse. If a provider fails, export is blocked instead of silently dropping the background. Browser validation confirmed generation of the fictional four-section example; geometric tests cover boundary clipping, holes, exclusions, width interpretation and escaped report content.
+
+
+## Release 0.6.0 — corridor connectivity check
+
+Three new layers: **core areas** (old-growth candidates, riparian cores, reserves), **road crossings** and **proposed treatment units**. **Check corridors** runs the `@viridis/dfm-core` connectivity check on the latest saved project: do the core areas stay linked by retained habitat at least the minimum width, before and after the proposed treatment units?
+
+- Retained habitat = proposed forest connections plus the riparian buffer at the distance set above (when a boundary and waterways exist). Road surfaces (assumed width) and open-water polygons are removed. A road keeps a corridor only at a recorded crossing.
+- The result is **pass**, **fail** (a link is lost, a core is cleared, or a treatment overlaps retained habitat without a recorded light-treatment permission) or **incomplete** (missing inputs, or no source recorded for the minimum width). Lost corridor is drawn in red, with the units that caused it named.
+- Drawn cores start as `old-growth-candidate`, drawn crossings as `assumed` passage (with a warning) and drawn treatments with `unrecorded` intensity (treated as removing habitat). Import GeoJSON with `core_class`, `passage`, `intensity`, `corridor_permitted` and `reason` properties to record them.
+- **Download Landscape Package** exports the same inputs as a DFM Landscape Package v1 file. A VergeCommon steward can upload it as woodland corridor layers, and `checkConnectivity(fromLandscapePackage(pkg))` reproduces the result and its input checksum.
+- API: `POST /api/projects/:id/connectivity` with `revision`, `waterWidth`, `roadWidth`, `minWidthM`, `minWidthSource`. Returns `{result, package, revision}`; nothing is stored.
+
+The check is structural connectivity only. It does not establish species movement, genetic viability or old-growth condition. `@viridis/dfm-core` is vendored as `vendor/viridis-dfm-core-0.1.0.tgz` from `packages/dfm-core`; CI fails if the two differ.
