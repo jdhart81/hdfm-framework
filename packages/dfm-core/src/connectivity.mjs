@@ -67,6 +67,12 @@ const difference = (a, b) => (a && b ? robust(turf.difference, [a, b]) : a);
 const buffer = (f, m) => (f ? turf.buffer(f, m, {units: 'meters', steps: 16}) ?? null : null);
 const close = f => (f ? buffer(buffer(f, CLOSE_M), -CLOSE_M) ?? f : null);
 const areaM2 = f => (f ? turf.area(f) : 0);
+/** Mean width of a polygon, 2 x area / perimeter (meters): small for slivers. */
+const meanWidthM = f => {
+  let perimeter = 0;
+  for (const ring of f.geometry.coordinates) for (let i = 1; i < ring.length; i++) perimeter += turf.rhumbDistance(ring[i - 1], ring[i], {units: 'meters'});
+  return perimeter ? (2 * areaM2(f)) / perimeter : 0;
+};
 const parts = f => (!f ? [] : f.geometry.type === 'Polygon' ? [turf.polygon(f.geometry.coordinates)] : f.geometry.coordinates.map(c => turf.polygon(c)));
 
 /** Validate a connectivity input. Returns {errors, warnings, cores}. */
@@ -281,7 +287,12 @@ export function checkConnectivitySync(input) {
 
     let lostGeometry = null;
     if (lost.length) {
-      try { lostGeometry = difference(buffer(linkedBefore.eroded, p.minWidthM / 2), buffer(linkedAfter.eroded, p.minWidthM / 2)); }
+      try {
+        // Drop slivers under 1 m wide left by differing buffer approximations; keep the real loss.
+        const raw = difference(buffer(linkedBefore.eroded, p.minWidthM / 2), buffer(linkedAfter.eroded, p.minWidthM / 2));
+        const kept = parts(raw).filter(part => meanWidthM(part) >= 1);
+        lostGeometry = kept.length ? union(kept) : null;
+      }
       catch { warnings.push('The map of lost corridor could not be drawn for this geometry; the link results are unaffected.'); }
     }
     // Each removed unit is tested alone once; a unit "causes" a lost link if removing it alone breaks that link.
