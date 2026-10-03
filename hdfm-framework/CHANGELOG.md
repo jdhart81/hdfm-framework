@@ -5,6 +5,18 @@ All notable changes to the HDFM Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Width allocation budgets convert patch areas from hectares to m² before comparing them with corridor length × width. Previously the budget was 10,000× too small, so every width solve was infeasible.
+- `WidthOptimizer` and `BackwardsOptimizer` check feasibility before solving, verify returned widths against bounds and budget, and report `success=False` with a `message` instead of returning failed solver output as a plan.
+- `WidthOptimizer.optimize()` now returns the solved widths in `optimal_widths` (previously discarded).
+- `check_allocation_constraint` returns areas in m².
+
+### Added
+- `OptimizationResult.success` and `OptimizationResult.message`; `M2_PER_HECTARE` and `corridor_area_budget_m2()`.
+- Regression tests in `tests/test_optimization.py` with hand-calculated budgets.
+
 ## [0.2.1] - 2025-12-09
 
 ### Added
