@@ -23,7 +23,7 @@ test('every page has a language, one h1, a title, a description and a canonical 
     assert.equal((h.match(/<h1[\s>]/g) || []).length, 1, name);
     assert.match(h, /<title>[^<]{10,}<\/title>/, name);
     assert.match(h, /<meta name="description" content="[^"]{30,}">/, name);
-    assert.match(h, /<link rel="canonical" href="https:\/\/dendriticforest\.org\//, name);
+    assert.match(h, /<link rel="canonical" href="https:\/\/dendriticforest\.com\//, name);
   }
 });
 
@@ -70,6 +70,17 @@ test('the map illustration is labelled for screen readers and marked as not a re
 
 test('sitemap lists the public pages', async () => {
   const xml = await readFile(path.join(dist, 'sitemap.xml'), 'utf8');
-  for (const u of ['/', '/unbroken/', '/data-format/']) assert.match(xml, new RegExp(`<loc>https://dendriticforest\\.org${u.replace(/\//g, '\\/')}</loc>`));
+  for (const u of ['/', '/unbroken/', '/data-format/']) assert.match(xml, new RegExp(`<loc>https://dendriticforest\\.com${u.replace(/\//g, '\\/')}</loc>`));
   assert.doesNotMatch(xml, /404/);
+});
+
+test('the site origin comes only from site.config.json and is used in canonicals, sitemap and robots', async () => {
+  const {origin} = JSON.parse(await readFile(path.join(dist, '..', 'site.config.json'), 'utf8'));
+  assert.equal(origin, 'https://dendriticforest.com');
+  const robots = await readFile(path.join(dist, 'robots.txt'), 'utf8');
+  assert.match(robots, new RegExp(`^Sitemap: ${origin.replace(/\./g, '\\.')}/sitemap\\.xml$`, 'm'));
+  for (const f of await files()) {
+    if (!/\.(html|xml|txt)$/.test(f) || f.includes(`${path.sep}fonts${path.sep}`)) continue;
+    assert.doesNotMatch(await readFile(f, 'utf8'), /dendriticforest\.org/, path.relative(dist, f));
+  }
 });

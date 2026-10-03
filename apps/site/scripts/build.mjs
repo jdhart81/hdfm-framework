@@ -5,6 +5,8 @@ import {fileURLToPath} from 'node:url';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = path.join(root, 'src'), dist = path.join(root, 'dist');
 const config = JSON.parse(await readFile(path.join(root, 'site.config.json'), 'utf8'));
+// The origin is set only in site.config.json: an https scheme and host, no path or trailing slash.
+if (!/^https:\/\/[a-z0-9.-]+$/.test(config.origin)) throw new Error('site.config.json: origin must be https://host with no path');
 const read = f => readFile(path.join(src, f), 'utf8');
 const [head, foot] = await Promise.all([read('partials/head.html'), read('partials/foot.html')]);
 const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -33,13 +35,14 @@ for (const page of await pages()) {
   const html = (head + body + foot)
     .replaceAll('{{title}}', esc(meta.title)).replaceAll('{{description}}', esc(meta.description)).replaceAll('{{path}}', meta.path)
     .replaceAll('{{nav-check}}', nav('check')).replaceAll('{{nav-unbroken}}', nav('unbroken')).replaceAll('{{nav-format}}', nav('format'))
-    .replaceAll('{{contact}}', esc(config.contact));
+    .replaceAll('{{contact}}', esc(config.contact)).replaceAll('{{origin}}', config.origin);
   if (/\{\{[\w-]+\}\}/.test(html)) throw new Error(`${page}: unreplaced placeholder`);
   await mkdir(path.join(dist, path.dirname(page)), {recursive: true});
   await writeFile(path.join(dist, page), html);
   if (page !== '404.html') urls.push(config.origin + meta.path);
 }
-for (const f of ['styles.css', 'favicon.svg', 'robots.txt']) await cp(path.join(src, f), path.join(dist, f));
+for (const f of ['styles.css', 'favicon.svg']) await cp(path.join(src, f), path.join(dist, f));
+await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${config.origin}/sitemap.xml\n`);
 const fonts = {
   '@fontsource-variable/archivo/files': ['archivo-latin-wdth-normal.woff2'],
   '@fontsource/source-serif-4/files': ['source-serif-4-latin-400-normal.woff2', 'source-serif-4-latin-400-italic.woff2', 'source-serif-4-latin-600-normal.woff2'],
