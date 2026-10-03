@@ -1,0 +1,75 @@
+---
+title: Dendritic Forest Management: keep woodlot corridors connected
+description: An open-source check that shows whether a harvest plan breaks the retained corridors linking old-growth candidates, riparian cores and reserves across working woodlots.
+path: /
+nav: home
+---
+<main id="main">
+<section class="hero">
+<div>
+<h1>Cut the woods. Keep them connected.</h1>
+<p class="lede">Dendritic Forest Management checks a harvest plan against the corridors that link your old-growth candidates, stream cores and reserves. If a unit breaks a link, the check names the unit and draws the break on the map before anyone starts a saw.</p>
+<div class="actions">
+<a class="button primary" href="#use">Check a harvest plan</a>
+<a class="button" href="/unbroken/">Join Unbroken Woods</a>
+</div>
+</div>
+<!--#include map.svg.html-->
+</section>
+
+<section id="check">
+<h2>One question, asked before every harvest</h2>
+<p class="lede">Do the core areas stay linked by retained forest at least the minimum width, before and after the planned treatment units?</p>
+<div class="states">
+<div class="state pass"><h3>Pass <span>links hold</span></h3><p>Every core area linked today is still linked after the plan, and no unit enters a corridor without a recorded light-treatment permission.</p></div>
+<div class="state fail"><h3>Fail <span>a link breaks</span></h3><p>A unit cuts a corridor, narrows it below the minimum width, clears a core, or enters retained forest unpermitted. The check names each unit responsible and maps the lost corridor.</p></div>
+<div class="state incomplete"><h3>Incomplete <span>inputs missing</span></h3><p>A layer is missing, a geometry is wrong, or no source is recorded for the minimum width. The check never reports a pass it could not establish.</p></div>
+</div>
+</section>
+
+<section id="how">
+<h2>How the check works</h2>
+<ol class="steps">
+<li><p><strong>Map what is there.</strong> Core areas, retained corridors along streams and between stands, roads, open water and road crossings, each with its source.</p></li>
+<li><p><strong>Set the minimum width.</strong> A site parameter in meters, with a recorded reason such as a co-op policy or a forester's recommendation.</p></li>
+<li><p><strong>Remove what interrupts forest.</strong> Road surfaces and open water come out. A road keeps a corridor only where a crossing is recorded on it, and an assumed crossing is flagged for field checking.</p></li>
+<li><p><strong>Draw in the plan.</strong> Each treatment unit comes out of the forest unless it is a recorded light treatment, such as single-tree selection with a stated reason.</p></li>
+<li><p><strong>Test every link.</strong> Two cores are linked when a strip of forest the minimum width runs all the way between them. Links present today but missing after the plan fail the check.</p></li>
+</ol>
+<p class="small">Every result records the engine version and a checksum of its inputs, so the same inputs always give the same answer.</p>
+</section>
+
+<section id="use">
+<h2>Three ways to use it</h2>
+<div class="routes">
+<div><h3>In a VergeCommon co-op</h3><p>Start a woodland project. Stewards review the corridor layers; every member's harvest plan is checked before it can be reviewed, and a plan that breaks a link needs a recorded member vote.</p><p><a href="https://vergecommon.com">Open VergeCommon</a></p></div>
+<div><h3>In the mapping workspace</h3><p>Draw or import roads, streams, cores, crossings and treatment units, run the check, and download a Landscape Package to share with your co-op or forester.</p><p><a href="https://github.com/jdhart81/hdfm-framework/tree/main/web">Run the workspace</a></p></div>
+<div><h3>In your own software</h3><p>The check is a small JavaScript package with no server or storage. Give it GeoJSON; get back pass, fail or incomplete with reasons.</p><p><a href="/data-format/">Read the data format</a></p></div>
+</div>
+</section>
+
+<section id="limits">
+<h2>What a pass does and does not tell you</h2>
+<dl class="limits">
+<dt>It establishes</dt><dd>That mapped retained forest of at least the minimum width connects the same core areas after the plan as before, given the layers and crossings as recorded.</dd>
+<dt>It does not establish</dt><dd>That wildlife moves through the corridor, that populations stay genetically viable, that a stand is old growth, or that a plan meets any regulation. Those need field evidence and qualified review.</dd>
+<dt>Old growth</dt><dd>Mapping alone makes a stand an old-growth candidate. Calling it old growth requires field evidence of its structure, reviewed by someone other than the person who mapped it.</dd>
+<dt>Distances</dt><dd>Horizontal, on a spherical Earth, within about half a percent. Slope and edge effects are not modeled.</dd>
+</dl>
+</section>
+
+<section id="research">
+<div class="split">
+<div>
+<h2>Built in the open</h2>
+<p>The method, the code and the research toolkit are on GitHub under the MIT license. The research toolkit explores dendritic network theory and is marked experimental; the corridor check does not depend on it.</p>
+<p><a href="https://github.com/jdhart81/hdfm-framework">Read the source</a> or <a href="https://github.com/jdhart81/hdfm-framework/blob/main/docs/RESEARCH_STATUS.md">see what is and is not established</a>.</p>
+</div>
+<div>
+<h2>Help us find where it is wrong</h2>
+<p>Foresters, ecologists and developers: test the check on a woodlot you know, review the method, or take an issue. Reports of a wrong answer are the most useful contribution there is.</p>
+<p><a href="https://github.com/jdhart81/hdfm-framework/issues">Open an issue</a> or <a href="https://github.com/jdhart81/hdfm-framework/blob/main/CONTRIBUTING.md">read the contributing guide</a>.</p>
+</div>
+</div>
+</section>
+</main>

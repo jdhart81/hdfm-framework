@@ -1,0 +1,20 @@
+{
+  "name": "dendriticforest-site",
+  "version": "1.0.0",
+  "description": "Static site for dendriticforest.org and the Unbroken Woods campaign.",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test test/*.test.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.0"
+  },
+  "private": true,
+  "type": "module"
+}

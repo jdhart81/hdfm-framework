@@ -25,6 +25,7 @@ updates:
 - package-ecosystem: npm
   directories:
   - /web
+  - /apps/site
   schedule:
     interval: monthly
   open-pull-requests-limit: 5
