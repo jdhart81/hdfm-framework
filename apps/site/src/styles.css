@@ -1,0 +1,114 @@
+/* Dendritic Forest Management: site styles.
+   Palette from a working woodlot: birch paper, hemlock ink, moss, lichen,
+   stream blue, and survey flagging-tape pink for the one thing that matters:
+   where a plan breaks a corridor. */
+@font-face{font-family:"Archivo";src:url("/fonts/archivo-latin-wdth-normal.woff2") format("woff2");font-weight:100 900;font-stretch:62% 125%;font-display:swap}
+@font-face{font-family:"Source Serif 4";src:url("/fonts/source-serif-4-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Source Serif 4";src:url("/fonts/source-serif-4-latin-400-italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Source Serif 4";src:url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+
+:root{
+  --bark:#f2f3ee;--paper:#fbfbf8;--hemlock:#17312a;--moss:#4d6b3c;--lichen:#c4d2a2;
+  --stream:#2f6f8f;--flag:#e8336f;--rule:#cfd6c6;--muted:#55665d;
+  --display:"Archivo",system-ui,sans-serif;--text:"Source Serif 4",Georgia,serif;
+  --measure:38rem;--gutter:clamp(1rem,4vw,3rem);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bark);color:var(--hemlock);font:400 1.125rem/1.65 var(--text)}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.18em}
+a:hover{color:var(--moss)}
+:focus-visible{outline:3px solid var(--flag);outline-offset:3px}
+img,svg{max-width:100%;height:auto}
+.skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--paper);padding:.5rem 1rem;z-index:2}
+
+/* Header and footer */
+.site-head,.site-foot{display:flex;flex-wrap:wrap;gap:.5rem 2rem;align-items:baseline;justify-content:space-between;padding:1.25rem var(--gutter);font-family:var(--display);font-stretch:85%}
+.site-head nav,.site-foot nav{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem}
+.site-head nav a,.site-foot nav a{text-decoration:none;font-size:1rem}
+.site-head nav a[aria-current="page"]{text-decoration:underline}
+.wordmark{font-family:var(--display);font-weight:700;font-stretch:112%;font-size:1.05rem;text-decoration:none;letter-spacing:-.01em}
+.site-foot{border-top:1px solid var(--rule);margin-top:5rem;color:var(--muted);font-size:.95rem}
+
+/* Type scale (1.25) */
+h1,h2,h3{font-family:var(--display);color:var(--hemlock);line-height:1.08;margin:0 0 1rem}
+h1{font-size:clamp(2.6rem,6.2vw,4.9rem);font-weight:800;font-stretch:118%;letter-spacing:-.025em;max-width:13ch}
+h2{font-size:clamp(1.7rem,3.2vw,2.45rem);font-weight:700;font-stretch:110%;letter-spacing:-.015em;max-width:22ch}
+h3{font-size:1.2rem;font-weight:650;font-stretch:100%;line-height:1.25}
+p,li{max-width:var(--measure)}
+.lede{font-size:clamp(1.2rem,1.9vw,1.4rem);line-height:1.55}
+.small{font-size:.95rem;color:var(--muted)}
+
+/* Layout */
+main{padding:0 var(--gutter)}
+section{padding:4.5rem 0 0}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(1.5rem,4vw,4rem);align-items:center;padding-top:2.5rem}
+.hero .actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.75rem}
+.button{display:inline-block;font-family:var(--display);font-weight:650;font-stretch:95%;text-decoration:none;padding:.7rem 1.15rem;border:2px solid var(--hemlock);border-radius:2px}
+.button.primary{background:var(--hemlock);color:var(--paper)}
+.button.primary:hover{background:var(--moss);border-color:var(--moss);color:var(--paper)}
+.button:hover{color:var(--moss);border-color:var(--moss)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(1.5rem,4vw,4rem)}
+
+/* The map: the one bold element */
+.map{background:var(--paper);border:1px solid var(--rule);padding:clamp(.5rem,1.5vw,1rem)}
+.map figcaption{font-family:var(--display);font-stretch:80%;font-size:.95rem;color:var(--muted);padding:.5rem .25rem 0}
+.map .contour{fill:none;stroke:#dfe4d7;stroke-width:1.2}
+.map .stream{fill:none;stroke:var(--stream);stroke-width:2.2;stroke-linecap:round}
+.map .core{fill:var(--lichen);stroke:var(--moss);stroke-width:1.5}
+.map .corridor{fill:none;stroke:var(--moss);stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round}
+.map .road{fill:none;stroke:#8b7a5a;stroke-width:5;stroke-dasharray:1 0}
+.map .road-edge{fill:none;stroke:var(--paper);stroke-width:2.2;stroke-dasharray:7 6}
+.map .unit{fill:#e9ebe3;stroke:#9aa596;stroke-width:1.2;stroke-dasharray:4 3}
+.map .unit.breaks{fill:rgba(232,51,111,.14);stroke:var(--flag);stroke-width:2;stroke-dasharray:none}
+.map .break{stroke:var(--flag);stroke-width:4;stroke-linecap:round}
+.map .crossing{fill:var(--paper);stroke:var(--hemlock);stroke-width:2}
+.map text{font-family:var(--display);font-stretch:75%;font-size:16px;fill:var(--hemlock)}
+.map text.flagged{fill:var(--flag);font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .map .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
+  .map .late{opacity:0;animation:appear .5s 2.1s forwards}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes appear{to{opacity:1}}
+
+/* Results: three states of a check */
+.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin-top:2rem}
+.state{border-top:4px solid var(--moss);padding-top:1rem}
+.state.fail{border-color:var(--flag)}
+.state.incomplete{border-color:#b49a3c}
+.state h3 span{font-weight:400;font-stretch:85%}
+
+/* Sequence (a real order of steps) */
+ol.steps{list-style:none;padding:0;margin:2rem 0 0;counter-reset:step;display:grid;gap:1.25rem;max-width:46rem}
+ol.steps li{counter-increment:step;display:grid;grid-template-columns:3rem 1fr;gap:1rem;max-width:none}
+ol.steps li p{margin:0}
+ol.steps li::before{content:counter(step);font-family:var(--display);font-weight:800;font-stretch:118%;font-size:1.9rem;line-height:1;color:var(--moss)}
+
+/* Routes and audiences */
+.routes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2rem;margin-top:2rem}
+.routes h3{margin-bottom:.5rem}
+dl.limits{display:grid;grid-template-columns:minmax(10rem,15rem) 1fr;gap:.75rem 2rem;margin:2rem 0 0;max-width:52rem}
+dl.limits dt{font-family:var(--display);font-weight:650;font-stretch:95%}
+dl.limits dd{margin:0}
+table{border-collapse:collapse;width:100%;max-width:60rem;margin-top:1.5rem;font-size:1rem}
+th,td{text-align:left;vertical-align:top;padding:.75rem 1rem .75rem 0;border-bottom:1px solid var(--rule)}
+th{font-family:var(--display);font-weight:650;font-stretch:95%}
+code{font-size:.92em;background:var(--paper);padding:.05em .3em;border:1px solid var(--rule)}
+pre{background:var(--paper);border:1px solid var(--rule);padding:1rem;overflow-x:auto;font-size:.88rem;line-height:1.5;max-width:52rem}
+pre code{border:0;padding:0;background:none}
+
+/* Campaign page */
+.campaign h1{max-width:18ch;font-size:clamp(2.3rem,4.6vw,3.9rem)}
+.campaign .promise{font-size:clamp(1.25rem,2.2vw,1.55rem);max-width:34rem}
+.pilot{background:var(--hemlock);color:var(--paper);padding:clamp(1.5rem,4vw,3rem);margin-top:4.5rem}
+.pilot h2,.pilot a{color:var(--paper)}
+.pilot .button{border-color:var(--paper)}
+.pilot .button:hover{background:var(--paper);color:var(--hemlock)}
+
+@media (max-width:860px){
+  .hero,.split{grid-template-columns:1fr}
+  .states,.routes{grid-template-columns:1fr}
+  dl.limits{grid-template-columns:1fr}
+  dl.limits dd{margin-bottom:.75rem}
+}

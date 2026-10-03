@@ -42,6 +42,30 @@ jobs:
           cache-dependency-path: packages/dfm-core/package-lock.json
       - run: npm ci
       - run: npm test
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/site
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/site/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - name: Build and smoke-test the site container
+        run: |
+          docker build -t dendriticforest-site:ci .
+          docker run -d --name site -p 8080:8080 dendriticforest-site:ci
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'Cut the woods'
+          curl -fsS http://127.0.0.1:8080/unbroken/ | grep -q 'One unbroken forest'
+          curl -sSI http://127.0.0.1:8080/ | grep -qi "content-security-policy: default-src 'self'"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing)" = 404
+          docker rm -f site
   research-implementation:
     runs-on: ubuntu-latest
     defaults:

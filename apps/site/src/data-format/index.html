@@ -1,0 +1,48 @@
+---
+title: Data format: DFM Landscape Package v1
+description: The DFM Landscape Package is one JSON file of WGS84 GeoJSON layers, the minimum corridor width with its source, and a source record per layer.
+path: /data-format/
+nav: format
+---
+<main id="main">
+<section>
+<h1>The Landscape Package</h1>
+<p class="lede">One JSON file carries a woodlot's corridor layers between the mapping workspace, VergeCommon and your own tools. Lengths are meters and areas are square meters. Coordinates are WGS84 longitude and latitude.</p>
+</section>
+<section>
+<h2>Layers</h2>
+<table>
+<thead><tr><th scope="col">Layer</th><th scope="col">Geometry</th><th scope="col">Properties that matter</th></tr></thead>
+<tbody>
+<tr><td><code>coreAreas</code></td><td>Polygon</td><td><code>dfm_id</code>; <code>core_class</code>: old-growth-candidate, old-growth-verified (needs <code>evidence_id</code>), riparian-core or reserve</td></tr>
+<tr><td><code>retained</code></td><td>Polygon</td><td>Retained forest: riparian buffers, corridors, retained stands</td></tr>
+<tr><td><code>roads</code></td><td>Line or polygon</td><td><code>width_m</code> for a centerline, or the package's <code>roadWidthM</code></td></tr>
+<tr><td><code>water</code></td><td>Polygon</td><td>Open water; buffer stream centerlines into polygons first</td></tr>
+<tr><td><code>crossings</code></td><td>Point</td><td><code>passage</code>: verified, assumed or none</td></tr>
+<tr><td><code>treatments</code></td><td>Polygon</td><td><code>dfm_id</code>, <code>period</code>, <code>intensity</code>; inside a corridor only with <code>corridor_permitted</code>, a light intensity and a <code>reason</code></td></tr>
+<tr><td><code>parcels</code></td><td>Polygon</td><td><code>consent</code>: covered or none; corridor on covered parcels counts as committed</td></tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>A minimal package</h2>
+<pre><code>{
+  "dfm_package": "1.0",
+  "crs": "EPSG:4326",
+  "units": { "length": "m", "area": "m2" },
+  "params": {
+    "minWidthM": 100,
+    "minWidthSource": "Co-op woodland policy, section 4",
+    "roadWidthM": 6
+  },
+  "sources": { "roads": { "title": "County road centerlines", "date": "2026-05-01" } },
+  "layers": { "coreAreas": [], "retained": [], "roads": [], "water": [],
+              "crossings": [], "treatments": [], "parcels": [], "boundary": [] }
+}</code></pre>
+<p>Run the check with the open-source package:</p>
+<pre><code>import { checkConnectivity, fromLandscapePackage } from '@viridis/dfm-core';
+const result = await checkConnectivity(fromLandscapePackage(pkg));
+// result.status is 'pass', 'fail' or 'incomplete', with reasons</code></pre>
+<p><a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-schema">JSON Schemas for the package and the result</a></p>
+</section>
+</main>

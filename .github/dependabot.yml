@@ -26,6 +26,7 @@ updates:
   directories:
   - /web
   - /packages/dfm-core
+  - /apps/site
   schedule:
     interval: monthly
   open-pull-requests-limit: 5
