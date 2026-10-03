@@ -21,6 +21,20 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run analyze -- examples/fictional-watershed.geojson /tmp/dfm-assessment.json 50 6
+  dfm-core:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/dfm-core
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/dfm-core/package-lock.json
+      - run: npm ci
+      - run: npm test
   research-implementation:
     runs-on: ubuntu-latest
     defaults:
