@@ -1,5 +1,9 @@
 # Releases
 
+## Web application 0.6.0 — unreleased
+
+Corridor connectivity check in the workspace: core-area, road-crossing and treatment-unit layers; `POST /api/projects/:id/connectivity`; red lost-corridor overlay; DFM Landscape Package download for VergeCommon. Uses the vendored `@viridis/dfm-core`. Includes the phase 0 web hardening (#37).
+
 ## dfm-core 0.1.0 — unreleased
 
 Adds `packages/dfm-core`, the shared analysis package for the DFM workspace and VergeCommon woodland projects, and `packages/dfm-schema`.

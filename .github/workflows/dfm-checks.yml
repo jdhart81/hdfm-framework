@@ -17,6 +17,13 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - name: Vendored dfm-core matches packages/dfm-core
+        run: |
+          mkdir -p /tmp/vendored /tmp/packed
+          tar -xzf vendor/viridis-dfm-core-0.1.0.tgz -C /tmp/vendored
+          (cd ../packages/dfm-core && npm pack --pack-destination /tmp >/dev/null)
+          tar -xzf /tmp/viridis-dfm-core-0.1.0.tgz -C /tmp/packed
+          diff -r /tmp/vendored /tmp/packed
       - run: npm ci
       - run: npm test
       - run: npm run build

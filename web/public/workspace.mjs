@@ -4,7 +4,7 @@ import {metricLabels,comparisonGroups,comparisonCsv} from './comparison.mjs';
 const $=id=>document.getElementById(id),dfm=window.dfm;let project=null,sources={},scenarios=[],busy=false;
 const el=(tag,value)=>{const e=document.createElement(tag);e.textContent=value;return e;};
 async function call(path,method='GET',data){const r=await fetch('/api/'+path,{method,headers:method==='GET'?{}:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});let b;try{b=await r.json();}catch{throw Error('The service could not respond. Your map is still available to export.');}if(!r.ok)throw Error(b.error||'Request failed.');return b;}
-async function action(fn){if(busy)return;busy=true;const controls=['save-project','run-scenario','saved-projects','new-project','example','refresh-projects'];controls.forEach(id=>$(id).disabled=true);try{await fn();}catch(e){dfm.tell(e.message,true);}finally{busy=false;controls.forEach(id=>$(id).disabled=false);}}
+async function action(fn){if(busy)return;busy=true;const controls=['save-project','run-scenario','saved-projects','new-project','example','refresh-projects','corridor-check','corridor-package'];controls.forEach(id=>$(id).disabled=true);try{await fn();}catch(e){dfm.tell(e.message,true);}finally{busy=false;controls.forEach(id=>$(id).disabled=false);}}
 function download(value,name,type='application/json'){const blob=new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type});const url=URL.createObjectURL(blob),a=el('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function sourceForm(){const s=sources[$('source-layer').value]||{};for(const k of ['title','url','date','license','notes'])$('source-'+k).value=s[k]||'';}
 function keepSource(){const s={};for(const k of ['title','url','date','license','notes'])s[k]=$('source-'+k).value.trim();sources[$('source-layer').value]=s;}
@@ -39,3 +39,20 @@ function report(s){const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;
 sourceForm();await action(refresh);
 
 window.dfmProjectMeta=()=>({name:$('project-name').value,sources});window.addEventListener('dfm-import',e=>{project=null;sources=e.detail.sources||{};$('project-name').value=e.detail.name||'';sourceForm();scenarios=[];renderScenarios();$('save-status').textContent='Imported map · save as a new project';});
+
+// Corridor check (DFM Build Spec phase 2): runs @viridis/dfm-core on the saved project.
+let lastCorridor=null;
+function corridorParams(){return {revision:project?.revision,waterWidth:Number($('buffer-width').value),roadWidth:Number($('road-width').value),minWidthM:Number($('min-width').value),minWidthSource:$('min-width-source').value.trim()};}
+async function corridorCall(){if(!project)throw Error('Save the project first.');if(dfm.isDirty())throw Error('Save your map changes before checking corridors.');lastCorridor=await call(`projects/${project.id}/connectivity`,'POST',corridorParams());return lastCorridor;}
+function renderCorridor({result,revision}){const host=$('corridor-results');host.replaceChildren();const pairs=l=>l?.length?l.map(p=>`${p.a}–${p.b}`).join(', '):'none';
+ const head=el('p',`Corridor check: ${result.status} · revision ${revision}`);head.className='corridor-status '+result.status;host.append(head);
+ if(result.status!=='incomplete'){host.append(el('p',`Linked now: ${pairs(result.linkedBefore)}. Linked after proposed treatments: ${pairs(result.linkedAfter)}.`));if(result.pinchedLinks?.length)host.append(el('p',`Pinch points (within ${Math.round((result.parameters?.pinchFraction??0.1)*100)}% of the minimum width): ${pairs(result.pinchedLinks)}.`));}
+ for(const r of result.reasons){const p=el('p',r);p.className='validation-item error';host.append(p);}
+ for(const w of result.warnings){const p=el('p',w);p.className='validation-item warning';host.append(p);}
+ const id=el('p',`${result.engine} · ${result.inputChecksum.slice(0,23)}…`);id.title=result.inputChecksum;id.className='hint';host.append(id);
+ const save=el('button','Download check result');save.onclick=()=>download(result,`dfm-corridor-check-r${revision}.json`);host.append(save);
+ dfm.showCorridors?.(result);
+}
+$('corridor-check').onclick=()=>action(async()=>{const out=await corridorCall();renderCorridor(out);dfm.tell(out.result.status==='fail'?'The proposed treatments break a corridor link or overlap retained habitat. The lost corridor is shown in red.':out.result.status==='pass'?'Core areas stay linked at the minimum width under the proposed treatments.':'The check could not run. See the reasons listed.',out.result.status!=='pass');});
+$('corridor-package').onclick=()=>action(async()=>{const out=await corridorCall();download(out.package,`dfm-landscape-package-r${out.revision}.json`);dfm.tell('Landscape Package downloaded. A VergeCommon steward can upload it as woodland corridor layers.');});
+window.addEventListener('dfm-reset',()=>{lastCorridor=null;$('corridor-results').replaceChildren();});
