@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import Ajv2020 from 'ajv/dist/2020.js';
-import {checkConnectivity, toLandscapePackage, fromLandscapePackage, canonicalJSON} from '../src/index.mjs';
+import {checkConnectivity, checkConnectivitySync, toLandscapePackage, fromLandscapePackage, canonicalJSON} from '../src/index.mjs';
 import {woodlot} from '../fixtures/woodlot.mjs';
 
 const linked = (r, a = 'core-A', b = 'core-B') => r.linkedAfter.some(p => p.a === a && p.b === b);
@@ -277,10 +277,21 @@ test('review new-1: road width_m is range-checked; null pinchFraction uses the d
 });
 
 test('sync SHA-256 matches the platform implementation; sync and async checks agree', async () => {
-  const {sha256Hex, checkConnectivitySync} = await import('../src/index.mjs');
+  const {sha256Hex} = await import('../src/index.mjs');
   const {createHash} = await import('node:crypto');
   for (const text of ['', 'abc', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'é∂ƒ — woodlot', 'x'.repeat(100000)])
     assert.equal(sha256Hex(text), createHash('sha256').update(text).digest('hex'));
   const input = woodlot({treatments: ['harvest-3']});
   assert.equal(canonicalJSON(checkConnectivitySync(input)), canonicalJSON(await checkConnectivity(input)));
+});
+
+test('the lost-corridor map holds only the real loss, not buffer slivers along untouched cores', async () => {
+  const r = checkConnectivitySync(woodlot({treatments: ['harvest-3']}));
+  const loss = r.geometry.features.find(f => f.properties.dfm_layer === 'connectivity-loss');
+  const {area} = await import('../src/turf.mjs');
+  // Corridor 120 m wide; harvest-3 removes 100 m of it, and the 100 m link's reach narrows the area lost on either side.
+  assert.ok(area(loss) < 120 * 400, area(loss));
+  const {booleanIntersects} = await import('../src/turf.mjs');
+  const coreA = woodlot().coreAreas[0];
+  assert.ok(!booleanIntersects(loss, coreA), 'no sliver along core A');
 });
