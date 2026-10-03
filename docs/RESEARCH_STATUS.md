@@ -6,8 +6,8 @@ Updated 2026-09-13. This document supersedes older completion percentages and cl
 |---|---|---|
 | MST construction | Finds a tree minimizing summed edge weight on the supplied graph | Does not minimize the composite entropy objective; Euclidean edges are not terrain-routed corridors |
 | Entropy comparisons | Computes a weighted score on synthetic networks | The cycle penalty favors trees by construction; a score improvement is not independent evidence of biological benefit |
-| Width budgets | Length and width enter the allocation calculation | Patch areas are documented in hectares but some budgets compare them directly with square meters |
-| Optimizers | Solvers return candidate widths | Failed/infeasible solver outputs and preservation of width results require repair |
+| Width budgets | Patch hectares are converted to m² before comparison with corridor length × width (fixed 2026-10-03; regression tests) | Synthetic landscapes at default guild widths are often infeasible under a 20–30% budget; that is now reported, not hidden |
+| Optimizers | Width solvers check feasibility first, verify returned widths independently, and return them on the result; `success=False` with a message on any failure (fixed 2026-10-03) | Topology search remains a local heuristic; the composite objective is still unvalidated |
 | Movement | Relative weights are normalized | Normalization can conceal uniformly poor movement success |
 | Population estimates | The current formula returns a numeric proxy | Uniform population scaling cancels; do not use it for population viability decisions |
 | Climate | Synthetic scenarios and scheduling interfaces exist | No independently validated regional ecological forecast is supplied |
@@ -30,4 +30,4 @@ The web application currently operates at the first two levels for geometric scr
 
 ## Priorities
 
-Correct area units and solver failure handling; rederive the population estimator; distinguish absolute movement from normalized distribution; compare alternatives at equal management objectives and budgets; then seek independent review on a real landscape. Do not connect the experimental algorithms to customer-facing recommendations before these questions are resolved.
+Rederive the population estimator; distinguish absolute movement from normalized distribution; compare alternatives at equal management objectives and budgets; then seek independent review on a real landscape. Do not connect the experimental algorithms to customer-facing recommendations before these questions are resolved.

@@ -36,7 +36,7 @@ Register your own Sites project and put its identity in `.openai/hosting.json`; 
 
 The same Node API supports an optional PostgreSQL database: apply `db/postgres.sql` once, set `DATABASE_URL`, and start the server. It stores validated GeoJSON snapshots in text columns; it does not yet run spatial queries in PostGIS. The PostgreSQL adapter is supplied but has not been integration-tested against a running database here.
 
-For external single-owner hosting, set `PUBLIC_ORIGIN` to the exact HTTPS origin, `DFM_PASSWORD` to a strong secret, and `HOST` as required. Put the service behind a TLS reverse proxy. Browser sign-in uses username `dfm`. Never expose unauthenticated local mode. This single-owner option is not a substitute for multi-tenant SaaS authentication.
+For external single-owner hosting, set `PUBLIC_ORIGIN` to the exact HTTPS origin, `DFM_PASSWORD` to a strong secret (at least 12 characters), and `HOST` as required. The server refuses to start if either is missing or malformed. Ten failed sign-ins from one client address lock that address out for 15 minutes; behind a reverse proxy every client shares the proxy's address, so an attacker can also lock out the owner for that window. Put the service behind a TLS reverse proxy. Browser sign-in uses username `dfm`. Never expose unauthenticated local mode. This single-owner option is not a substitute for multi-tenant SaaS authentication.
 
 The frontend uses MapLibre GL JS 6.9.0. Analysis and storage remain separate from rendering. PostGIS spatial processing, GDAL raster ingestion and terrain analysis are future integrations.
 
@@ -52,6 +52,10 @@ All routes require trusted identity. JSON responses are private and not cached.
 - `GET /api/projects/:id/validation`: missing inputs/source fields and evidence warnings.
 - `GET /api/projects/:id/scenarios`: immutable scenario records.
 - `POST /api/projects/:id/scenarios`: name, expected revision, waterWidth (each side, meters), roadWidth (full surface width, meters).
+- `DELETE /api/projects/:id`: permanently delete a project and all its scenarios.
+- `DELETE /api/projects/:id/scenarios/:scenarioId`: permanently delete one scenario.
+
+Invalid input returns 400 with a message. Storage failures return 503 and the change is not saved; a failed local disk write is rolled back and later saves continue. Unexpected server errors return 500 without internal detail.
 
 Imports support 2,000 features and 20,000 coordinates, under 5 degrees across and within ±85 degrees latitude. Saved payloads are limited to 2 MB. Hosted analysis is limited to 300 features and 6,000 coordinates, plus at most 100 waterway and boundary features. Simplify larger datasets before import. Files can be up to 5 MB for local exploration, but must fit the smaller saving limit to persist.
 

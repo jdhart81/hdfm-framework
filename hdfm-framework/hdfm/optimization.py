@@ -14,6 +14,66 @@ from .landscape import Landscape
 from .network import build_dendritic_network, DendriticNetwork
 from .entropy import calculate_entropy
 
+#: Square meters per hectare. Patch areas are stored in hectares; corridor
+#: areas (length in m x width in m) are square meters.
+M2_PER_HECTARE = 10_000.0
+
+#: Maximum practical corridor width (meters) used as the solver's upper bound.
+W_MAX_M = 500.0
+
+
+def corridor_area_budget_m2(landscape: Landscape, beta: float) -> float:
+    """Allocation budget beta * sum(patch areas), converted from hectares to m^2."""
+    assert 0 < beta <= 1, f"Beta must be in (0,1], got {beta}"
+    return beta * sum(patch.area for patch in landscape.patches) * M2_PER_HECTARE
+
+
+def _solve_widths(landscape, edges, species_guild, beta, x0, max_iterations,
+                  entropy_kwargs, callback=None):
+    """Solve the width allocation problem and verify the answer independently.
+
+    Returns (widths or None, success, message). Widths are returned only when the
+    solver reports success AND the returned widths satisfy the bounds and the
+    allocation budget within a small tolerance. An infeasible budget is detected
+    before calling the solver.
+    """
+    w_min = species_guild.w_min
+    distances = np.array([landscape.graph[i][j]['distance'] for (i, j) in edges])
+    budget = corridor_area_budget_m2(landscape, beta)
+    minimum_need = float(w_min * distances.sum())
+    if minimum_need > budget:
+        return None, False, (
+            f"Infeasible: corridors at minimum width {w_min:g} m need "
+            f"{minimum_need:,.0f} m^2 but the allocation budget is {budget:,.0f} m^2 "
+            f"(beta={beta:g} of {budget / beta / M2_PER_HECTARE:,.2f} ha)."
+        )
+
+    constraint = LinearConstraint(distances, lb=0, ub=budget)
+    bounds = [(w_min, W_MAX_M) for _ in edges]
+
+    def objective(widths):
+        width_dict = {edge: w for edge, w in zip(edges, widths)}
+        H, _ = calculate_entropy(landscape, edges, corridor_widths=width_dict,
+                                 species_guild=species_guild, **entropy_kwargs)
+        return H
+
+    x0 = np.clip(np.asarray(x0, dtype=float), w_min, W_MAX_M)
+    result = minimize(objective, x0, method='SLSQP', bounds=bounds,
+                      constraints=[constraint], options={'maxiter': max_iterations},
+                      callback=(lambda xk: callback(objective(xk))) if callback else None)
+    if not result.success:
+        return None, False, f"Solver failed: {result.message}"
+
+    widths = {edge: float(w) for edge, w in zip(edges, result.x)}
+    used = float(distances @ result.x)
+    tol = 1e-6 * max(budget, 1.0)
+    if used > budget + tol or np.any(result.x < w_min - 1e-6) or np.any(result.x > W_MAX_M + 1e-6):
+        return None, False, (
+            f"Solver returned widths that violate the constraints "
+            f"(uses {used:,.0f} of {budget:,.0f} m^2)."
+        )
+    return widths, True, "Solved; widths satisfy bounds and allocation budget."
+
 
 @dataclass
 class ClimateScenario:
@@ -86,6 +146,9 @@ class OptimizationResult:
         corridor_schedule: Optional temporal schedule for corridor establishment
         width_schedule: Optional temporal schedule for corridor widths by year
         optimal_widths: Optional dictionary of optimized corridor widths
+        success: False when any solve failed or was infeasible; never treat a
+            result with success=False as a usable plan
+        message: Solver/feasibility status in plain words
     """
     network: DendriticNetwork
     entropy: float
@@ -95,6 +158,8 @@ class OptimizationResult:
     corridor_schedule: Optional[List[List[Tuple[int, int]]]] = None
     width_schedule: Optional[Dict[int, Dict[Tuple[int, int], float]]] = None
     optimal_widths: Optional[Dict[Tuple[int, int], float]] = None
+    success: bool = True
+    message: str = ""
 
 
 class DendriticOptimizer:
@@ -254,76 +319,26 @@ class BackwardsOptimizer:
         initial_widths: Optional[Dict[Tuple[int, int], float]] = None,
         max_iterations: int = 50,
         **entropy_kwargs
-    ) -> Dict[Tuple[int, int], float]:
+    ) -> Tuple[Optional[Dict[Tuple[int, int], float]], bool, str]:
         """
         Optimize corridor widths for a specific time step.
 
-        Args:
-            landscape: Climate-modified landscape for this year
-            edges: Fixed corridor topology
-            initial_widths: Optional starting widths from previous time step
-            max_iterations: Maximum optimization iterations
-            **entropy_kwargs: Parameters for entropy calculation
-
         Returns:
-            Dictionary mapping edges to optimal widths
+            (widths or None, success, message). Widths are None when the budget
+            is infeasible or the solver fails; callers must not substitute
+            defaults silently.
         """
         if self.species_guild is None:
-            # Return default widths if no species guild specified
-            return {edge: 200.0 for edge in edges}
-
-        n_edges = len(edges)
-        if n_edges == 0:
-            return {}
-
-        # Set width bounds
-        w_min = self.species_guild.w_min
-        w_max = 500.0  # Maximum practical width (meters)
-
-        # Initialize widths
-        if initial_widths is None:
-            x0 = np.full(n_edges, self.species_guild.w_crit)
+            return {edge: 200.0 for edge in edges}, True, "No species guild: nominal 200 m widths, not optimized."
+        if not edges:
+            return {}, True, "No corridors."
+        w_crit = self.species_guild.w_crit
+        if initial_widths:
+            x0 = [initial_widths.get(e, initial_widths.get((e[1], e[0]), w_crit)) for e in edges]
         else:
-            x0 = np.array([initial_widths.get(e, initial_widths.get((e[1], e[0]), self.species_guild.w_crit))
-                          for e in edges])
-
-        # Calculate allocation constraint parameters
-        total_area = sum(patch.area for patch in landscape.patches)
-        max_corridor_area = self.beta * total_area
-
-        # Build constraint matrix: sum of (distance * width) <= max_corridor_area
-        distances = np.array([landscape.graph[i][j]['distance'] for (i, j) in edges])
-
-        # Linear constraint: distances @ widths <= max_corridor_area
-        constraint = LinearConstraint(distances, lb=0, ub=max_corridor_area)
-
-        # Bounds on individual widths
-        bounds = [(w_min, w_max) for _ in range(n_edges)]
-
-        # Objective function: minimize entropy
-        def objective(widths):
-            width_dict = {edge: w for edge, w in zip(edges, widths)}
-            H, _ = calculate_entropy(
-                landscape,
-                edges,
-                corridor_widths=width_dict,
-                species_guild=self.species_guild,
-                **entropy_kwargs
-            )
-            return H
-
-        # Optimize
-        result = minimize(
-            objective,
-            x0,
-            method='SLSQP',
-            bounds=bounds,
-            constraints=[constraint],
-            options={'maxiter': max_iterations}
-        )
-
-        # Extract optimal widths
-        return {edge: w for edge, w in zip(edges, result.x)}
+            x0 = [w_crit] * len(edges)
+        return _solve_widths(landscape, edges, self.species_guild, self.beta, x0,
+                             max_iterations, entropy_kwargs)
 
     def optimize(
         self,
@@ -359,6 +374,7 @@ class BackwardsOptimizer:
         networks_by_year = {}
         widths_by_year = {}
         convergence_history = []
+        failures = []
 
         # Start at final year (2100)
         final_year = years[-1]
@@ -369,17 +385,20 @@ class BackwardsOptimizer:
 
         # Optimize widths for final year if enabled
         if self.optimize_widths and self.species_guild is not None:
-            widths_by_year[final_year] = self._optimize_widths_for_year(
+            widths, ok, msg = self._optimize_widths_for_year(
                 final_landscape,
                 final_network.edges,
                 max_iterations=max_iterations,
                 **entropy_kwargs
             )
+            widths_by_year[final_year] = widths
+            if not ok:
+                failures.append(f"{final_year}: {msg}")
             H_final, _ = calculate_entropy(
                 final_landscape,
                 final_network.edges,
-                corridor_widths=widths_by_year[final_year],
-                species_guild=self.species_guild,
+                corridor_widths=widths,
+                species_guild=self.species_guild if widths else None,
                 **entropy_kwargs
             )
         else:
@@ -466,18 +485,21 @@ class BackwardsOptimizer:
             if self.optimize_widths and self.species_guild is not None:
                 # Use widths from next time step as initial values
                 prev_widths = widths_by_year.get(years[i+1], None)
-                widths_by_year[year] = self._optimize_widths_for_year(
+                widths, ok, msg = self._optimize_widths_for_year(
                     landscape_t,
                     current_edges,
                     initial_widths=prev_widths,
                     max_iterations=max_iterations,
                     **entropy_kwargs
                 )
+                widths_by_year[year] = widths
+                if not ok:
+                    failures.append(f"{year}: {msg}")
                 H_t, _ = calculate_entropy(
                     landscape_t,
                     current_edges,
-                    corridor_widths=widths_by_year[year],
-                    species_guild=self.species_guild,
+                    corridor_widths=widths,
+                    species_guild=self.species_guild if widths else None,
                     **entropy_kwargs
                 )
             else:
@@ -493,7 +515,7 @@ class BackwardsOptimizer:
         present_network = networks_by_year[years[0]]
         present_widths = widths_by_year[years[0]]
 
-        if self.optimize_widths and self.species_guild is not None:
+        if self.optimize_widths and self.species_guild is not None and present_widths:
             H_present, components = calculate_entropy(
                 self._modify_landscape_for_climate(years[0]),
                 present_network.edges,
@@ -512,7 +534,9 @@ class BackwardsOptimizer:
             convergence_history=convergence_history,
             corridor_schedule=corridor_schedule,
             width_schedule=widths_by_year,
-            optimal_widths=present_widths
+            optimal_widths=present_widths,
+            success=not failures,
+            message="; ".join(failures) if failures else "All time steps solved."
         )
 
 
@@ -530,7 +554,7 @@ def check_allocation_constraint(
     Where:
     - dᵢⱼ: corridor length (m)
     - wᵢⱼ: corridor width (m)
-    - Aᵢ: patch area (m²)
+    - Aᵢ: patch area (stored in hectares, converted here to m²)
     - β: allocation fraction (typically 0.20-0.30 = 20-30%)
 
     Args:
@@ -540,7 +564,7 @@ def check_allocation_constraint(
         beta: Landscape allocation fraction (default 0.25 = 25%)
 
     Returns:
-        (constraint_satisfied, corridor_area_used, total_area_available)
+        (constraint_satisfied, corridor_area_used_m2, total_patch_area_m2)
 
     Invariants:
     - 0 < β ≤ 1
@@ -548,8 +572,8 @@ def check_allocation_constraint(
     """
     assert 0 < beta <= 1, f"Beta must be in (0,1], got {beta}"
 
-    # Calculate total landscape area
-    total_area = sum(patch.area for patch in landscape.patches)
+    # Patch areas are hectares; corridor areas are m^2.
+    total_area = sum(patch.area for patch in landscape.patches) * M2_PER_HECTARE
 
     # Calculate corridor area used
     corridor_area = 0.0
@@ -627,71 +651,23 @@ class WidthOptimizer:
         Returns:
             OptimizationResult with optimized widths
         """
-        n_edges = len(self.edges)
-
-        # Set width bounds
-        w_min = self.species_guild.w_min
-        w_max = 500.0  # Maximum practical width (meters)
-
-        # Initialize widths
+        w_crit = self.species_guild.w_crit
         if initial_widths is None:
-            # Start at critical width
-            x0 = np.full(n_edges, self.species_guild.w_crit)
+            x0 = [w_crit] * len(self.edges)
         else:
-            x0 = np.array([initial_widths.get(e, self.species_guild.w_crit) for e in self.edges])
+            x0 = [initial_widths.get(e, initial_widths.get((e[1], e[0]), w_crit)) for e in self.edges]
 
-        # Calculate allocation constraint parameters
-        total_area = sum(patch.area for patch in self.landscape.patches)
-        max_corridor_area = self.beta * total_area
+        convergence_history: List[float] = []
+        optimal_widths, ok, message = _solve_widths(
+            self.landscape, self.edges, self.species_guild, self.beta, x0,
+            max_iterations, entropy_kwargs, callback=convergence_history.append)
 
-        # Build constraint matrix: sum of (distance * width) <= max_corridor_area
-        distances = np.array([self.landscape.graph[i][j]['distance'] for (i, j) in self.edges])
-
-        # Linear constraint: distances @ widths <= max_corridor_area
-        constraint = LinearConstraint(distances, lb=0, ub=max_corridor_area)
-
-        # Bounds on individual widths
-        bounds = [(w_min, w_max) for _ in range(n_edges)]
-
-        # Objective function: minimize entropy
-        def objective(widths):
-            width_dict = {edge: w for edge, w in zip(self.edges, widths)}
-            H, _ = calculate_entropy(
-                self.landscape,
-                self.edges,
-                corridor_widths=width_dict,
-                species_guild=self.species_guild,
-                **entropy_kwargs
-            )
-            return H
-
-        # Convergence history
-        convergence_history = []
-
-        def callback(xk):
-            convergence_history.append(objective(xk))
-
-        # Optimize
-        result = minimize(
-            objective,
-            x0,
-            method='SLSQP',
-            bounds=bounds,
-            constraints=[constraint],
-            options={'maxiter': max_iterations},
-            callback=callback
-        )
-
-        # Extract optimal widths
-        optimal_widths = {edge: w for edge, w in zip(self.edges, result.x)}
-
-        # Build result
         network = DendriticNetwork(self.landscape, self.edges)
         H_final, components = calculate_entropy(
             self.landscape,
             self.edges,
             corridor_widths=optimal_widths,
-            species_guild=self.species_guild,
+            species_guild=self.species_guild if optimal_widths else None,
             **entropy_kwargs
         )
 
@@ -701,7 +677,9 @@ class WidthOptimizer:
             entropy_components=components,
             iterations=len(convergence_history),
             convergence_history=convergence_history,
-            corridor_schedule=None  # Store widths in network metadata if needed
+            optimal_widths=optimal_widths,
+            success=ok,
+            message=message
         )
 
 
