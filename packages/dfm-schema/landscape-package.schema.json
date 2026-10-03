@@ -1,0 +1,481 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/landscape-package.schema.json",
+  "title": "DFM Landscape Package v1",
+  "description": "WGS84 GeoJSON layers, parameters and source records exchanged between DFM tools and VergeCommon. Lengths in meters, areas in square meters.",
+  "type": "object",
+  "required": [
+    "dfm_package",
+    "crs",
+    "units",
+    "params",
+    "layers"
+  ],
+  "properties": {
+    "dfm_package": {
+      "const": "1.0"
+    },
+    "name": {
+      "type": "string"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generator": {
+      "type": "string"
+    },
+    "crs": {
+      "const": "EPSG:4326"
+    },
+    "units": {
+      "type": "object",
+      "properties": {
+        "length": {
+          "const": "m"
+        },
+        "area": {
+          "const": "m2"
+        }
+      },
+      "required": [
+        "length",
+        "area"
+      ]
+    },
+    "params": {
+      "type": "object",
+      "required": [
+        "minWidthM",
+        "minWidthSource"
+      ],
+      "properties": {
+        "minWidthM": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "minWidthSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "roadWidthM": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "pinchFraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "license": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "boundary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "parcels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string"
+                  },
+                  "consent": {
+                    "enum": [
+                      "covered",
+                      "none"
+                    ]
+                  },
+                  "consent_ref": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "dfm_id",
+                  "consent"
+                ]
+              }
+            }
+          }
+        },
+        "coreAreas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string",
+                    "pattern": "^[^|]+$"
+                  },
+                  "core_class": {
+                    "enum": [
+                      "old-growth-candidate",
+                      "old-growth-verified",
+                      "riparian-core",
+                      "reserve"
+                    ]
+                  },
+                  "evidence_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "dfm_id",
+                  "core_class"
+                ]
+              }
+            }
+          }
+        },
+        "retained": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "roads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LineString",
+                      "MultiLineString",
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "water": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "crossings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Point"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string"
+                  },
+                  "passage": {
+                    "enum": [
+                      "verified",
+                      "assumed",
+                      "none"
+                    ]
+                  }
+                },
+                "required": [
+                  "passage"
+                ]
+              }
+            }
+          }
+        },
+        "treatments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string"
+                  },
+                  "period": {
+                    "type": "string"
+                  },
+                  "intensity": {
+                    "type": "string"
+                  },
+                  "corridor_permitted": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "dfm_id"
+                ],
+                "if": {
+                  "properties": {
+                    "corridor_permitted": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "corridor_permitted"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "intensity",
+                    "reason"
+                  ],
+                  "properties": {
+                    "intensity": {
+                      "enum": [
+                        "single-tree-selection",
+                        "light-thinning",
+                        "invasive-removal",
+                        "restoration-planting"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

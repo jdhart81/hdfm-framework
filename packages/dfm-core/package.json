@@ -1,0 +1,22 @@
+{
+  "name": "@viridis/dfm-core",
+  "version": "0.1.0",
+  "description": "Pure analysis functions for Dendritic Forest Management: corridor connectivity checks and the DFM Landscape Package.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": ["src", "README.md", "LICENSE"],
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@turf/turf": "7.2.0"
+  },
+  "devDependencies": {
+    "ajv": "8.17.1"
+  },
+  "repository": {"type": "git", "url": "https://github.com/jdhart81/hdfm-framework.git", "directory": "packages/dfm-core"}
+}

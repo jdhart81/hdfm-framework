@@ -1,5 +1,15 @@
 # Releases
 
+## dfm-core 0.1.0 — unreleased
+
+Adds `packages/dfm-core`, the shared analysis package for the DFM workspace and VergeCommon woodland projects, and `packages/dfm-schema`.
+
+- Corridor connectivity check: compares the current state with proposed treatment units and fails when a link between core areas is lost or narrowed below the minimum width, naming the responsible units. Unpermitted treatment overlap with retained habitat also fails. Roads sever corridors except at recorded crossings. Reports pinch points, consent coverage (committed vs proposed habitat), engine version and input checksum.
+- DFM Landscape Package v1 and connectivity-result JSON Schemas, with round-trip tests.
+- 28 tests on fictional fixtures, each tied to a DFM Build Spec invariant or an independent-review finding.
+
+Structural connectivity only; no claims about species movement, genetics or old-growth condition.
+
 ## Web application 0.3.0 — 2026-09-13
 
 Adds the MIT-licensed planning workspace under `web/`: persistent owner-scoped projects, source records, GeoJSON import and drawing, reproducible geometric scenarios, map overlays, reports and self-hosting instructions.

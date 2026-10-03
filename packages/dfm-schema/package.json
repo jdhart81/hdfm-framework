@@ -1,0 +1,11 @@
+{
+  "name": "@viridis/dfm-schema",
+  "version": "0.1.0",
+  "description": "JSON Schemas for the DFM Landscape Package and connectivity check result.",
+  "license": "MIT",
+  "files": ["*.schema.json", "README.md"],
+  "exports": {
+    "./landscape-package": "./landscape-package.schema.json",
+    "./connectivity-result": "./connectivity-result.schema.json"
+  }
+}
