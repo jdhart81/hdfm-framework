@@ -1,10 +1,12 @@
 // The old-growth spine (DFM Build Spec, "Old-growth spine").
 //
-// The spine is the dendritic network of retained forest that follows a landscape's natural
+// The spine is the dendritic network of retained habitat that follows a landscape's natural
 // corridors: streams set its branches and it is widest along the largest rivers (a river network
 // is already a terrain-routed tree); links over ridges, along dry valleys and across saddles
-// close loops. Loops can give a second route around a single disturbance; this module finds where
-// one disturbance would still cut a link. Two functions:
+// close loops. In flat country, links follow swales, escarpments, moraines and shorelines, or
+// land use (rights-of-way, field margins, hedgerows), and stepping stones can join patches
+// (params.gapCrossingM, as in the check). Loops can give a second route around a single
+// disturbance; this module finds where one disturbance would still cut a link. Two functions:
 //
 //   deriveSpine(input)   draft retained-habitat polygons from stream and link lines, for a steward
 //                        to review and save as the retained layer;
@@ -18,17 +20,23 @@
 //       margin, rounded up past the next 5 m, recorded as a default. A width under the minimum plus
 //       the pinch margin warns: the check flags such corridors as pinch points.
 //   SP2 Width never decreases with stream order: a larger river never gets a narrower corridor.
-//   SP3 Streams need an integer stream_order from 1 to 12 and a dfm_id; links need a kind (ridge,
-//       valley or saddle) and a dfm_id; every line is at least 1 m long; width-table keys are whole
-//       numbers. Anything else returns 'incomplete' with reasons, never a thrown error (I7).
+//   SP3 Streams need an integer stream_order from 1 to 12 and a dfm_id; links need a kind from
+//       SPINE_LINK_KINDS and a dfm_id; every line is at least 1 m long; width-table keys are whole
+//       numbers. A link may carry its own width_m with width_source (a right-of-way's width is
+//       fixed by the land), at least the minimum width. Anything else returns 'incomplete' with
+//       reasons, never a thrown error (I7).
 //   SP4 Each derived section records its origin, source line, width and width source, and is
 //       retained habitat only: derivation never assigns a core class (I6). A derived corridor that
 //       overlaps mapped open water warns, for every kind of line.
-//   SP5 Links come only from the connectivity check's rules applied to the derived corridors and
-//       the core areas: roads sever unless a crossing on that road part carries the corridor (I4),
-//       open water is removed, and the minimum width holds (I3). The line graph never adds a link.
+//   SP5 Links come only from the connectivity check's rules applied to the derived corridors, the
+//       retained habitat already mapped (stepping-stone patches, remnants) and the core areas:
+//       roads sever unless a crossing on that road part carries the corridor (I4), open water is
+//       removed, the minimum width holds (I3), and stepping stones join patches only within
+//       params.gapCrossingM (B2). The line graph never adds a link.
 //   SP6 Single points of failure are tested on that same habitat. A disturbance is a disk
-//       params.disturbanceWidthM wide (default: the widest corridor plus 2 m), centered anywhere;
+//       params.disturbanceWidthM wide (default: the widest corridor plus 2 m; with stepping
+//       stones, wide enough to open a gap beyond the crossing distance across that corridor),
+//       centered anywhere;
 //       it may overlap a core but does not remove core habitat. Centers are tested on a grid with
 //       an enlargement that covers every position (src/robust.mjs), so a pair reported robust
 //       cannot be separated by any such disturbance under the check's rules. Each place where a
@@ -47,12 +55,16 @@
 import * as turf from './turf.mjs';
 import {canonicalHashSync} from './hash.mjs';
 import {fc, isPoly, isLine, id, buffer, intersect, areaM2, lineParts} from './geo.mjs';
-import {CROSSING_STATUS, LIMITS, effectiveHabitat, linkedPairs, pairObj} from './connectivity.mjs';
-import {disturbanceModel, searchDisturbances, zones, exactCut} from './robust.mjs';
+import {CROSSING_STATUS, LIMITS, effectiveHabitat, linkedPairs, pairObj, gapOf, validateGap} from './connectivity.mjs';
+import {disturbanceModel, searchDisturbances, zones, exactCut, CHORD_SHORTFALL} from './robust.mjs';
 
-export const SPINE_VERSION = 'dfm-spine-0.1.0';
-/** Kinds of non-stream links in the spine. */
-export const SPINE_LINK_KINDS = ['ridge', 'valley', 'saddle'];
+export const SPINE_VERSION = 'dfm-spine-0.2.0';
+/**
+ * Kinds of non-stream links in the spine. Landforms: ridge, valley, saddle, swale, escarpment,
+ * moraine (and other glacial ridges), shoreline. Land use: right-of-way (road or rail verges),
+ * field-margin, hedgerow. 'planned': a link drawn where neither carries one.
+ */
+export const SPINE_LINK_KINDS = ['ridge', 'valley', 'saddle', 'swale', 'escarpment', 'moraine', 'shoreline', 'right-of-way', 'field-margin', 'hedgerow', 'planned'];
 const MAX_ORDER = 12, DEFAULT_SNAP_M = 5, MAX_SNAP_M = 10, MIN_LINE_M = 1;
 const ATTACH_STEP_M = 5; // spacing of samples used to find where a line enters a core's reach
 
@@ -73,11 +85,11 @@ const featureList = (input, k, errors) => {
 };
 
 /** Shared validation for spine inputs. */
-function validateSpine(input, {needCores = false} = {}) {
+function validateSpine(input, {needCores = false, network = false} = {}) {
   const errors = [], warnings = [];
   if (!input || typeof input !== 'object') return {errors: ['A spine input object is required.'], warnings};
   const layers = {};
-  for (const k of ['streams', 'connectors', 'coreAreas', 'roads', 'crossings', 'water']) layers[k] = featureList(input, k, errors);
+  for (const k of ['streams', 'connectors', 'coreAreas', 'roads', 'crossings', 'water', ...(network ? ['retained'] : [])]) layers[k] = featureList(input, k, errors);
   if (input.params != null && (typeof input.params !== 'object' || Array.isArray(input.params))) errors.push('params must be an object.');
   if (errors.length) return {errors, warnings};
   const p = input.params ?? {};
@@ -86,10 +98,14 @@ function validateSpine(input, {needCores = false} = {}) {
   if (p.pinchFraction != null && (!Number.isFinite(p.pinchFraction) || p.pinchFraction < 0 || p.pinchFraction > 1)) errors.push('params.pinchFraction must be between 0 and 1.');
   if (p.junctionSnapM != null && !(p.junctionSnapM >= 0.1 && p.junctionSnapM <= MAX_SNAP_M)) errors.push(`params.junctionSnapM must be between 0.1 and ${MAX_SNAP_M} m.`);
   if (p.disturbanceWidthM != null && !(Number.isFinite(p.disturbanceWidthM) && p.disturbanceWidthM >= 1 && p.disturbanceWidthM <= 2000)) errors.push('params.disturbanceWidthM must be a width in meters between 1 and 2,000.');
+  validateGap(p, errors);
   const mw = p.minWidthM, pinch = p.pinchFraction ?? 0.1;
 
   const streams = layers.streams, links = layers.connectors;
-  if (!streams.length && !links.length) errors.push('Spine lines are required: streams (with stream_order) and optional connectors over ridges, along valleys or across saddles.');
+  if (!streams.length && !links.length && !(network && layers.retained.length)) errors.push(network
+    ? 'Spine lines or retained habitat are required: streams (with stream_order), connectors such as ridges, swales or rights-of-way, or habitat patches.'
+    : 'Spine lines are required: streams (with stream_order) and optional connectors such as ridges, valleys, swales or rights-of-way.');
+  for (const [i, f] of (layers.retained ?? []).entries()) if (!isPoly(f)) errors.push(`retained[${i}] must be a polygon: retained habitat, such as a stepping-stone patch.`);
   for (const [i, f] of streams.entries()) {
     if (!isLine(f)) { errors.push(`streams[${i}] must be a line.`); continue; }
     if (!id(f) || id(f).includes('|')) errors.push(`streams[${i}] needs properties.dfm_id without a "|" character.`);
@@ -147,6 +163,17 @@ function validateSpine(input, {needCores = false} = {}) {
     if (typeof p.connectorWidthSource !== 'string' || !p.connectorWidthSource.trim()) errors.push('params.connectorWidthSource must record where the connector width comes from.');
     linkWidth = p.connectorWidthM; linkSource = p.connectorWidthSource;
   }
+  // A link's own width (land use often fixes it), checked like the table (SP1).
+  for (const f of links.filter(isLine)) {
+    const w = f.properties?.width_m;
+    if (w == null) continue;
+    const name = id(f) || '(no id)';
+    if (!Number.isFinite(w) || w > 2000) errors.push(`Connector ${name} width_m must be a width in meters up to 2,000.`);
+    else if (Number.isFinite(mw) && w < mw) errors.push(`Connector ${name} is ${w} m wide, narrower than the ${mw} m minimum width; a corridor that narrow cannot carry a link.`);
+    else if (Number.isFinite(mw) && w === mw) warnings.push(`Connector ${name} is exactly the ${mw} m minimum: the check finds no link through a corridor exactly that wide.`);
+    else if (Number.isFinite(marginWidth) && w <= marginWidth) warnings.push(`Connector ${name} is ${w} m wide, within the pinch margin of the minimum: the check will flag it as a pinch point.`);
+    if (typeof f.properties.width_source !== 'string' || !f.properties.width_source.trim()) errors.push(`Connector ${name} has width_m; record width_source too.`);
+  }
 
   for (const [i, f] of layers.water.entries()) if (!isPoly(f)) errors.push(`water[${i}] must be a polygon (buffer stream centerlines into polygons first).`);
   if (p.roadWidthM != null && (!Number.isFinite(p.roadWidthM) || p.roadWidthM < 1 || p.roadWidthM > 100)) errors.push('params.roadWidthM must be between 1 and 100 m.');
@@ -184,9 +211,10 @@ function validateSpine(input, {needCores = false} = {}) {
   return {errors, warnings, table, defaultWidth, widthSource, linkWidth, linkSource};
 }
 
-/** Width and its source for one stream or connector feature. */
+/** Width and its source for one stream or connector feature: a link's own width first. */
 function sectionWidth(f, kind, v) {
   if (kind === 'stream') return {width: v.table ? widthFor(v.table, f.properties.stream_order) : v.defaultWidth, source: v.widthSource};
+  if (f.properties?.width_m != null) return {width: f.properties.width_m, source: f.properties.width_source};
   return {width: v.linkWidth, source: v.linkSource};
 }
 
@@ -242,7 +270,17 @@ export function deriveSpine(input) {
 function frame(features) {
   const [w, s, e, n] = turf.bbox(fc(features));
   const lon0 = (w + e) / 2, lat0 = (s + n) / 2, R = 6371008.8, k = Math.cos(lat0 * Math.PI / 180), d = Math.PI / 180;
-  return {toXY: c => [(c[0] - lon0) * d * R * k, (c[1] - lat0) * d * R], fromXY: ([x, y]) => [lon0 + x / (d * R * k), lat0 + y / (d * R)]};
+  return {lat0, toXY: c => [(c[0] - lon0) * d * R * k, (c[1] - lat0) * d * R], fromXY: ([x, y]) => [lon0 + x / (d * R * k), lat0 + y / (d * R)]};
+}
+
+/**
+ * How far the frame can stretch (scale >= 1) or shrink (kMin <= 1) east-west distances between
+ * latitudes south and north, with the frame centered at lat0.
+ */
+function frameDistortion(lat0, south, north) {
+  const cosAt = lat => Math.cos(lat * Math.PI / 180);
+  const far = Math.max(Math.abs(south), Math.abs(north)), near = south <= 0 && north >= 0 ? 0 : Math.min(Math.abs(south), Math.abs(north));
+  return {scale: Math.max(1, cosAt(lat0) / cosAt(far)), kMin: Math.min(1, cosAt(lat0) / cosAt(near))};
 }
 
 /** Union-find with path halving. */
@@ -265,8 +303,10 @@ const pointAlong = (line, at) => (at <= 0 ? line.geometry.coordinates[0] : turf.
 
 /**
  * Analyze the spine as a network (SP5-SP8).
- * @param {object} input - {streams, connectors?, coreAreas, roads?, crossings?, water?, params:
- *   {minWidthM, minWidthSource, spineWidthByOrderM?, connectorWidthM?, roadWidthM?, junctionSnapM?, disturbanceWidthM?}}
+ * @param {object} input - {streams?, connectors?, retained?, coreAreas, roads?, crossings?, water?,
+ *   params: {minWidthM, minWidthSource, spineWidthByOrderM?, connectorWidthM?, roadWidthM?,
+ *   junctionSnapM?, disturbanceWidthM?, gapCrossingM? + gapCrossingSource}}. retained holds habitat
+ *   already mapped, such as stepping-stone patches; with no lines, set disturbanceWidthM.
  * @param {{cuts?: boolean, cutBudget?: number}} [options] - cuts: false skips the disturbance tests
  *   (fast; robustness is then reported as null, never as true). cutBudget (default 20,000) caps the
  *   number of disturbance positions tested; a search that needs more reports robustness as null.
@@ -279,22 +319,25 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
   catch (e) { return {engine: SPINE_VERSION, inputChecksum: null, status: 'incomplete', reasons: [`Invalid input: ${e.message}`], warnings: []}; }
   const warnings = [];
   try {
-    const v = validateSpine(input, {needCores: true});
+    const v = validateSpine(input, {needCores: true, network: true});
     warnings.push(...v.warnings);
     if (!v.errors.length && input.params.minWidthM < 5) v.errors.push('The network analysis needs params.minWidthM of at least 5 m; a narrower strip is not a forest corridor.');
     if (v.errors.length) return {...base, status: 'incomplete', reasons: v.errors, warnings};
-    const p = input.params, snapM = p.junctionSnapM ?? DEFAULT_SNAP_M, mw = p.minWidthM;
+    const p = input.params, snapM = p.junctionSnapM ?? DEFAULT_SNAP_M, mw = p.minWidthM, gap = gapOf(p);
     const lines = sortedLines(input);
     const cores = (input.coreAreas ?? []).slice().sort(byId);
     const coreIds = cores.map(id);
-    const {toXY, fromXY} = frame([...lines.map(l => l[0]), ...cores]);
+    // Retained habitat already mapped (patches, remnants). Features marked spine are drawn from the lines.
+    const patches = (input.retained ?? []).filter(f => f?.properties?.spine !== true).sort(byId);
+    const {toXY, fromXY, lat0} = frame([...lines.map(l => l[0]), ...cores, ...patches]);
 
-    // SP5: the habitat is the derived spine plus the cores, under the check's own rules.
+    // SP5: the habitat is the derived spine, the retained habitat already mapped (patches,
+    // remnants) and the cores, under the check's own rules.
     const derived = derive(input, v);
     warnings.push(...derived.warnings);
     const checkCores = cores.map(c => ({id: id(c), feature: c}));
-    const {habitat} = effectiveHabitat({...input, retained: derived.features, coreAreas: cores, treatments: []}, [], warnings);
-    const linked = new Set(linkedPairs(habitat, checkCores, mw).pairs);
+    const {habitat, barrier} = effectiveHabitat({...input, retained: [...patches, ...derived.features], coreAreas: cores, treatments: []}, [], warnings);
+    const linked = new Set(linkedPairs(habitat, checkCores, mw, {gapM: gap, barrier}).pairs);
 
     // The line graph: parts, junctions, sections.
     const partsList = [];
@@ -449,21 +492,26 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
     // SP6: one disturbance, centered anywhere, tested on the habitat (src/robust.mjs).
     const widths = derived.features.map(f => f.properties.width_m);
     const widest = widths.length ? Math.max(...widths) : null, narrowest = widths.length ? Math.min(...widths) : null;
-    const disturbanceWidthM = p.disturbanceWidthM ?? (widest != null ? widest + 2 : null), rho = disturbanceWidthM / 2;
+    // Default: the smallest disturbance that cuts the widest corridor (its width plus 2 m) and, with
+    // stepping stones, opens a gap wider than the crossing distance across the corridor's whole
+    // width: radius sqrt((r + gap / 2)^2 + ((widest - minWidth) / 2)^2) - r, plus 1 m.
+    const rHalf = mw / 2;
+    const rhoGap = widest != null && gap ? Math.max(widest / 2 + 1, Math.sqrt((rHalf + gap / 2) ** 2 + ((widest - mw) / 2) ** 2) - rHalf + 1) : null;
+    const disturbanceWidthM = p.disturbanceWidthM ?? (widest == null ? null : gap ? Math.ceil(2 * rhoGap) : widest + 2), rho = disturbanceWidthM / 2;
     // Raster spacing: fine enough for the narrowest corridor, and at most r / 2 so no gap in E can be stepped over.
-    const resolutionM = narrowest != null ? Math.min(2.5, Math.max(0.5, (narrowest - mw) / 6), mw / 4) : null;
+    const resolutionM = Math.min(2.5, mw / 4, narrowest != null ? Math.max(0.5, (narrowest - mw) / 6) : 2.5);
     const failures = [], separated = new Set(), untested = new Set(), failingCenters = [];
     let cutsTested = 0, fineSpacing = null, testedWidths = null, robustnessTested = false;
     if (cuts && linked.size) {
-      if (!Number.isFinite(disturbanceWidthM) || !Number.isFinite(resolutionM)) warnings.push('No corridor could be derived to test, so robustness is not reported.');
+      if (!Number.isFinite(disturbanceWidthM)) warnings.push('No spine line is drawn, so the disturbance width has no default: set params.disturbanceWidthM to test robustness.');
       else {
-        const model = disturbanceModel({habitat, cores: checkCores, minWidthM: mw, resolutionM, toXY});
+        // The frame stretches east-west distances poleward of its center (tested radii grow by scale)
+        // and shrinks them equatorward (stepping-stone joins shrink by kMin), over the habitat's extent.
+        const [, south, , north] = turf.bbox(habitat);
+        const {scale, kMin} = frameDistortion(lat0, Math.min(south, lat0), Math.max(north, lat0));
+        const model = disturbanceModel({habitat, cores: checkCores, minWidthM: mw, resolutionM, toXY, gapM: gap, barrier, distanceFactor: kMin * (1 - CHORD_SHORTFALL)});
         for (const k of linked) if (!model?.baseline.has(k)) { untested.add(k); separated.add(k); }
-        if (untested.size) warnings.push(`${[...untested].join(', ')} ${untested.size === 1 ? 'is' : 'are'} linked by the check through habitat too narrow for the ${resolutionM.toFixed(1)} m disturbance raster, so ${untested.size === 1 ? 'it is' : 'they are'} not reported as robust.`);
-        // The local frame stretches east-west distances away from its center latitude; inflate for the worst case.
-        const [, south, , north] = turf.bbox(fc([...lines.map(l => l[0]), ...cores]));
-        const lat0 = (south + north) / 2, latFar = Math.max(Math.abs(south), Math.abs(north));
-        const scale = Math.max(1, Math.cos(lat0 * Math.PI / 180) / Math.cos(latFar * Math.PI / 180));
+        if (untested.size) warnings.push(`${[...untested].join(', ')} ${untested.size === 1 ? 'is' : 'are'} linked by the check, but the ${resolutionM.toFixed(1)} m disturbance raster cannot confirm ${untested.size === 1 ? 'that link' : 'those links'} (a corridor near the minimum width${gap ? ', or a gap near the crossing distance or a road' : ''}), so ${untested.size === 1 ? 'it is' : 'they are'} not reported as robust.`);
         const search = model ? searchDisturbances(model, {rhoM: rho, minWidthM: mw, pairs: linked, scale, budget: cutBudget}) : null;
         if (search?.exhausted) {
           cutsTested = search.tested;
@@ -485,7 +533,7 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
             let rep = order[0], verified = false;
             for (const cand of tries) {
               cutsTested++;
-              const exactAfter = exactCut({habitat, cores: checkCores, minWidthM: mw, center: fromXY([cand.x, cand.y]), rhoM: rho});
+              const exactAfter = exactCut({habitat, cores: checkCores, minWidthM: mw, center: fromXY([cand.x, cand.y]), rhoM: rho, gapM: gap, barrier});
               if (cand.lost.some(k => !exactAfter.has(k))) { rep = cand; verified = true; break; }
             }
             const location = fromXY([rep.x, rep.y]);
@@ -493,10 +541,12 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
             // Source lines whose corridor the disturbance reaches (whole lines, so a line shorter
             // than the junction distance, which has no section, is still named).
             const nearLines = [...new Set(partsList.filter(x => turf.nearestPointOnLine(x.line, at, {units: 'meters'}).properties.dist <= rho + x.width / 2).map(x => x.sourceId))].sort();
+            const reach = patches.length ? buffer(at, rho) : null;
+            const nearPatches = patches.filter(f => id(f) && turf.booleanIntersects(reach, f)).map(id);
             let extent = 0;
             for (const a of members) for (const b of members) extent = Math.max(extent, Math.hypot(a.x - b.x, a.y - b.y));
             lost.forEach(k => separated.add(k));
-            failures.push({kind: 'zone', location: location.map(v => Math.round(v * 1e7) / 1e7), separates: [...lost].sort().map(pairObj), verified, nearLines, extentM: Math.round(extent + fineSpacing)});
+            failures.push({kind: 'zone', location: location.map(v => Math.round(v * 1e7) / 1e7), separates: [...lost].sort().map(pairObj), verified, nearLines, nearPatches, extentM: Math.round(extent + fineSpacing)});
           }
           failingCenters.push(...search.failures.map(f => [f.x, f.y]));
         }
@@ -506,7 +556,7 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
     // Exposure: spine length whose corridor a separating disturbance overlaps (its center within
     // the disturbance radius plus the corridor half-width, plus the fine grid's half-diagonal).
     const sectionExposed = new Map();
-    if (failingCenters.length) {
+    if (failingCenters.length && sections.length) {
       const reachMax = rho + widest / 2 + fineSpacing;
       const bins = new Map(), bin = (x, y) => `${Math.floor(x / reachMax)},${Math.floor(y / reachMax)}`;
       for (const c of failingCenters) { const k = bin(c[0], c[1]); if (!bins.has(k)) bins.set(k, []); bins.get(k).push(c); }
@@ -536,9 +586,9 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
     const robust = [...linked].filter(k => !separated.has(k)).length;
     const totalLength = sections.reduce((t, s) => t + s.lengthM, 0);
     const exposed = [...sectionExposed.values()].reduce((t, v) => t + v, 0);
-    if (!sections.length) warnings.push(`Every spine line is shorter than the ${snapM} m junction distance, so the network has no sections; exposure is not reported. Check that the lines are drawn at full length.`);
+    if (!sections.length && partsList.length) warnings.push(`Every spine line is shorter than the ${snapM} m junction distance, so the network has no sections; exposure is not reported. Check that the lines are drawn at full length.`);
     for (const g of loose) warnings.push(`Line ${g.source} ends ${g.gapM.toFixed(1)} m from line ${g.other}, beyond the ${snapM} m junction distance; join them if they meet on the ground.`);
-    for (const c of coreIds.filter((_, ci) => !attachments.some(a => a.core === ci))) warnings.push(`Core ${c} is not reached by any spine line.`);
+    if (partsList.length) for (const c of coreIds.filter((_, ci) => !attachments.some(a => a.core === ci))) warnings.push(`Core ${c} is not reached by any spine line.`);
     if (!linked.size) warnings.push('The spine links no pair of cores under the check rules.');
     if (!cuts) warnings.push('Cut tests were skipped, so robustness and single points of failure are not reported.');
 
@@ -559,8 +609,10 @@ export function spineNetwork(input, {cuts = true, cutBudget = 20000} = {}) {
       sections: sections.map(s => ({id: s.id, sourceId: s.sourceId, origin: s.origin, ...(s.order ? {order: s.order} : {}), widthM: s.widthM, lengthM: Math.round(s.lengthM * 10) / 10, ...(s.severedBy ? {severedBy: s.severedBy} : {})})),
       limitations: [
         'Links follow the connectivity check: the corridors derived from these lines, with roads, crossings, open water and the minimum width applied. Run the check on the saved retained layer for a treatment plan.',
-        `Robust means no single disturbance up to ${disturbanceWidthM} m wide, centered anywhere, separates the pair under the check's rules. Disturbances may overlap core areas but do not remove core habitat in this test.`,
-        `Reported failures are places where a disturbance up to ${testedWidths ? testedWidths.fineM : disturbanceWidthM} m wide (the tested width with its safety margin) separates a pair. Those marked verified separate it at ${disturbanceWidthM} m exactly; unverified ones were not confirmed at nominal width and may still be real.`,
+        ...(disturbanceWidthM == null ? ['Robustness was not tested: no disturbance width is set and no spine line gives a default.'] : [
+          `Robust means no single disturbance up to ${disturbanceWidthM} m wide, centered anywhere, separates the pair under the check's rules${gap ? `, stepping stones up to ${gap} m apart included` : ''}. Disturbances may overlap core areas but do not remove core habitat in this test.`,
+          `Reported failures are places where a disturbance up to ${testedWidths ? testedWidths.fineM : disturbanceWidthM} m wide (the tested width with its safety margin) separates a pair. Those marked verified separate it at ${disturbanceWidthM} m exactly; unverified ones were not confirmed at nominal width and may still be real.`,
+        ]),
         'Robust does not mean the corridor resists fire, storm or pests, or that species use it; two disturbances at once are not tested.',
         `Lines join where one ends within ${snapM} m of another; lines that cross mid-way are reported, not joined.`,
       ],

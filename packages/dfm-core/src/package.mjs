@@ -3,8 +3,8 @@
 // a source record per layer. Schema: packages/dfm-schema/landscape-package.schema.json
 export const SCHEMA_VERSION = '1.0';
 export const LAYERS = ['boundary', 'parcels', 'coreAreas', 'retained', 'roads', 'water', 'crossings', 'treatments'];
-/** Spine layers: written only when present, so a package without them is unchanged. */
-export const SPINE_LAYERS = ['streams', 'connectors'];
+/** Spine layers (lines, and exits to the next landscape): written only when present, so a package without them is unchanged. */
+export const SPINE_LAYERS = ['streams', 'connectors', 'exits'];
 
 /** Wrap connectivity inputs as a Landscape Package. */
 export function toLandscapePackage(input, {name, generator = 'dfm-core', sources = {}, created = new Date().toISOString()} = {}) {

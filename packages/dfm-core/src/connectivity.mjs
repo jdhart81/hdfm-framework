@@ -10,7 +10,8 @@
 //   I2  A treatment unit overlapping retained habitat or a core area fails the
 //       check unless it is a permitted light treatment: corridor_permitted, an
 //       intensity from LIGHT_INTENSITIES and a recorded reason. Permitted units
-//       keep habitat in place and are reported as warnings.
+//       keep habitat in place and are reported as warnings. The list holds forest
+//       treatments and the upkeep fire- and grazing-dependent habitats need.
 //   I3  Width is enforced after road surfaces and open water are removed; the
 //       minimum width must carry a recorded source.
 //   I4  Roads sever habitat; a crossing recorded as 'verified' or 'assumed' on a
@@ -24,22 +25,46 @@
 //   I8  Results are deterministic; an input checksum and engine version are
 //       recorded.
 //   I10 Lengths are meters and areas square meters throughout.
+//   B1  No rule depends on a biome label: what differs between forest, grassland and
+//       other biomes is a recorded parameter or property, with its source.
+//   B2  Stepping stones: with params.gapCrossingM = g > 0 (and gapCrossingSource),
+//       pieces of habitat at least the minimum width across link when the gap
+//       between them is at most g without crossing a road (I4: only a recorded crossing
+//       carries a link over a road). Open water and cropland can be crossed. g = 0 or
+//       unset gives exactly the results without it.
 //
 // Method: a minimum-width corridor exists between two cores when a disk of
 // diameter minWidthM can travel from one to the other inside the habitat:
 // the cores (what remains of them) touch the same connected part of the habitat
-// eroded by minWidthM / 2, within that radius.
+// eroded by minWidthM / 2, within that radius. With stepping stones, parts of the
+// eroded habitat within minWidthM + g of each other count as one.
 
 import * as turf from './turf.mjs';
 import {canonicalHashSync} from './hash.mjs';
 import {fc, isPoly, isLine, id, union, intersect, difference, buffer, close, areaM2, meanWidthM, parts} from './geo.mjs';
 
-export const ENGINE_VERSION = 'dfm-connectivity-0.1.0';
+export const ENGINE_VERSION = 'dfm-connectivity-0.2.0';
 export const CORE_CLASSES = ['old-growth-candidate', 'old-growth-verified', 'riparian-core', 'reserve'];
 export const CROSSING_STATUS = ['verified', 'assumed', 'none'];
-/** Treatments that may be permitted inside corridors and cores. Anything else removes habitat. */
-export const LIGHT_INTENSITIES = ['single-tree-selection', 'light-thinning', 'invasive-removal', 'restoration-planting'];
+/**
+ * Treatments that may be permitted inside corridors and cores; anything else removes habitat.
+ * Forest treatments first, then the upkeep that fire- and grazing-dependent habitats (prairie,
+ * savanna, other grassland) need. Each still needs corridor_permitted and a recorded reason.
+ */
+export const LIGHT_INTENSITIES = ['single-tree-selection', 'light-thinning', 'invasive-removal', 'restoration-planting', 'prescribed-burn', 'prescribed-grazing', 'late-season-mowing', 'brush-management'];
 export const LIMITS = {features: 2000, treatments: 100, cores: 50, extentDegrees: 0.5};
+/** Largest gap (m) a stepping-stone link may cross. */
+export const MAX_GAP_M = 1000;
+const hasText = s => typeof s === 'string' && s.trim().length > 0;
+
+/** Validate params.gapCrossingM and its source (B2). Shared by every entry point. */
+export function validateGap(p, errors) {
+  if (p?.gapCrossingM == null) return;
+  if (!(Number.isFinite(p.gapCrossingM) && p.gapCrossingM >= 0 && p.gapCrossingM <= MAX_GAP_M)) errors.push(`params.gapCrossingM must be a distance in meters from 0 to ${MAX_GAP_M.toLocaleString('en-US')}.`);
+  else if (p.gapCrossingM > 0 && !hasText(p.gapCrossingSource)) errors.push('params.gapCrossingSource must record where the gap-crossing distance comes from, such as a dispersal study for the species the corridors serve.');
+}
+/** The stepping-stone gap in meters (0 when unset). */
+export const gapOf = p => (Number.isFinite(p?.gapCrossingM) && p.gapCrossingM > 0 ? p.gapCrossingM : 0);
 /** Validate a connectivity input. Returns {errors, warnings, cores}. */
 export function validateInput(input) {
   const errors = [], warnings = [];
@@ -58,6 +83,7 @@ export function validateInput(input) {
   if (typeof p.minWidthSource !== 'string' || !p.minWidthSource.trim()) errors.push('params.minWidthSource must record where the minimum width comes from.');
   if (p.roadWidthM != null && (!Number.isFinite(p.roadWidthM) || p.roadWidthM < 1 || p.roadWidthM > 100)) errors.push('params.roadWidthM must be between 1 and 100 m.');
   if (p.pinchFraction != null && (!Number.isFinite(p.pinchFraction) || p.pinchFraction < 0 || p.pinchFraction > 1)) errors.push('params.pinchFraction must be between 0 and 1.');
+  validateGap(p, errors);
 
   const polygonsOnly = {coreAreas: 'core areas', retained: 'retained habitat', water: 'open water (buffer stream centerlines into polygons first)', parcels: 'parcels', treatments: 'treatment units'};
   for (const [k, label] of Object.entries(polygonsOnly))
@@ -101,7 +127,7 @@ export function validateInput(input) {
   if (!lonLatOk) errors.push('Coordinates must be WGS84 longitude/latitude (EPSG:4326); reproject projected data first.');
   else if (all.length) {
     const [w, s, e, n] = turf.bbox(fc(all));
-    if (e - w > LIMITS.extentDegrees || n - s > LIMITS.extentDegrees) errors.push(`The landscape spans more than ${LIMITS.extentDegrees}° (about 50 km); this engine is for woodlot-scale extents.`);
+    if (e - w > LIMITS.extentDegrees || n - s > LIMITS.extentDegrees) errors.push(`The landscape spans more than ${LIMITS.extentDegrees}° (about 50 km); this engine is for woodlot, farm and watershed-scale extents.`);
   }
   for (const f of all) if (!turf.booleanValid(f)) { errors.push(`Feature ${id(f) || '(no id)'} has invalid geometry.`); break; }
   return {errors, warnings, cores};
@@ -197,37 +223,80 @@ function roadsAndBridges(input, habitatGross, warnings) {
   return {roads: union(roads.map(r => r.surface).filter(Boolean)), bridges};
 }
 
-/** Build effective habitat for one plan state. Internal: also used by projections on filtered layers. */
+/** Openings narrower than this (m) in the road surface are closed before stepping stones use it. */
+export const BARRIER_CLOSE_M = 1;
+
+/**
+ * Build effective habitat for one plan state. Internal: also used by projections on filtered layers.
+ * `barrier` is the road surface left after recorded crossings, which stepping stones never cross.
+ * With stepping stones it is closed first, so digitizing gaps and touching corners leave no opening.
+ */
 export function effectiveHabitat(input, treatments, warnings) {
   const habitatGross = close(union([...input.retained, ...input.coreAreas]));
-  if (!habitatGross) return {habitat: null, removed: []};
+  if (!habitatGross) return {habitat: null, removed: [], barrier: null};
   const {roads, bridges} = roadsAndBridges(input, habitatGross, warnings);
+  const barrier = roads && gapOf(input.params) > 0 ? buffer(buffer(roads, BARRIER_CLOSE_M), -BARRIER_CLOSE_M) ?? roads : roads;
   // Closing runs once more in every case (roads are at least 1 m wide, so it cannot heal one).
   let habitat = close(union([difference(habitatGross, roads), ...bridges].filter(Boolean)));
   habitat = difference(habitat, union(input.water ?? []));
   const removed = treatments.filter(t => !isPermittedLight(t, warnings));
   if (removed.length) habitat = difference(habitat, union(removed));
-  return {habitat, removed};
+  return {habitat, removed, barrier};
 }
 
 export const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 export const pairObj = k => { const [a, b] = k.split('|'); return {a, b}; };
 
+/** Pieces of `area` that share ground with `seed` (pieces sharing an edge count as one). */
+const piecesTouching = (area, seed) => union(parts(union(parts(area))).filter(piece => turf.booleanIntersects(piece, seed)));
+
 /**
  * Pairs of cores linked by a corridor at least `widthM` wide. Uses what remains of each core.
- * `coreHabitat` (default `habitat`) is where a core's remaining part is measured: projections pass
- * the full habitat so an endpoint core need not itself qualify as old forest to be reached.
+ * Options: `coreHabitat` (default `habitat`) is where a core's remaining part is measured:
+ * projections pass the full habitat so an endpoint core need not itself qualify as old to be
+ * reached. `gapM` > 0 adds stepping stones (B2): each part of the eroded habitat reaches ground
+ * within a = widthM / 2 + gapM / 2 of it along paths that keep widthM / 4 clear of `barrier`
+ * (roads after crossings), and parts whose reaches meet join: habitat at least widthM across,
+ * separated by at most gapM, the gap crossing no road. Near a road the reach grows in fixed steps
+ * of widthM / 4 (the last one shorter), so no step can jump the road, which is at least widthM / 2
+ * wide once kept clear, and a longer gap never loses a link. A path around a road's end is
+ * measured as it bends, each step cutting the corner slightly: there a join can be made up to
+ * about widthM / 4 beyond the limit. Elsewhere buffers draw arcs as chords (16 per quarter
+ * circle), so a join can be missed within 0.12% of the limit, never made beyond it.
  */
-export function linkedPairs(habitat, cores, widthM, coreHabitat = habitat) {
+export function linkedPairs(habitat, cores, widthM, {coreHabitat = habitat, gapM = 0, barrier = null} = {}) {
   const r = widthM / 2;
   const eroded = buffer(habitat, -r);
   const components = parts(eroded);
+  let group = components.map((_, i) => i);
+  if (gapM > 0 && components.length > 1) {
+    const a = r + gapM / 2;
+    const wall = barrier ? buffer(barrier, r / 2) : null, zone = wall ? buffer(wall, a + 1) : null;
+    const reach = components.map(comp => {
+      if (!zone || !turf.booleanIntersects(comp, zone)) return buffer(comp, a);
+      // Far from roads the reach is a plain buffer; near them it grows step by step around the wall:
+      // fixed steps of r / 2, then what is left of a.
+      const far = difference(comp, zone), step = r / 2;
+      let grown = intersect(comp, zone);
+      for (let done = 0; done < a - 1e-9 && grown; done += step) grown = piecesTouching(difference(buffer(grown, Math.min(step, a - done)), wall), grown);
+      return union([comp, grown, far ? buffer(far, a) : null].filter(Boolean));
+    });
+    const box = reach.map(f => (f ? turf.bbox(f) : null));
+    const up = components.map((_, i) => i);
+    const find = i => { while (up[i] !== i) { up[i] = up[up[i]]; i = up[i]; } return i; };
+    for (let a = 0; a < reach.length; a++) for (let b = a + 1; b < reach.length; b++) {
+      const A = box[a], B = box[b];
+      if (!A || !B || A[2] < B[0] || B[2] < A[0] || A[3] < B[1] || B[3] < A[1]) continue;
+      if (find(a) !== find(b) && turf.booleanIntersects(reach[a], reach[b])) up[Math.max(find(a), find(b))] = Math.min(find(a), find(b));
+    }
+    group = components.map((_, i) => find(i));
+  }
   const touch = cores.map(c => {
     // A core counts only while at least half of it remains as habitat.
     const remaining = intersect(c.feature, coreHabitat);
     if (!remaining || areaM2(remaining) < 0.5 * areaM2(c.feature)) return new Set();
     const reach = buffer(remaining, r + 0.5);
-    return new Set(components.map((comp, i) => (turf.booleanIntersects(comp, reach) ? i : -1)).filter(i => i >= 0));
+    return new Set(components.map((comp, i) => (turf.booleanIntersects(comp, reach) ? group[i] : -1)).filter(i => i >= 0));
   });
   const pairs = [];
   for (let a = 0; a < cores.length; a++) for (let b = a + 1; b < cores.length; b++)
@@ -247,7 +316,8 @@ function consentStatus(input) {
 /**
  * Check corridor connectivity for a proposed set of treatment units.
  * @param {object} input - {coreAreas, retained, roads?, water?, crossings?, treatments?, parcels?, params}
- *   params: {minWidthM, minWidthSource, roadWidthM?, pinchFraction? (default 0.1)}
+ *   params: {minWidthM, minWidthSource, roadWidthM?, pinchFraction? (default 0.1),
+ *   gapCrossingM? + gapCrossingSource (stepping stones, B2)}
  *   treatments are the PROPOSED units; the current state is checked without them.
  * Synchronous: safe to call inside a host's synchronous command handler.
  * @returns {object} check result (schema: dfm-schema/connectivity-result.schema.json)
@@ -262,11 +332,11 @@ export function checkConnectivitySync(input) {
   catch (e) { return {...base, status: 'incomplete', reasons: [`Invalid input: ${e.message}`], warnings: []}; }
   if (errors.length) return {...base, status: 'incomplete', reasons: errors, warnings};
   try {
-    const p = input.params, treatments = input.treatments ?? [];
+    const p = input.params, treatments = input.treatments ?? [], gap = gapOf(p);
     const before = effectiveHabitat(input, [], warnings);
     const after = effectiveHabitat(input, treatments, warnings);
-    const linkedBefore = linkedPairs(before.habitat, cores, p.minWidthM);
-    const linkedAfter = linkedPairs(after.habitat, cores, p.minWidthM);
+    const linkedBefore = linkedPairs(before.habitat, cores, p.minWidthM, {gapM: gap, barrier: before.barrier});
+    const linkedAfter = linkedPairs(after.habitat, cores, p.minWidthM, {gapM: gap, barrier: after.barrier});
     const lost = linkedBefore.pairs.filter(k => !linkedAfter.pairs.includes(k));
 
     let lostGeometry = null;
@@ -280,7 +350,7 @@ export function checkConnectivitySync(input) {
       catch { warnings.push('The map of lost corridor could not be drawn for this geometry; the link results are unaffected.'); }
     }
     // Each removed unit is tested alone once; a unit "causes" a lost link if removing it alone breaks that link.
-    const single = lost.length ? new Map(after.removed.map(t => [t, new Set(linkedPairs(effectiveHabitat(input, [t], []).habitat, cores, p.minWidthM).pairs)])) : new Map();
+    const single = lost.length ? new Map(after.removed.map(t => { const e = effectiveHabitat(input, [t], []); return [t, new Set(linkedPairs(e.habitat, cores, p.minWidthM, {gapM: gap, barrier: e.barrier}).pairs)]; })) : new Map();
     const breaks = lost.map(k => {
       const causes = after.removed.filter(t => !single.get(t).has(k)).map(id);
       const near = lostGeometry ?? before.habitat;
@@ -295,11 +365,11 @@ export function checkConnectivitySync(input) {
 
     // Pinch points: links that hold at the minimum width but not with the margin.
     const margin = p.pinchFraction ?? 0.1;
-    const linkedMargin = margin > 0 ? linkedPairs(after.habitat, cores, p.minWidthM * (1 + margin)) : linkedAfter;
+    const linkedMargin = margin > 0 ? linkedPairs(after.habitat, cores, p.minWidthM * (1 + margin), {gapM: gap, barrier: after.barrier}) : linkedAfter;
     const pinched = linkedAfter.pairs.filter(k => !linkedMargin.pairs.includes(k)).map(pairObj);
 
     for (const k of cores.flatMap((c, i) => cores.slice(i + 1).map(d => pairKey(c.id, d.id))))
-      if (!linkedBefore.pairs.includes(k)) warnings.push(`Cores ${k.replace('|', ' and ')} are not linked at ${p.minWidthM} m in the current state.`);
+      if (!linkedBefore.pairs.includes(k)) warnings.push(`Cores ${k.replace('|', ' and ')} are not linked at ${p.minWidthM} m${gap ? ` with stepping stones up to ${gap} m apart` : ''} in the current state.`);
     if (!linkedBefore.pairs.length) warnings.push('No core areas are linked in the current state, so this plan cannot break a link; review the corridor design before relying on a pass.');
 
     const consent = consentStatus(input);
@@ -326,7 +396,9 @@ export function checkConnectivitySync(input) {
         consent.committed && {...consent.committed, properties: {dfm_layer: 'corridor-committed', name: 'Retained habitat with covering consent'}},
       ]),
       limitations: [
-        'Structural connectivity at a minimum width only; not species movement, genetics or verified old-growth condition.',
+        gap
+          ? `Structural connectivity at a minimum width, with stepping stones of habitat at least that wide up to ${gap} m apart (${p.gapCrossingSource}); not species movement, genetics or verified old-growth condition.`
+          : 'Structural connectivity at a minimum width only; not species movement, genetics or verified old-growth condition.',
         'Widths are horizontal, on a spherical Earth (within about 0.5%), after road surfaces and open water are removed; slope and edge effects are not modeled.',
         'Crossing passage is as recorded; assumed crossings need field verification.',
       ],
