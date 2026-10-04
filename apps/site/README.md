@@ -8,7 +8,7 @@ npm test          # builds dist/ and checks links, metadata, privacy and claims
 npm run serve     # preview dist/ at http://127.0.0.1:4300
 ```
 
-Pages live in `src/` with a small front-matter block; `src/partials/` holds the shared header, footer and map illustration. `site.config.json` sets the canonical origin and the pilot contact link.
+Pages live in `src/` with a small front-matter block; `src/partials/` holds the shared header, footer and map illustration. `site.config.json` sets the canonical origin and VergeCommon's address. The site links to VergeCommon's woodland page (`/woodland/`), which says whether woodland projects are open and is the Unbroken Woods pilot contact (`/woodland/#first-woodlot`); it links back here.
 
 ## Hosting
 

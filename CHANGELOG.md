@@ -12,10 +12,11 @@ Adds the old-growth spine to `packages/dfm-core`: the dendritic network of retai
 - Landscape Package: optional `streams` and `connectors` layers and spine, age, consent-year and temperature properties and parameters. Packages without them, and their checksums, are unchanged. New `spine-results.schema.json` in `packages/dfm-schema` (0.2.0).
 - The connectivity check's results are unchanged; malformed layer types now return `incomplete` instead of throwing.
 - 53 new tests (83 in all) on fictional fixtures, including the watershed drawn on dendriticforest.com.
+- Used by VergeCommon v0.10.0, which vendors a tarball byte-identical to `npm pack` of this package. A contract test (`test/vergecommon-contract.test.mjs`) reads the check package a steward downloads from a VergeCommon plan and must reproduce the result and input checksum VergeCommon stored, so a change here cannot silently break plans stored there.
 
 ## Site — unreleased
 
-dendriticforest.com: the home-page map shows the spine mapped along a watershed's rivers, built out woodlot by woodlot in four directions, aging toward old growth and keeping a route to cooler ground as climate lines move upslope. One orchestrated time-lapse that respects reduced motion, four static stages, and a section on the method. The data format page documents the new layers and parameters, and a test keeps it in step with the schema.
+dendriticforest.com: the home-page map shows the spine mapped along a watershed's rivers, built out woodlot by woodlot in four directions, aging toward old growth and keeping a route to cooler ground as climate lines move upslope. One orchestrated time-lapse that respects reduced motion, four static stages, and a section on the method. The data format page documents the new layers and parameters, and a test keeps it in step with the schema. The VergeCommon links go to its woodland page, which says whether woodland projects are open there, and the Unbroken Woods pilot offer goes to that page's first-woodlot contact.
 
 ## Web application 0.6.0 — unreleased
 
