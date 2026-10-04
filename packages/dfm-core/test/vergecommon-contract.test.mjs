@@ -29,7 +29,11 @@ test('a VergeCommon check package is a valid v1 Landscape Package', async () => 
 });
 
 test('dfm-core reproduces the result and input checksum VergeCommon stored', async () => {
-  assert.equal(stored.engine, ENGINE_VERSION, 'the same connectivity engine');
+  // A stored check names the engine that made it. Later engines must give the same result for the
+  // same input (they may name themselves differently), so plans stored in VergeCommon stay
+  // reproducible as dfm-core moves on.
+  assert.match(stored.engine, /^dfm-connectivity-\d+\.\d+\.\d+$/);
+  assert.match(ENGINE_VERSION, /^dfm-connectivity-\d+\.\d+\.\d+$/);
   const input = fromLandscapePackage(pkg);
   assert.equal(canonicalHashSync(input), stored.inputChecksum);
   for (const result of [checkConnectivitySync(input), await checkConnectivity(input)]) {
