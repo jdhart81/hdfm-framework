@@ -66,7 +66,7 @@ section{padding:4.5rem 0 0}
 .map text{font-family:var(--display);font-stretch:75%;font-size:16px;fill:var(--hemlock)}
 .map text.flagged{fill:var(--flag);font-weight:700}
 @media (prefers-reduced-motion:no-preference){
-  .map .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
+  .map .draw{--len:1;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
   .map .late{opacity:0;animation:appear .5s 2.1s forwards}
 }
 @keyframes draw{to{stroke-dashoffset:0}}
@@ -91,7 +91,11 @@ ol.steps li::before{content:counter(step);font-family:var(--display);font-weight
 dl.limits{display:grid;grid-template-columns:minmax(10rem,15rem) 1fr;gap:.75rem 2rem;margin:2rem 0 0;max-width:52rem}
 dl.limits dt{font-family:var(--display);font-weight:650;font-stretch:95%}
 dl.limits dd{margin:0}
-table{border-collapse:collapse;width:100%;max-width:60rem;margin-top:1.5rem;font-size:1rem}
+/* Wide tables scroll inside their own box on narrow screens; words never break mid-word. */
+.table-scroll{overflow-x:auto;max-width:60rem;margin-top:1.5rem}
+.table-scroll:focus-visible{outline:2px solid currentColor;outline-offset:4px}
+table{border-collapse:collapse;width:100%;max-width:60rem;font-size:1rem}
+.table-scroll table.wide{min-width:32rem}
 th,td{text-align:left;vertical-align:top;padding:.75rem 1rem .75rem 0;border-bottom:1px solid var(--rule)}
 th{font-family:var(--display);font-weight:650;font-stretch:95%}
 code{font-size:.92em;background:var(--paper);padding:.05em .3em;border:1px solid var(--rule)}

@@ -1,7 +1,7 @@
 {
   "name": "dendriticforest-site",
   "version": "1.0.0",
-  "description": "Static site for dendriticforest.org and the Unbroken Woods campaign.",
+  "description": "Static site for dendriticforest.com and the Unbroken Woods campaign.",
   "directories": {
     "test": "test"
   },

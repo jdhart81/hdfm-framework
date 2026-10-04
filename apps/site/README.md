@@ -1,6 +1,6 @@
-# dendriticforest.org
+# dendriticforest.com
 
-Static site for Dendritic Forest Management and the **Unbroken Woods** campaign (`/unbroken/`, also reached at unbrokenwoods.org). No runtime JavaScript, no third-party requests; fonts (Archivo, Source Serif 4, SIL OFL) are self-hosted.
+Static site for Dendritic Forest Management and the **Unbroken Woods** campaign (`/unbroken/`). No runtime JavaScript, no third-party requests; fonts (Archivo, Source Serif 4, SIL OFL) are self-hosted.
 
 ```sh
 npm ci
@@ -12,7 +12,7 @@ Pages live in `src/` with a small front-matter block; `src/partials/` holds the 
 
 ## Hosting
 
-Production runs on the VergeCommon server as an unprivileged nginx container (`Dockerfile`, port 8080) on the private `vergecommon` Docker network. VergeCommon's Caddy terminates TLS for dendriticforest.org and redirects unbrokenwoods.org to `/unbroken/`. The deployment runbook is in the VergeCommon repository: `docs/DFM_SITE.md`.
+Production runs on the VergeCommon server as an unprivileged nginx container (`Dockerfile`, port 8080) on the private `vergecommon` Docker network. VergeCommon's Caddy terminates TLS for dendriticforest.com and redirects www.dendriticforest.com to it. The address is set once, in `site.config.json`. The deployment runbook is in the VergeCommon repository: `docs/DFM_SITE.md`.
 
 ## Content rules
 
