@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/landscape-package.schema.json",
   "title": "DFM Landscape Package v1",
-  "description": "WGS84 GeoJSON layers, parameters and source records exchanged between DFM tools and VergeCommon. Lengths in meters, areas in square meters.",
+  "description": "WGS84 GeoJSON layers, parameters and source records exchanged between DFM tools and VergeCommon. Lengths in meters, areas in square meters. Optional spine layers (streams, connectors) and properties for projections are additive: a package without them is unchanged.",
   "type": "object",
   "required": [
     "dfm_package",
@@ -68,6 +68,84 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "spineWidthByOrderM": {
+          "description": "Spine corridor width in meters by stream (Strahler) order; each at least minWidthM and never decreasing with order.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^([1-9]|1[0-2])$"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 2000
+          }
+        },
+        "spineWidthSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "connectorWidthM": {
+          "description": "Width in meters of ridge, valley and saddle links; at least minWidthM.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "connectorWidthSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "junctionSnapM": {
+          "description": "Distance within which a line end joins another line (spine network).",
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10
+        },
+        "ageAsOfYear": {
+          "description": "Year that stand ages and consent are recorded for.",
+          "type": "integer",
+          "minimum": 1800,
+          "maximum": 3000
+        },
+        "oldGrowthAgeYears": {
+          "description": "Stand age at which retained forest counts as old-growth age in projections (age, not condition).",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "oldGrowthAgeSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "milestoneYears": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1800,
+            "maximum": 3000
+          },
+          "maxItems": 12
+        },
+        "coreTempSource": {
+          "description": "Where core temp_c values come from (for example a 30-year climate normal).",
+          "type": "string",
+          "minLength": 1
+        },
+        "climateWarmingC": {
+          "description": "Warming target in degrees C for climate routes.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10
+        },
+        "climateSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disturbanceWidthM": {
+          "description": "Width of the single disturbance the spine network is tested against (default: the widest corridor plus 2 m).",
+          "type": "number",
+          "minimum": 1,
+          "maximum": 2000
         }
       }
     },
@@ -174,6 +252,18 @@
                   },
                   "consent_ref": {
                     "type": "string"
+                  },
+                  "consent_year": {
+                    "description": "Year covering consent began; not after params.ageAsOfYear.",
+                    "type": "integer",
+                    "minimum": 1800,
+                    "maximum": 3000
+                  },
+                  "planned_year": {
+                    "description": "Year a parcel without consent plans to join (projections only).",
+                    "type": "integer",
+                    "minimum": 1800,
+                    "maximum": 3000
                   }
                 },
                 "required": [
@@ -229,6 +319,12 @@
                   },
                   "evidence_id": {
                     "type": "string"
+                  },
+                  "temp_c": {
+                    "description": "Mean temperature of the core in degrees C, from params.coreTempSource.",
+                    "type": "number",
+                    "minimum": -60,
+                    "maximum": 60
                   }
                 },
                 "required": [
@@ -268,7 +364,41 @@
                 }
               },
               "properties": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "stand_age": {
+                    "description": "Stand age in years as of params.ageAsOfYear.",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3000
+                  },
+                  "spine": {
+                    "type": "boolean"
+                  },
+                  "origin": {
+                    "enum": [
+                      "stream",
+                      "ridge",
+                      "valley",
+                      "saddle"
+                    ]
+                  },
+                  "source_id": {
+                    "type": "string"
+                  },
+                  "stream_order": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "width_m": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "width_source": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -474,6 +604,108 @@
               }
             }
           }
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LineString",
+                      "MultiLineString"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string",
+                    "pattern": "^[^|]+$"
+                  },
+                  "stream_order": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  }
+                },
+                "required": [
+                  "dfm_id",
+                  "stream_order"
+                ]
+              }
+            }
+          },
+          "description": "Stream centerlines with Strahler order: the branches of the old-growth spine."
+        },
+        "connectors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LineString",
+                      "MultiLineString"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "dfm_id": {
+                    "type": "string",
+                    "pattern": "^[^|]+$"
+                  },
+                  "kind": {
+                    "enum": [
+                      "ridge",
+                      "valley",
+                      "saddle"
+                    ]
+                  }
+                },
+                "required": [
+                  "dfm_id",
+                  "kind"
+                ]
+              }
+            }
+          },
+          "description": "Spine links over ridges, along dry valleys or across saddles; they close loops."
         }
       }
     }

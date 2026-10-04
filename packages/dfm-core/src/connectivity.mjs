@@ -32,53 +32,27 @@
 
 import * as turf from './turf.mjs';
 import {canonicalHashSync} from './hash.mjs';
+import {fc, isPoly, isLine, id, union, intersect, difference, buffer, close, areaM2, meanWidthM, parts} from './geo.mjs';
 
 export const ENGINE_VERSION = 'dfm-connectivity-0.1.0';
 export const CORE_CLASSES = ['old-growth-candidate', 'old-growth-verified', 'riparian-core', 'reserve'];
 export const CROSSING_STATUS = ['verified', 'assumed', 'none'];
 /** Treatments that may be permitted inside corridors and cores. Anything else removes habitat. */
 export const LIGHT_INTENSITIES = ['single-tree-selection', 'light-thinning', 'invasive-removal', 'restoration-planting'];
-const LIMITS = {features: 2000, treatments: 100, cores: 50, extentDegrees: 0.5};
-/** Seams narrower than 2 * CLOSE_M between adjacent habitat polygons are closed (digitizing gaps). */
-const CLOSE_M = 0.4;
-
-const fc = features => turf.featureCollection(features.filter(Boolean));
-const isPoly = f => f?.geometry && ['Polygon', 'MultiPolygon'].includes(f.geometry.type);
-const isLine = f => f?.geometry && ['LineString', 'MultiLineString'].includes(f.geometry.type);
-const id = f => String(f?.properties?.dfm_id ?? '');
-
-// Polygon clipping can fail on near-coincident edges (e.g. habitat drawn exactly to a road
-// edge). Each operation retries once on a 1e-8 degree grid (about 1 mm), which removes the
-// near-coincidence without changing any width or area materially.
-const snap = f => turf.truncate(f, {precision: 8, coordinates: 2});
-function robust(op, features) {
-  try { return op(fc(features)); } catch (first) {
-    try { return op(fc(features.map(snap))); } catch { throw first; }
-  }
-}
-function union(features) {
-  const polys = features.filter(f => isPoly(f));
-  if (!polys.length) return null;
-  if (polys.length === 1) return turf.feature(structuredClone(polys[0].geometry));
-  return robust(turf.union, polys.map(f => turf.feature(f.geometry)));
-}
-const intersect = (a, b) => (a && b ? robust(turf.intersect, [a, b]) : null);
-const difference = (a, b) => (a && b ? robust(turf.difference, [a, b]) : a);
-const buffer = (f, m) => (f ? turf.buffer(f, m, {units: 'meters', steps: 16}) ?? null : null);
-const close = f => (f ? buffer(buffer(f, CLOSE_M), -CLOSE_M) ?? f : null);
-const areaM2 = f => (f ? turf.area(f) : 0);
-/** Mean width of a polygon, 2 x area / perimeter (meters): small for slivers. */
-const meanWidthM = f => {
-  let perimeter = 0;
-  for (const ring of f.geometry.coordinates) for (let i = 1; i < ring.length; i++) perimeter += turf.rhumbDistance(ring[i - 1], ring[i], {units: 'meters'});
-  return perimeter ? (2 * areaM2(f)) / perimeter : 0;
-};
-const parts = f => (!f ? [] : f.geometry.type === 'Polygon' ? [turf.polygon(f.geometry.coordinates)] : f.geometry.coordinates.map(c => turf.polygon(c)));
-
+export const LIMITS = {features: 2000, treatments: 100, cores: 50, extentDegrees: 0.5};
 /** Validate a connectivity input. Returns {errors, warnings, cores}. */
 export function validateInput(input) {
   const errors = [], warnings = [];
   if (!input || typeof input !== 'object') return {errors: ['A connectivity input object is required.'], warnings, cores: []};
+  // Structure first, so malformed layers are reported in plain words rather than failing later.
+  for (const k of ['coreAreas', 'retained', 'roads', 'water', 'crossings', 'treatments', 'parcels']) {
+    if (input[k] == null) continue;
+    if (!Array.isArray(input[k])) { errors.push(`${k} must be an array of GeoJSON features.`); continue; }
+    for (const [i, f] of input[k].entries())
+      if (!f || typeof f !== 'object' || !f.geometry || !Array.isArray(f.geometry.coordinates)) errors.push(`${k}[${i}] must be a GeoJSON feature with geometry coordinates.`);
+  }
+  if (input.params != null && (typeof input.params !== 'object' || Array.isArray(input.params))) errors.push('params must be an object.');
+  if (errors.length) return {errors, warnings, cores: []};
   const p = input.params ?? {};
   if (!Number.isFinite(p.minWidthM) || p.minWidthM <= 0 || p.minWidthM > 2000) errors.push('params.minWidthM must be a width in meters between 0 and 2,000.');
   if (typeof p.minWidthSource !== 'string' || !p.minWidthSource.trim()) errors.push('params.minWidthSource must record where the minimum width comes from.');
@@ -134,7 +108,7 @@ export function validateInput(input) {
 }
 
 /** Recorded light treatment that may stay inside corridors and cores (I2). */
-function isPermittedLight(f, warnings) {
+export function isPermittedLight(f, warnings) {
   const pr = f.properties ?? {};
   if (pr.corridor_permitted !== true) return false;
   if (!LIGHT_INTENSITIES.includes(pr.intensity) || !pr.reason) {
@@ -145,7 +119,7 @@ function isPermittedLight(f, warnings) {
 }
 
 /** Split roads into single parts so a crossing applies only to the piece it sits on. */
-function roadParts(input) {
+export function roadParts(input) {
   const p = input.params, out = [];
   for (const f of input.roads ?? []) {
     const width = f.properties?.width_m ?? p.roadWidthM ?? null;
@@ -223,9 +197,10 @@ function roadsAndBridges(input, habitatGross, warnings) {
   return {roads: union(roads.map(r => r.surface).filter(Boolean)), bridges};
 }
 
-/** Build effective habitat for one plan state. */
-function effectiveHabitat(input, treatments, warnings) {
+/** Build effective habitat for one plan state. Internal: also used by projections on filtered layers. */
+export function effectiveHabitat(input, treatments, warnings) {
   const habitatGross = close(union([...input.retained, ...input.coreAreas]));
+  if (!habitatGross) return {habitat: null, removed: []};
   const {roads, bridges} = roadsAndBridges(input, habitatGross, warnings);
   // Closing runs once more in every case (roads are at least 1 m wide, so it cannot heal one).
   let habitat = close(union([difference(habitatGross, roads), ...bridges].filter(Boolean)));
@@ -235,17 +210,21 @@ function effectiveHabitat(input, treatments, warnings) {
   return {habitat, removed};
 }
 
-const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
-const pairObj = k => { const [a, b] = k.split('|'); return {a, b}; };
+export const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+export const pairObj = k => { const [a, b] = k.split('|'); return {a, b}; };
 
-/** Pairs of cores linked by a corridor at least `widthM` wide. Uses what remains of each core. */
-function linkedPairs(habitat, cores, widthM) {
+/**
+ * Pairs of cores linked by a corridor at least `widthM` wide. Uses what remains of each core.
+ * `coreHabitat` (default `habitat`) is where a core's remaining part is measured: projections pass
+ * the full habitat so an endpoint core need not itself qualify as old forest to be reached.
+ */
+export function linkedPairs(habitat, cores, widthM, coreHabitat = habitat) {
   const r = widthM / 2;
   const eroded = buffer(habitat, -r);
   const components = parts(eroded);
   const touch = cores.map(c => {
     // A core counts only while at least half of it remains as habitat.
-    const remaining = intersect(c.feature, habitat);
+    const remaining = intersect(c.feature, coreHabitat);
     if (!remaining || areaM2(remaining) < 0.5 * areaM2(c.feature)) return new Set();
     const reach = buffer(remaining, r + 0.5);
     return new Set(components.map((comp, i) => (turf.booleanIntersects(comp, reach) ? i : -1)).filter(i => i >= 0));
@@ -274,8 +253,13 @@ function consentStatus(input) {
  * @returns {object} check result (schema: dfm-schema/connectivity-result.schema.json)
  */
 export function checkConnectivitySync(input) {
-  const {errors, warnings, cores} = validateInput(input);
-  const base = {engine: ENGINE_VERSION, inputChecksum: canonicalHashSync(input ?? null), parameters: input?.params ?? null};
+  let base;
+  try { base = {engine: ENGINE_VERSION, inputChecksum: canonicalHashSync(input ?? null), parameters: input?.params ?? null}; }
+  catch (e) { return {engine: ENGINE_VERSION, inputChecksum: null, parameters: null, status: 'incomplete', reasons: [`Invalid input: ${e.message}`], warnings: []}; }
+  let errors, warnings, cores;
+  // I7: malformed input (wrong types, missing coordinates) is 'incomplete', never a thrown error.
+  try { ({errors, warnings, cores} = validateInput(input)); }
+  catch (e) { return {...base, status: 'incomplete', reasons: [`Invalid input: ${e.message}`], warnings: []}; }
   if (errors.length) return {...base, status: 'incomplete', reasons: errors, warnings};
   try {
     const p = input.params, treatments = input.treatments ?? [];

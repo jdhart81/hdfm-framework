@@ -1,0 +1,107 @@
+<defs>
+<!-- The spine's centerlines, widest on the main stem (stream order 3), then order 2, then headwaters and ridge links. Stroke color comes from whoever uses it. -->
+<g id="spine-{{arg:sfx}}" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path stroke-width="16" d="M238 38 C246 62 262 92 282 112"/>
+<path stroke-width="16" d="M338 28 C330 60 306 92 282 112"/>
+<path stroke-width="22" d="M282 112 C276 150 280 196 288 232"/>
+<path stroke-width="16" d="M78 62 C96 100 122 140 150 168"/>
+<path stroke-width="16" d="M34 188 C72 176 112 170 150 168"/>
+<path stroke-width="22" d="M150 168 C196 178 246 202 288 232"/>
+<path stroke-width="16" d="M476 48 C466 88 446 128 430 160"/>
+<path stroke-width="16" d="M532 182 C498 168 462 160 430 160"/>
+<path stroke-width="22" d="M430 160 C392 200 340 250 300 306"/>
+<path stroke-width="16" d="M52 352 C122 362 230 372 306 398"/>
+<path stroke-width="16" d="M530 362 C460 380 380 418 322 452"/>
+<path stroke-width="30" d="M288 232 C292 258 296 282 300 306 C302 338 302 370 306 398 C310 418 316 436 322 452 C328 472 334 496 338 520"/>
+<path stroke-width="16" d="M251 69 C222 70 196 76 176 82 C150 90 124 100 103 108"/>
+<path stroke-width="16" d="M501 171 C503 210 496 240 490 268 C484 300 480 340 476 379"/>
+</g>
+<!-- Woodlots. Each clip holds one parcel; together they tile the map. -->
+<clipPath id="pc1-{{arg:sfx}}"><polygon points="190,130 385,125 395,325 210,330"/></clipPath>
+<clipPath id="pc2-{{arg:sfx}}"><polygon points="200,0 395,0 385,125 190,130"/></clipPath>
+<clipPath id="pc3-{{arg:sfx}}"><polygon points="210,330 395,325 410,520 215,520"/></clipPath>
+<clipPath id="pc4-{{arg:sfx}}"><polygon points="385,125 560,115 560,330 395,325"/></clipPath>
+<clipPath id="pc5-{{arg:sfx}}"><polygon points="0,120 190,130 210,330 0,335"/></clipPath>
+<clipPath id="pc6-{{arg:sfx}}"><polygon points="395,0 560,0 560,115 385,125"/></clipPath>
+<clipPath id="pc7-{{arg:sfx}}"><polygon points="0,335 210,330 215,520 0,520"/></clipPath>
+<clipPath id="pc8-{{arg:sfx}}"><polygon points="0,0 200,0 190,130 0,120"/></clipPath>
+<clipPath id="pc9-{{arg:sfx}}"><polygon points="395,325 560,330 560,520 410,520"/></clipPath>
+</defs>
+<g class="contours">
+<path d="M0 176 C80 174 160 170 220 164 C246 160 266 152 280 140 C294 152 316 160 350 164 C420 170 500 172 560 172"/>
+<path d="M0 296 C80 292 170 288 236 282 C262 278 280 270 292 256 C304 270 322 278 350 282 C430 290 500 294 560 296"/>
+<path d="M0 446 C90 444 190 440 262 434 C286 432 302 428 311 420 C322 428 340 434 372 438 C440 446 500 450 560 452"/>
+</g>
+<g class="ridges">
+<path d="M150 10 C160 40 170 64 176 82 C186 112 214 158 270 196"/>
+<path d="M412 12 C404 46 396 72 390 96 C376 140 340 200 316 244"/>
+<path d="M8 262 C60 262 120 270 180 284 C220 294 254 308 280 328"/>
+<path d="M552 252 C528 258 506 264 490 268 C450 280 396 308 330 362"/>
+</g>
+<g class="parcels">
+<path d="M200 0 L190 130 L210 330 L215 520"/>
+<path d="M395 0 L385 125 L395 325 L410 520"/>
+<path d="M0 120 L190 130 L385 125 L560 115"/>
+<path d="M0 335 L210 330 L395 325 L560 330"/>
+</g>
+<g class="units">
+<polygon points="222,244 258,240 262,266 226,270"/>
+<polygon points="150,216 188,212 192,240 154,244"/>
+<polygon points="420,214 458,210 462,240 424,244"/>
+<polygon points="90,418 128,414 132,440 94,444"/>
+<polygon points="420,458 458,454 462,482 424,486"/>
+<polygon points="360,384 394,380 398,406 364,410"/>
+</g>
+<use class="spine-mapped" href="#spine-{{arg:sfx}}"/>
+<g class="piece p1" clip-path="url(#pc1-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p2" clip-path="url(#pc2-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p3" clip-path="url(#pc3-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p4" clip-path="url(#pc4-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p5" clip-path="url(#pc5-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p6" clip-path="url(#pc6-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p7" clip-path="url(#pc7-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p8" clip-path="url(#pc8-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<g class="piece p9" clip-path="url(#pc9-{{arg:sfx}})"><use href="#spine-{{arg:sfx}}"/></g>
+<path class="road" d="M0 318 C120 312 220 318 300 326 C390 334 480 326 560 318"/>
+<path class="road-edge" d="M0 318 C120 312 220 318 300 326 C390 334 480 326 560 318"/>
+<g class="rivers">
+<path class="o1" d="M238 38 C246 62 262 92 282 112"/>
+<path class="o1" d="M338 28 C330 60 306 92 282 112"/>
+<path class="o2" d="M282 112 C276 150 280 196 288 232"/>
+<path class="o1" d="M78 62 C96 100 122 140 150 168"/>
+<path class="o1" d="M34 188 C72 176 112 170 150 168"/>
+<path class="o2" d="M150 168 C196 178 246 202 288 232"/>
+<path class="o1" d="M476 48 C466 88 446 128 430 160"/>
+<path class="o1" d="M532 182 C498 168 462 160 430 160"/>
+<path class="o2" d="M430 160 C392 200 340 250 300 306"/>
+<path class="o1" d="M52 352 C122 362 230 372 306 398"/>
+<path class="o1" d="M530 362 C460 380 380 418 322 452"/>
+<path class="o3" d="M288 232 C292 258 296 282 300 306 C302 338 302 370 306 398 C310 418 316 436 322 452 C328 472 334 496 338 520"/>
+</g>
+<circle class="crossing" cx="301" cy="327" r="6"/>
+<circle class="crossing" cx="482" cy="327" r="6"/>
+<g class="cores">
+<polygon points="244,18 322,10 342,40 308,66 250,52"/>
+<polygon points="100,124 146,130 156,158 124,172 98,152"/>
+<polygon points="446,104 494,110 500,142 468,152 444,134"/>
+<polygon points="346,470 392,474 398,506 354,514 340,494"/>
+</g>
+<g class="climate">
+<path class="iso" d="M0 396 C90 392 186 386 254 378 C278 374 296 366 304 352 C312 366 330 374 360 378 C436 388 502 392 560 394"/>
+<g class="later">
+<path class="iso" d="M0 222 C80 218 170 212 238 204 C262 200 278 192 286 178 C294 192 312 200 344 204 C424 214 500 220 560 222"/>
+<path class="iso-arrow" d="M20 378 L20 238 M13 250 L20 238 L27 250"/>
+</g>
+</g>
+<g class="nums">
+<g class="num n1"><circle cx="352" cy="286" r="11"/><text x="352" y="291">1</text></g>
+<g class="num n2"><circle cx="360" cy="66" r="11"/><text x="360" y="71">2</text></g>
+<g class="num n3"><circle cx="240" cy="474" r="11"/><text x="240" y="479">3</text></g>
+<g class="num n4"><circle cx="530" cy="290" r="11"/><text x="530" y="295">4</text></g>
+<g class="num n5"><circle cx="60" cy="236" r="11"/><text x="60" y="241">5</text></g>
+<g class="num n6"><circle cx="512" cy="92" r="11"/><text x="512" y="97">6</text></g>
+<g class="num n7"><circle cx="130" cy="470" r="11"/><text x="130" y="475">7</text></g>
+<g class="num n8"><circle cx="36" cy="96" r="11"/><text x="36" y="101">8</text></g>
+<g class="num n9"><circle cx="488" cy="452" r="11"/><text x="488" y="457">9</text></g>
+</g>
+<g class="compass"><path d="M536 54 L536 30 M530 38 L536 30 L542 38"/><text x="536" y="22">N</text></g>

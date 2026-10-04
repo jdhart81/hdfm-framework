@@ -1,0 +1,653 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/spine-results.schema.json",
+  "title": "DFM old-growth spine results",
+  "description": "Results of deriveSpine, spineNetwork, projectSpine, climateRoutes and buildOutFrontier in @viridis/dfm-core. Each result type is a $defs entry; lengths in meters, areas in square meters.",
+  "$defs": {
+    "pair": {
+      "type": "object",
+      "required": [
+        "a",
+        "b"
+      ],
+      "properties": {
+        "a": {
+          "type": "string"
+        },
+        "b": {
+          "type": "string"
+        }
+      }
+    },
+    "common": {
+      "type": "object",
+      "required": [
+        "engine",
+        "inputChecksum",
+        "status",
+        "reasons",
+        "warnings"
+      ],
+      "properties": {
+        "engine": {
+          "type": "string"
+        },
+        "inputChecksum": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "incomplete"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "derivation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "required": [
+        "features"
+      ],
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "required": [
+                  "dfm_id",
+                  "spine",
+                  "origin",
+                  "source_id",
+                  "width_m",
+                  "width_source"
+                ],
+                "properties": {
+                  "dfm_id": {
+                    "type": "string"
+                  },
+                  "spine": {
+                    "const": true
+                  },
+                  "origin": {
+                    "enum": [
+                      "stream",
+                      "ridge",
+                      "valley",
+                      "saddle"
+                    ]
+                  },
+                  "source_id": {
+                    "type": "string"
+                  },
+                  "stream_order": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "width_m": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "width_source": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "not": {
+                  "required": [
+                    "core_class"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "network": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "summary",
+          "coreLinks",
+          "singlePointsOfFailure",
+          "severed",
+          "sections"
+        ]
+      },
+      "properties": {
+        "summary": {
+          "type": "object",
+          "required": [
+            "sections",
+            "nodes",
+            "cores",
+            "loops",
+            "dendritic",
+            "linkedPairs",
+            "robustPairs",
+            "totalPairs",
+            "rho2",
+            "pFail1",
+            "exposedShare",
+            "lengthM",
+            "loopsThroughCores",
+            "cutsTested",
+            "severedSections",
+            "disturbanceWidthM",
+            "resolutionM"
+          ],
+          "properties": {
+            "loops": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dendritic": {
+              "type": "boolean"
+            },
+            "rho2": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "pFail1": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "exposedShare": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "robustPairs": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "loopsThroughCores": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cutsTested": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "severedSections": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "disturbanceWidthM": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "resolutionM": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "testedWidths": {
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          }
+        },
+        "coreLinks": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/pair"
+              }
+            ],
+            "required": [
+              "robust"
+            ],
+            "properties": {
+              "robust": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "singlePointsOfFailure": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "location",
+              "separates",
+              "verified",
+              "nearLines",
+              "extentM"
+            ],
+            "properties": {
+              "kind": {
+                "const": "zone"
+              },
+              "location": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "separates": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/pair"
+                }
+              },
+              "verified": {
+                "type": "boolean"
+              },
+              "nearLines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "extentM": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "severed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "section",
+              "sourceId",
+              "roads"
+            ],
+            "properties": {
+              "roads": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "sourceId",
+              "origin",
+              "widthM",
+              "lengthM"
+            ]
+          }
+        }
+      }
+    },
+    "projection": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "milestones",
+          "linkedAfter",
+          "assumptions",
+          "parameters"
+        ]
+      },
+      "properties": {
+        "linkedAfter": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pair"
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "year",
+              "committedParcels",
+              "committedLinks",
+              "committedM2",
+              "oldGrowthAgeLinks",
+              "oldGrowthAgeM2",
+              "unknownAgeM2"
+            ],
+            "properties": {
+              "year": {
+                "type": "integer"
+              },
+              "committedParcels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "committedLinks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/pair"
+                }
+              },
+              "committedM2": {
+                "type": "number",
+                "minimum": 0
+              },
+              "oldGrowthAgeLinks": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "$ref": "#/$defs/pair"
+                }
+              },
+              "oldGrowthAgeM2": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "unknownAgeM2": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "climate": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "cores",
+          "flagged",
+          "target",
+          "temperatureSource",
+          "checkStatus"
+        ]
+      },
+      "properties": {
+        "checkStatus": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "warmingC",
+                "source"
+              ]
+            }
+          ]
+        },
+        "cores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "tempC",
+              "status",
+              "coolest",
+              "coolingC"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "route",
+                  "short",
+                  "none",
+                  "coolest",
+                  "unknown"
+                ]
+              },
+              "coolest": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "tempC",
+                      "via"
+                    ],
+                    "properties": {
+                      "via": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "flagged": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "frontier": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "committed",
+          "frontier",
+          "laterParcels"
+        ]
+      },
+      "properties": {
+        "committed": {
+          "type": "object",
+          "required": [
+            "parcels",
+            "spineM2",
+            "mappedSpineM2",
+            "share",
+            "links"
+          ],
+          "properties": {
+            "share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "links": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/pair"
+              }
+            }
+          }
+        },
+        "frontier": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "parcel",
+              "spineM2",
+              "completesLinks"
+            ],
+            "properties": {
+              "direction": {
+                "enum": [
+                  "N",
+                  "NE",
+                  "E",
+                  "SE",
+                  "S",
+                  "SW",
+                  "W",
+                  "NW"
+                ]
+              },
+              "bearingDeg": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 359
+              },
+              "completesLinks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/pair"
+                }
+              }
+            }
+          }
+        },
+        "laterParcels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
