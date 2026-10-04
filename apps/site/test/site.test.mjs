@@ -23,7 +23,10 @@ test('every page has a language, one h1, a title, a description and a canonical 
     assert.equal((h.match(/<h1[\s>]/g) || []).length, 1, name);
     assert.match(h, /<title>[^<]{10,}<\/title>/, name);
     assert.match(h, /<meta name="description" content="[^"]{30,}">/, name);
-    assert.match(h, /<link rel="canonical" href="https:\/\/dendriticforest\.com\//, name);
+    if (name === '404.html') {
+      assert.match(h, /<meta name="robots" content="noindex">/, '404 page is not indexed');
+      assert.doesNotMatch(h, /rel="canonical"/, '404 page has no canonical');
+    } else assert.match(h, /<link rel="canonical" href="https:\/\/dendriticforest\.com\//, name);
   }
 });
 
@@ -82,5 +85,45 @@ test('the site origin comes only from site.config.json and is used in canonicals
   for (const f of await files()) {
     if (!/\.(html|xml|txt)$/.test(f) || f.includes(`${path.sep}fonts${path.sep}`)) continue;
     assert.doesNotMatch(await readFile(f, 'utf8'), /dendriticforest\.org/, path.relative(dist, f));
+  }
+});
+
+test('every in-page and cross-page #fragment points at an element that exists', () => {
+  const ids = page => new Set([...html[page].matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
+  for (const [name, h] of Object.entries(html))
+    for (const [, target, frag] of h.matchAll(/href="([^"#]*)#([^"]+)"/g)) {
+      if (/^https?:/.test(target)) continue;
+      const page = target === '' ? name : path.join(target.replace(/^\//, ''), target.endsWith('/') || target === '' ? 'index.html' : '');
+      assert.ok(html[page], `${name}: ${target}#${frag} names a page that was not built`);
+      assert.ok(ids(page).has(frag), `${name}: #${frag} not found on ${page}`);
+    }
+});
+
+test('every page links to VergeCommon, and nothing promises what is not live yet', async () => {
+  const {vergecommon} = JSON.parse(await readFile(path.join(dist, '..', 'site.config.json'), 'utf8'));
+  for (const [name, h] of Object.entries(html)) {
+    assert.ok(h.includes(`href="${vergecommon}"`), `${name} links to VergeCommon`);
+    // Woodland projects are behind a feature flag in VergeCommon; dfm-core is not on npm yet.
+    assert.doesNotMatch(h, /Start a woodland project/i, name);
+    assert.doesNotMatch(h, /npm install @viridis/i, name);
+    assert.doesNotMatch(h, /with the VergeCommon conservation co-ops/i, name);
+  }
+  assert.match(html['data-format/index.html'], /not on npm yet/);
+  assert.match(html['index.html'], /being tested in VergeCommon/);
+});
+
+test('no inline styles or scripts, which the site CSP would block', () => {
+  for (const [name, h] of Object.entries(html)) {
+    assert.doesNotMatch(h, /\sstyle="/, `${name}: style attribute`);
+    assert.doesNotMatch(h, /<style[\s>]/, `${name}: <style> element`);
+    assert.doesNotMatch(h, /<script[\s>]|\son[a-z]+="/, `${name}: script or event handler`);
+  }
+});
+
+test('every table sits in a keyboard-scrollable, labelled region', () => {
+  for (const [name, h] of Object.entries(html)) {
+    const tables = (h.match(/<table[\s>]/g) || []).length;
+    const wrapped = (h.match(/<div class="table-scroll" role="region" aria-label="[^"]+" tabindex="0">\s*<table/g) || []).length;
+    assert.equal(wrapped, tables, name);
   }
 });

@@ -11,7 +11,8 @@ nav: format
 </section>
 <section>
 <h2>Layers</h2>
-<table>
+<div class="table-scroll" role="region" aria-label="Package layers" tabindex="0">
+<table class="wide">
 <thead><tr><th scope="col">Layer</th><th scope="col">Geometry</th><th scope="col">Properties that matter</th></tr></thead>
 <tbody>
 <tr><td><code>coreAreas</code></td><td>Polygon</td><td><code>dfm_id</code>; <code>core_class</code>: old-growth-candidate, old-growth-verified (needs <code>evidence_id</code>), riparian-core or reserve</td></tr>
@@ -20,9 +21,11 @@ nav: format
 <tr><td><code>water</code></td><td>Polygon</td><td>Open water; buffer stream centerlines into polygons first</td></tr>
 <tr><td><code>crossings</code></td><td>Point</td><td><code>passage</code>: verified, assumed or none</td></tr>
 <tr><td><code>treatments</code></td><td>Polygon</td><td><code>dfm_id</code>, <code>period</code>, <code>intensity</code>; inside a corridor only with <code>corridor_permitted</code>, a light intensity and a <code>reason</code></td></tr>
+<tr><td><code>boundary</code></td><td>Polygon</td><td>Outline of the planning area; carried for reference, not used by the check</td></tr>
 <tr><td><code>parcels</code></td><td>Polygon</td><td><code>consent</code>: covered or none; corridor on covered parcels counts as committed</td></tr>
 </tbody>
 </table>
+</div>
 </section>
 <section>
 <h2>A minimal package</h2>
@@ -39,7 +42,7 @@ nav: format
   "layers": { "coreAreas": [], "retained": [], "roads": [], "water": [],
               "crossings": [], "treatments": [], "parcels": [], "boundary": [] }
 }</code></pre>
-<p>Run the check with the open-source package:</p>
+<p>Run the check with the open-source <a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-core">dfm-core package</a>. It is not on npm yet; install it from the repository until it is published.</p>
 <pre><code>import { checkConnectivity, fromLandscapePackage } from '@viridis/dfm-core';
 const result = await checkConnectivity(fromLandscapePackage(pkg));
 // result.status is 'pass', 'fail' or 'incomplete', with reasons</code></pre>
