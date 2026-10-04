@@ -164,7 +164,7 @@ test('CL1 CL3 climate routes after a passing plan: the warm lowland core has a r
   valid('climate', climate);
   const c = Object.fromEntries(climate.cores.map(x => [x.id, x]));
   assert.equal(c['core-s'].status, 'route');
-  assert.deepEqual(c['core-s'].coolest, {id: 'core-n', tempC: 6, via: ['core-s', 'core-n']});
+  assert.deepEqual(c['core-s'].coolest, {id: 'core-n', tempC: 6, via: ['core-s', 'core-n'], exit: false, toward: null});
   assert.equal(c['core-s'].coolingC, 2.6);
   assert.equal(c['core-n'].status, 'coolest');
   assert.equal(c['core-w'].status, 'short', '1.2 °C cooler is less than the 2 °C target');

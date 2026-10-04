@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/landscape-package.schema.json",
   "title": "DFM Landscape Package v1",
-  "description": "WGS84 GeoJSON layers, parameters and source records exchanged between DFM tools and VergeCommon. Lengths in meters, areas in square meters. Optional spine layers (streams, connectors) and properties for projections are additive: a package without them is unchanged.",
+  "description": "WGS84 GeoJSON layers, parameters and source records exchanged between DFM tools and VergeCommon. Lengths in meters, areas in square meters. Optional spine layers (streams, connectors, exits) and properties for projections are additive: a package without them is unchanged.",
   "type": "object",
   "required": [
     "dfm_package",
@@ -86,7 +86,7 @@
           "minLength": 1
         },
         "connectorWidthM": {
-          "description": "Width in meters of ridge, valley and saddle links; at least minWidthM.",
+          "description": "Width in meters of spine links (connectors) that do not record their own width_m; at least minWidthM.",
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 2000
@@ -102,13 +102,13 @@
           "maximum": 10
         },
         "ageAsOfYear": {
-          "description": "Year that stand ages and consent are recorded for.",
+          "description": "Year that habitat ages and consent are recorded for.",
           "type": "integer",
           "minimum": 1800,
           "maximum": 3000
         },
         "oldGrowthAgeYears": {
-          "description": "Stand age at which retained forest counts as old-growth age in projections (age, not condition).",
+          "description": "Age at which retained habitat counts as old-growth age in projections (age, not condition). Remnants count from the start.",
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 2000
@@ -142,12 +142,43 @@
           "minLength": 1
         },
         "disturbanceWidthM": {
-          "description": "Width of the single disturbance the spine network is tested against (default: the widest corridor plus 2 m).",
+          "description": "Width of the single disturbance the spine network is tested against (default: the widest corridor plus 2 m; with stepping stones, wide enough that a cut across that corridor leaves a gap longer than gapCrossingM).",
           "type": "number",
           "minimum": 1,
           "maximum": 2000
+        },
+        "gapCrossingM": {
+          "description": "Stepping stones: habitat at least minWidthM across, separated by at most this many meters, counts as linked. A gap never crosses a road without a recorded crossing. 0 or absent: corridors only.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "gapCrossingSource": {
+          "description": "Where the gap-crossing distance comes from, such as a dispersal study for the species the corridors serve.",
+          "type": "string",
+          "minLength": 1
         }
-      }
+      },
+      "description": "Parameters with a recorded source for every width, age and temperature that changes a result.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "gapCrossingM": {
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "gapCrossingM"
+            ]
+          },
+          "then": {
+            "required": [
+              "gapCrossingSource"
+            ]
+          }
+        }
+      ]
     },
     "sources": {
       "type": "object",
@@ -325,11 +356,43 @@
                     "type": "number",
                     "minimum": -60,
                     "maximum": 60
+                  },
+                  "stand_age": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 3000
+                  },
+                  "remnant": {
+                    "description": "Never plowed or clear-cut: at old-growth age in every projection year. Needs remnant_source.",
+                    "type": "boolean"
+                  },
+                  "remnant_source": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
                   "dfm_id",
                   "core_class"
+                ],
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "remnant": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "remnant"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "remnant_source"
+                      ]
+                    }
+                  }
                 ]
               }
             }
@@ -367,7 +430,7 @@
                 "type": "object",
                 "properties": {
                   "stand_age": {
-                    "description": "Stand age in years as of params.ageAsOfYear.",
+                    "description": "Years since the habitat was established as of params.ageAsOfYear: a forest stand's age, or years since a prairie was seeded.",
                     "type": "number",
                     "minimum": 0,
                     "maximum": 3000
@@ -380,7 +443,15 @@
                       "stream",
                       "ridge",
                       "valley",
-                      "saddle"
+                      "saddle",
+                      "swale",
+                      "escarpment",
+                      "moraine",
+                      "shoreline",
+                      "right-of-way",
+                      "field-margin",
+                      "hedgerow",
+                      "planned"
                     ]
                   },
                   "source_id": {
@@ -397,8 +468,35 @@
                   },
                   "width_source": {
                     "type": "string"
+                  },
+                  "remnant": {
+                    "description": "Never plowed or clear-cut: at old-growth age in every projection year. Needs remnant_source.",
+                    "type": "boolean"
+                  },
+                  "remnant_source": {
+                    "type": "string",
+                    "minLength": 1
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "remnant": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "remnant"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "remnant_source"
+                      ]
+                    }
+                  }
+                ]
               }
             }
           }
@@ -592,7 +690,11 @@
                         "single-tree-selection",
                         "light-thinning",
                         "invasive-removal",
-                        "restoration-planting"
+                        "restoration-planting",
+                        "prescribed-burn",
+                        "prescribed-grazing",
+                        "late-season-mowing",
+                        "brush-management"
                       ]
                     },
                     "reason": {
@@ -691,21 +793,100 @@
                     "pattern": "^[^|]+$"
                   },
                   "kind": {
+                    "description": "Landforms: ridge, valley, saddle, swale, escarpment, moraine (and other glacial ridges), shoreline. Land use: right-of-way, field-margin, hedgerow. planned: a link drawn where neither carries one.",
                     "enum": [
                       "ridge",
                       "valley",
-                      "saddle"
+                      "saddle",
+                      "swale",
+                      "escarpment",
+                      "moraine",
+                      "shoreline",
+                      "right-of-way",
+                      "field-margin",
+                      "hedgerow",
+                      "planned"
                     ]
+                  },
+                  "width_m": {
+                    "description": "The link's own corridor width, for land use that fixes it (a right-of-way); at least minWidthM.",
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2000
+                  },
+                  "width_source": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
                   "dfm_id",
                   "kind"
-                ]
+                ],
+                "dependentRequired": {
+                  "width_m": [
+                    "width_source"
+                  ]
+                }
               }
             }
           },
-          "description": "Spine links over ridges, along dry valleys or across saddles; they close loops."
+          "description": "Spine links along landforms (ridges, valleys, saddles, swales, escarpments, moraines, shorelines) or land use (rights-of-way, field margins, hedgerows); they close loops."
+        },
+        "exits": {
+          "description": "Where the spine continues into a neighboring landscape (climate routes). Each exit is a polygon on the spine at the landscape edge, with the temperature of the ground it leads to.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "geometry",
+              "properties"
+            ],
+            "properties": {
+              "type": {
+                "const": "Feature"
+              },
+              "geometry": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "Polygon",
+                      "MultiPolygon"
+                    ]
+                  }
+                }
+              },
+              "properties": {
+                "type": "object",
+                "required": [
+                  "dfm_id",
+                  "temp_c"
+                ],
+                "properties": {
+                  "dfm_id": {
+                    "type": "string",
+                    "pattern": "^[^|]+$"
+                  },
+                  "temp_c": {
+                    "description": "Temperature in degrees C of the ground the spine continues into, from params.coreTempSource.",
+                    "type": "number",
+                    "minimum": -60,
+                    "maximum": 60
+                  },
+                  "toward": {
+                    "description": "The neighboring landscape or region the spine continues into.",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
