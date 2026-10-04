@@ -50,27 +50,77 @@ section{padding:4.5rem 0 0}
 .button:hover{color:var(--moss);border-color:var(--moss)}
 .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(1.5rem,4vw,4rem)}
 
-/* The map: the one bold element */
+/* The map: the one bold element. An old-growth spine along rivers and over ridges,
+   built woodlot by woodlot and aging, while a climate line moves upslope. */
 .map{background:var(--paper);border:1px solid var(--rule);padding:clamp(.5rem,1.5vw,1rem)}
 .map figcaption{font-family:var(--display);font-stretch:80%;font-size:.95rem;color:var(--muted);padding:.5rem .25rem 0}
-.map .contour{fill:none;stroke:#dfe4d7;stroke-width:1.2}
-.map .stream{fill:none;stroke:var(--stream);stroke-width:2.2;stroke-linecap:round}
-.map .core{fill:var(--lichen);stroke:var(--moss);stroke-width:1.5}
-.map .corridor{fill:none;stroke:var(--moss);stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round}
-.map .road{fill:none;stroke:#8b7a5a;stroke-width:5;stroke-dasharray:1 0}
-.map .road-edge{fill:none;stroke:var(--paper);stroke-width:2.2;stroke-dasharray:7 6}
-.map .unit{fill:#e9ebe3;stroke:#9aa596;stroke-width:1.2;stroke-dasharray:4 3}
-.map .unit.breaks{fill:rgba(232,51,111,.14);stroke:var(--flag);stroke-width:2;stroke-dasharray:none}
-.map .break{stroke:var(--flag);stroke-width:4;stroke-linecap:round}
-.map .crossing{fill:var(--paper);stroke:var(--hemlock);stroke-width:2}
-.map text{font-family:var(--display);font-stretch:75%;font-size:16px;fill:var(--hemlock)}
-.map text.flagged{fill:var(--flag);font-weight:700}
+.spine-map{--spine-mapped:#dde6d0;--spine-young:#86a86b;--spine-old:#2f553b;--climate:#b07a1e;--river:#3f88b0}
+.spine-map .contours path{fill:none;stroke:#e1e6d9;stroke-width:1.2}
+.spine-map .ridges path{fill:none;stroke:#8f9886;stroke-width:1.9;stroke-dasharray:.1 6;stroke-linecap:round}
+.spine-map .parcels path{fill:none;stroke:#cdd4c3;stroke-width:1}
+.spine-map .units polygon{fill:#eceee6;stroke:#a3ad9f;stroke-width:1.1;stroke-dasharray:4 3}
+.spine-map .spine-mapped{stroke:var(--spine-mapped)}
+.spine-map .piece{stroke:var(--spine-old)}
+.spine-map .road{fill:none;stroke:#8b7a5a;stroke-width:5}
+.spine-map .road-edge{fill:none;stroke:var(--paper);stroke-width:2;stroke-dasharray:7 6}
+.spine-map .rivers path{fill:none;stroke:var(--river);stroke-linecap:round}
+.spine-map .rivers .o1{stroke-width:1.4}
+.spine-map .rivers .o2{stroke-width:2.2}
+.spine-map .rivers .o3{stroke-width:3}
+.spine-map .crossing{fill:var(--paper);stroke:var(--hemlock);stroke-width:2}
+.spine-map .cores polygon{fill:var(--lichen);stroke:var(--moss);stroke-width:1.5}
+.spine-map .iso{fill:none;stroke:var(--climate);stroke-width:2;stroke-dasharray:7 5}
+.spine-map .iso-arrow{fill:none;stroke:var(--climate);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spine-map .compass path{fill:none;stroke:var(--hemlock);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.spine-map text{font-family:var(--display);font-stretch:80%;font-size:15px;fill:var(--hemlock);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.spine-map .num circle{fill:var(--moss);stroke:var(--paper);stroke-width:2}
+.spine-map .num text{fill:var(--paper);stroke:none;font-weight:700;font-size:14px;text-anchor:middle}
+.spine-map .compass text{text-anchor:middle;font-weight:700}
+.spine-map .climate-label{fill:#7a520f}
+.spine-map .yr{font-size:22px;font-weight:750;font-stretch:100%;opacity:0}
+.spine-map .yr.final{opacity:1}
+/* The same map at four stages, for the spine section */
+.spine-panel{display:block;width:100%;height:auto;background:var(--paper);border:1px solid var(--rule)}
+.spine-panel .nums,.spine-panel .compass{display:none}
+.stage-a .piece,.stage-a .climate,.stage-b .climate,.stage-c .climate{display:none}
+.stage-b .p6,.stage-b .p7,.stage-b .p8,.stage-b .p9{display:none}
+.stage-b .piece{stroke:var(--spine-young)}
+/* One orchestrated sequence, once, on the hero map: mapped, then woodlots join in order,
+   then the spine ages and the climate line moves. Without it, the final frame shows. */
 @media (prefers-reduced-motion:no-preference){
-  .map .draw{--len:1;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
-  .map .late{opacity:0;animation:appear .5s 2.1s forwards}
+  .spine-hero .piece{animation:join .5s var(--t) both,age 1.6s 7s both}
+  .spine-hero .num circle{animation:num-fill .4s var(--t) both}
+  .spine-hero .num text{animation:num-text .4s var(--t) both}
+  .spine-hero .p1,.spine-hero .n1{--t:1.4s}
+  .spine-hero .p2,.spine-hero .n2{--t:2.2s}
+  .spine-hero .p3,.spine-hero .n3{--t:2.8s}
+  .spine-hero .p4,.spine-hero .n4{--t:3.4s}
+  .spine-hero .p5,.spine-hero .n5{--t:4s}
+  .spine-hero .p6,.spine-hero .n6{--t:4.6s}
+  .spine-hero .p7,.spine-hero .n7{--t:5.2s}
+  .spine-hero .p8,.spine-hero .n8{--t:5.8s}
+  .spine-hero .p9,.spine-hero .n9{--t:6.4s}
+  .spine-hero .yr0{animation:flash 1.6s 0s both}
+  .spine-hero .yr1{animation:flash 1.4s 1.6s both}
+  .spine-hero .yr2{animation:flash 2s 3s both}
+  .spine-hero .yr3{animation:flash 2s 5s both}
+  .spine-hero .yr.final{animation:show .4s 7s both}
+  .spine-hero .later{animation:show .8s 8.2s both}
 }
-@keyframes draw{to{stroke-dashoffset:0}}
-@keyframes appear{to{opacity:1}}
+@keyframes join{from{opacity:0}to{opacity:1}}
+@keyframes age{from{stroke:var(--spine-young)}to{stroke:var(--spine-old)}}
+@keyframes num-fill{from{fill:var(--paper);stroke:var(--moss)}to{fill:var(--moss);stroke:var(--paper)}}
+@keyframes num-text{from{fill:var(--hemlock)}to{fill:var(--paper)}}
+@keyframes flash{0%,100%{opacity:0}8%,92%{opacity:1}}
+@keyframes show{from{opacity:0}to{opacity:1}}
+
+/* The spine in four stages (a real sequence in time) */
+.spine-steps{list-style:none;padding:0;margin:2rem 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.75rem}
+.spine-steps li{max-width:none}
+.spine-steps h3{margin:.9rem 0 .4rem}
+.spine-steps p{margin:0;font-size:1rem;line-height:1.6}
+@media (max-width:1100px){.spine-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.spine-steps{grid-template-columns:1fr}}
 
 /* Results: three states of a check */
 .states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin-top:2rem}

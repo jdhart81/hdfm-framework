@@ -127,3 +127,48 @@ test('every table sits in a keyboard-scrollable, labelled region', () => {
     assert.equal(wrapped, tables, name);
   }
 });
+
+test('every id on a page is unique, including the reused spine geometry', () => {
+  for (const [name, h] of Object.entries(html)) {
+    const ids = [...h.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+    const dupes = ids.filter((x, i) => ids.indexOf(x) !== i);
+    assert.deepEqual(dupes, [], `${name} repeats ${dupes.join(', ')}`);
+    for (const [, ref] of h.matchAll(/(?:href|url\()"?#([\w-]+)/g)) assert.ok(ids.includes(ref), `${name}: #${ref} has no target`);
+  }
+});
+
+test('the spine section shows four stages in time order, decorative panels hidden from screen readers', () => {
+  const h = html['index.html'];
+  const section = h.slice(h.indexOf('<section id="spine">'), h.indexOf('</section>', h.indexOf('<section id="spine">')));
+  assert.deepEqual([...section.matchAll(/class="spine-map spine-panel stage-([a-d])"/g)].map(m => m[1]), ['a', 'b', 'c', 'd']);
+  assert.equal((section.match(/aria-hidden="true" focusable="false"/g) || []).length, 4);
+  assert.deepEqual([...section.matchAll(/<h3>([^<]+)<\/h3>/g)].map(m => m[1]), ['Map it whole', 'Build it piece by piece', 'Let it grow old', 'Plan for change']);
+  assert.match(section, /Age is not condition/);
+});
+
+test('the hero map plays its sequence only for people who allow motion, and its final frame tells the whole story', async () => {
+  const css = await readFile(path.join(dist, 'styles.css'), 'utf8');
+  const motion = css.slice(css.indexOf('@media (prefers-reduced-motion:no-preference){'));
+  assert.match(motion, /^@media \(prefers-reduced-motion:no-preference\)\{[^@]*\.spine-hero \.piece\{animation/);
+  // Outside the motion block nothing is hidden for good: pieces, numbers and the later climate line show by default.
+  const still = css.slice(0, css.indexOf('@media (prefers-reduced-motion:no-preference){'));
+  assert.doesNotMatch(still, /\.spine-hero[^{]*\{[^}]*(?:opacity:0|display:none)/);
+  assert.match(still, /\.spine-map \.yr\.final\{opacity:1\}/);
+  const hero = html['index.html'];
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9]) assert.match(hero, new RegExp(`class="piece p${n}" clip-path="url\\(#pc${n}-hero\\)"`));
+});
+
+test('the data format page documents every layer and parameter in the package schema', async () => {
+  const schema = JSON.parse(await readFile(path.join(dist, '..', '..', '..', 'packages', 'dfm-schema', 'landscape-package.schema.json'), 'utf8'));
+  const page = html['data-format/index.html'];
+  for (const layer of Object.keys(schema.properties.layers.properties)) assert.ok(page.includes(`<code>${layer}</code>`), `layer ${layer}`);
+  for (const param of Object.keys(schema.properties.params.properties)) assert.ok(page.includes(`<code>${param}</code>`), `parameter ${param}`);
+});
+
+test('the spine section claims only what the engine tests', () => {
+  const home = html['index.html'];
+  // Loops are tested for single points of failure; the page must not promise that a loop always gives a way around.
+  assert.doesNotMatch(home, /second way around/i);
+  assert.match(home, /shows where one disturbance/);
+  assert.match(home, /Age is not condition/);
+});

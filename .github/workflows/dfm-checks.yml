@@ -19,10 +19,14 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Vendored dfm-core matches packages/dfm-core
         run: |
+          # The version comes from packages/dfm-core, so a release bump cannot skip this check.
+          V=$(node -p "require('../packages/dfm-core/package.json').version")
+          test -f "vendor/viridis-dfm-core-$V.tgz" || { echo "web/vendor has no dfm-core $V tarball"; exit 1; }
+          grep -q "file:vendor/viridis-dfm-core-$V.tgz" package.json || { echo "web/package.json does not use dfm-core $V"; exit 1; }
           mkdir -p /tmp/vendored /tmp/packed
-          tar -xzf vendor/viridis-dfm-core-0.1.0.tgz -C /tmp/vendored
+          tar -xzf "vendor/viridis-dfm-core-$V.tgz" -C /tmp/vendored
           (cd ../packages/dfm-core && npm pack --pack-destination /tmp >/dev/null)
-          tar -xzf /tmp/viridis-dfm-core-0.1.0.tgz -C /tmp/packed
+          tar -xzf "/tmp/viridis-dfm-core-$V.tgz" -C /tmp/packed
           diff -r /tmp/vendored /tmp/packed
       - run: npm ci
       - run: npm test

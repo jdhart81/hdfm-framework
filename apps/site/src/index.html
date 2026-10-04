@@ -8,13 +8,24 @@ nav: home
 <section class="hero">
 <div>
 <h1>Cut the woods. Keep them connected.</h1>
-<p class="lede">Dendritic Forest Management checks a harvest plan against the corridors that link your old-growth candidates, stream cores and reserves. If a unit breaks a link, the check names the unit and draws the break on the map before anyone starts a saw.</p>
+<p class="lede">Dendritic Forest Management maps an old-growth spine along the rivers, valleys and ridges of a working landscape, then checks every harvest plan against it. If a unit would break a link, the check names the unit and draws the break on the map before anyone starts a saw.</p>
 <div class="actions">
 <a class="button primary" href="#use">Check a harvest plan</a>
 <a class="button" href="/unbroken/">Join Unbroken Woods</a>
 </div>
 </div>
 <!--#include map.svg.html-->
+</section>
+
+<section id="spine">
+<h2>The old-growth spine</h2>
+<p class="lede">Rivers, valleys and ridges are a landscape's arteries. Dendritic Forest Management draws the forest along them as one branching spine, wider where the rivers are larger, and keeps it standing while the woods around it are worked. Left standing, the spine grows old.</p>
+<ol class="spine-steps">
+<li><!--#include spine-panel.svg.html stage=a--><h3>Map it whole</h3><p>Start from the water: streams set the branches, and larger rivers get wider corridors. Links over ridges and saddles close loops. The engine shows where one disturbance, such as a patch of blowdown or a new road crossing, would still cut a link, so the next loop goes where it is needed. The whole watershed is drawn before any one woodlot commits.</p></li>
+<li><!--#include spine-panel.svg.html stage=b--><h3>Build it piece by piece</h3><p>Each woodlot that joins commits its stretch of the spine, and every later harvest plan is checked against it. The spine grows out from the first woodlot, north, south, east and west, toward the neighbor whose land would complete the next link.</p></li>
+<li><!--#include spine-panel.svg.html stage=c--><h3>Let it grow old</h3><p>Retained forest keeps aging. With each stand's age on record, the spine can be projected forward: which links run through forest old enough to develop old-growth structure in 25, 50 or 100 years. Age is not condition; calling a stand old growth still takes field evidence.</p></li>
+<li><!--#include spine-panel.svg.html stage=d--><h3>Plan for change</h3><p>As the climate warms, the conditions many species need move north and upslope. A spine that runs from warm valley floors to cool headwaters keeps a mapped route open toward cooler ground. The engine flags core areas with no linked route to a core cool enough for the warming you plan for.</p></li>
+</ol>
 </section>
 
 <section id="check">
@@ -54,6 +65,7 @@ nav: home
 <dt>It establishes</dt><dd>That mapped retained forest of at least the minimum width connects the same core areas after the plan as before, given the layers and crossings as recorded.</dd>
 <dt>It does not establish</dt><dd>That wildlife moves through the corridor, that populations stay genetically viable, that a stand is old growth, or that a plan meets any regulation. Those need field evidence and qualified review.</dd>
 <dt>Old growth</dt><dd>Mapping alone makes a stand an old-growth candidate. Calling it old growth requires field evidence of its structure, reviewed by someone other than the person who mapped it.</dd>
+<dt>Time and climate</dt><dd>Projections use stand ages and join years as recorded and assume no fire, storm or new road; climate routes use the temperatures you supply. Neither predicts what species will do.</dd>
 <dt>Distances</dt><dd>Horizontal, on a spherical Earth, within about half a percent. Slope and edge effects are not modeled.</dd>
 </dl>
 </section>

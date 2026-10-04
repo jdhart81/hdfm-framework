@@ -12,6 +12,24 @@ const read = f => readFile(path.join(src, f), 'utf8');
 const [head, foot] = await Promise.all([read('partials/head.html'), read('partials/foot.html')]);
 const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
+/**
+ * Expand <!--#include name.html key=value ...--> directives, recursively (depth <= 3).
+ * Arguments replace {{arg:key}} inside the included partial before its own includes
+ * expand, so one partial can be included several times with unique IDs.
+ */
+async function expand(text, depth = 0) {
+  if (depth > 3) throw new Error('Includes nest more than 3 deep.');
+  let out = '', last = 0;
+  for (const m of text.matchAll(/<!--#include ([\w.-]+)((?: [\w-]+=[\w-]+)*)-->/g)) {
+    let part = await read('partials/' + m[1]);
+    for (const [, k, v] of m[2].matchAll(/ ([\w-]+)=([\w-]+)/g)) part = part.replaceAll(`{{arg:${k}}}`, v);
+    if (part.includes('{{arg:')) throw new Error(`${m[1]}: an {{arg:...}} placeholder has no value in this include.`);
+    out += text.slice(last, m.index) + await expand(part, depth + 1);
+    last = m.index + m[0].length;
+  }
+  return out + text.slice(last);
+}
+
 async function pages(dir = src, rel = '') {
   const out = [];
   for (const e of await readdir(dir, {withFileTypes: true})) {
@@ -30,8 +48,7 @@ for (const page of await pages()) {
   const m = raw.match(/^---\n([\s\S]*?)\n---\n/);
   if (!m) throw new Error(`${page}: missing front matter`);
   const meta = Object.fromEntries(m[1].split('\n').map(l => [l.slice(0, l.indexOf(':')).trim(), l.slice(l.indexOf(':') + 1).trim()]));
-  let body = raw.slice(m[0].length);
-  for (const [, name] of body.matchAll(/<!--#include ([\w.-]+)-->/g)) body = body.replace(`<!--#include ${name}-->`, await read('partials/' + name));
+  const body = await expand(raw.slice(m[0].length));
   const nav = k => (meta.nav === k ? ' aria-current="page"' : '');
   const html = (head + body + foot)
     .replaceAll('{{title}}', esc(meta.title)).replaceAll('{{description}}', esc(meta.description)).replaceAll('{{path}}', meta.path)
