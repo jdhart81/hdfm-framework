@@ -456,6 +456,29 @@ test('SP6 the oracle agrees with reported failures: a verified zone separates it
   }
 });
 
+test('SP6 review: a corridor pinched just under the minimum width is no route, wherever the raster cells fall', () => {
+  // Route A narrows to 19.8 m at two notches (minimum 20 m); route B is a detour, so one cut on B separates the cores.
+  for (const dx of [1.0, 1.25]) {
+    const a = (x, y) => pt(x + dx, y);
+    const routeA = {type: 'Feature', geometry: {type: 'Polygon', coordinates: [[a(-15, -200), a(15, -200), a(15, -8), a(9.9, 0), a(15, 8), a(15, 200), a(-15, 200), a(-15, 8), a(-9.9, 0), a(-15, -8), a(-15, -200)]]}, properties: {dfm_id: 'route-a'}};
+    const input = {
+      coreAreas: [core('core-s', -100, -300, 100, -200), core('core-n', -100, 200, 100, 300)],
+      retained: [routeA, {type: 'Feature', geometry: rect(100, -300, 160, 300), properties: {dfm_id: 'route-b'}}],
+      params: {minWidthM: 20, minWidthSource: 'Test value', disturbanceWidthM: 80},
+    };
+    const r = spineNetwork(input);
+    assert.equal(r.status, 'ok', r.reasons.join(' '));
+    assert.deepEqual(r.coreLinks.map(x => x.robust), [false], `route A offset ${dx} m`);
+  }
+});
+
+test('SP5 review: spine features saved in the retained layer are drawn from the lines, not counted again', () => {
+  const input = yShape({link: 'mid'});
+  const saved = {...input, retained: deriveSpine(input).features};
+  const strip = r => ({...r, inputChecksum: null});
+  assert.equal(canonicalJSON(strip(spineNetwork(saved))), canonicalJSON(strip(spineNetwork(input))));
+});
+
 test('Landscape Package: spine layers round-trip, and a package without them reads exactly as before', () => {
   const input = {...watershed(), retained: withAges(derived.features)};
   const pkg = toLandscapePackage(input, {created: '2026-10-04T00:00:00Z'});

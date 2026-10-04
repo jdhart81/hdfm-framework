@@ -179,6 +179,22 @@ test('the data format page documents every layer and parameter in the package sc
   const page = html['data-format/index.html'];
   for (const layer of Object.keys(schema.properties.layers.properties)) assert.ok(page.includes(`<code>${layer}</code>`), `layer ${layer}`);
   for (const param of Object.keys(schema.properties.params.properties)) assert.ok(page.includes(`<code>${param}</code>`), `parameter ${param}`);
+  // Link kinds and permitted light treatments, so a new kind or treatment cannot go undocumented.
+  const {layers} = schema.properties;
+  const row = name => page.slice(page.indexOf(`<tr><td><code>${name}</code>`), page.indexOf('</tr>', page.indexOf(`<tr><td><code>${name}</code>`)));
+  for (const kind of layers.properties.connectors.items.properties.properties.properties.kind.enum) assert.match(row('connectors'), new RegExp(`\\b${kind}\\b`), `connector kind ${kind}`);
+  for (const intensity of layers.properties.treatments.items.properties.properties.then.properties.intensity.enum) assert.ok(row('treatments').includes(intensity), `light treatment ${intensity}`);
+});
+
+test('the biome section says what the engine does on flat land, and keeps roads as barriers', () => {
+  const h = html['index.html'];
+  const section = h.slice(h.indexOf('<section id="biomes">'), h.indexOf('</section>', h.indexOf('<section id="biomes">')));
+  assert.ok(section.length > 100, 'the home page has a biome section');
+  assert.deepEqual([...section.matchAll(/<dt>([^<]+)<\/dt>/g)].map(m => m[1]), ['Stepping stones', 'Links on flat land', 'Never-plowed ground', 'Fire and grazing', 'Beyond the map']);
+  // Stepping stones never cross a road (B2), upkeep needs a recorded permission (B6), exits end routes (CL4).
+  assert.match(section, /never crosses a road without a recorded crossing/);
+  assert.match(section, /recorded permission and reason/);
+  assert.match(section, /climate routes can end there/);
 });
 
 test('the spine section claims only what the engine tests', () => {

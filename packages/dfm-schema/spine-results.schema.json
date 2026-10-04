@@ -118,7 +118,15 @@
                       "stream",
                       "ridge",
                       "valley",
-                      "saddle"
+                      "saddle",
+                      "swale",
+                      "escarpment",
+                      "moraine",
+                      "shoreline",
+                      "right-of-way",
+                      "field-margin",
+                      "hedgerow",
+                      "planned"
                     ]
                   },
                   "source_id": {
@@ -298,6 +306,7 @@
               "separates",
               "verified",
               "nearLines",
+              "nearPatches",
               "extentM"
             ],
             "properties": {
@@ -323,6 +332,13 @@
                 "type": "boolean"
               },
               "nearLines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "nearPatches": {
+                "description": "Retained patches (by dfm_id) the disturbance overlaps.",
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -481,7 +497,8 @@
           "flagged",
           "target",
           "temperatureSource",
-          "checkStatus"
+          "checkStatus",
+          "exits"
         ]
       },
       "properties": {
@@ -536,7 +553,9 @@
                     "required": [
                       "id",
                       "tempC",
-                      "via"
+                      "via",
+                      "exit",
+                      "toward"
                     ],
                     "properties": {
                       "via": {
@@ -545,6 +564,16 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "exit": {
+                        "description": "True when the route ends at an exit to the next landscape.",
+                        "type": "boolean"
+                      },
+                      "toward": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     }
                   }
@@ -557,6 +586,38 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "exits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "tempC",
+              "toward",
+              "linkedCores"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "tempC": {
+                "type": "number"
+              },
+              "toward": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "linkedCores": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
