@@ -109,7 +109,17 @@ test('every page links to VergeCommon, and nothing promises what is not live yet
     assert.doesNotMatch(h, /with the VergeCommon conservation co-ops/i, name);
   }
   assert.match(html['data-format/index.html'], /not on npm yet/);
-  assert.match(html['index.html'], /being tested in VergeCommon/);
+  // Whether woodland projects are open is said in one place, VergeCommon's woodland page (it
+  // reads the service's flag), so this site stays true when they open.
+  const woodland = new URL('woodland/', vergecommon).href;
+  for (const page of ['index.html', 'unbroken/index.html'])
+    assert.ok(html[page].includes(`href="${woodland}"`), `${page} links to VergeCommon's woodland page`);
+  assert.ok(
+    html['unbroken/index.html'].includes(`href="${woodland}#first-woodlot"`),
+    'the pilot offer goes to the first-woodlot contact',
+  );
+  assert.match(html['index.html'], /woodland page says whether they are open yet/);
+  assert.doesNotMatch(html['index.html'], /woodland projects are open/i);
 });
 
 test('no inline styles or scripts, which the site CSP would block', () => {

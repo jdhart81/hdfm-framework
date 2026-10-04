@@ -8,6 +8,9 @@ const config = JSON.parse(await readFile(path.join(root, 'site.config.json'), 'u
 // The origin is set only in site.config.json: an https scheme and host, no path or trailing slash.
 if (!/^https:\/\/[a-z0-9.-]+$/.test(config.origin)) throw new Error('site.config.json: origin must be https://host with no path');
 if (!/^https:\/\/[a-z0-9.-]+\/$/.test(config.vergecommon ?? '')) throw new Error('site.config.json: vergecommon must be https://host/');
+// VergeCommon's woodland page says whether woodland projects are open, so this site never has to;
+// its #first-woodlot section is the Unbroken Woods pilot contact.
+const vergecommonWoodland = new URL('woodland/', config.vergecommon).href;
 const read = f => readFile(path.join(src, f), 'utf8');
 const [head, foot] = await Promise.all([read('partials/head.html'), read('partials/foot.html')]);
 const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -53,7 +56,8 @@ for (const page of await pages()) {
   const html = (head + body + foot)
     .replaceAll('{{title}}', esc(meta.title)).replaceAll('{{description}}', esc(meta.description)).replaceAll('{{path}}', meta.path)
     .replaceAll('{{nav-check}}', nav('check')).replaceAll('{{nav-unbroken}}', nav('unbroken')).replaceAll('{{nav-format}}', nav('format'))
-    .replaceAll('{{contact}}', esc(config.contact)).replaceAll('{{vergecommon}}', esc(config.vergecommon))
+    .replaceAll('{{vergecommon}}', esc(config.vergecommon))
+    .replaceAll('{{vergecommon-woodland}}', esc(vergecommonWoodland)).replaceAll('{{vergecommon-first-woodlot}}', esc(vergecommonWoodland + '#first-woodlot'))
     // The 404 page is served for every missing address: never indexed, no canonical.
     .replaceAll('{{canonical}}', page === '404.html' ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${config.origin}${meta.path}">`);
   if (/\{\{[\w-]+\}\}/.test(html)) throw new Error(`${page}: unreplaced placeholder`);
