@@ -15,12 +15,12 @@ nav: format
 <table class="wide">
 <thead><tr><th scope="col">Layer</th><th scope="col">Geometry</th><th scope="col">Properties that matter</th></tr></thead>
 <tbody>
-<tr><td><code>coreAreas</code></td><td>Polygon</td><td><code>dfm_id</code>; <code>core_class</code>: old-growth-candidate, old-growth-verified (needs <code>evidence_id</code>), riparian-core or reserve; optional <code>temp_c</code> for climate routes, and <code>stand_age</code> or <code>remnant</code> for projections</td></tr>
-<tr><td><code>retained</code></td><td>Polygon</td><td>Retained habitat: riparian buffers, corridors, retained stands, prairie or wetland patches. For projections, optional <code>stand_age</code> in years (a stand's age, or years since a prairie was seeded), or <code>remnant: true</code> with <code>remnant_source</code> for ground never plowed or cleared, which counts at old-growth age from the start</td></tr>
+<tr><td><code>coreAreas</code></td><td>Polygon</td><td><code>dfm_id</code>; <code>core_class</code>: old-growth-candidate, old-growth-verified (needs <code>evidence_id</code>), riparian-core or reserve; optional <code>temp_c</code> for climate routes, and <code>stand_age</code> or <code>remnant</code>, <code>stand_origin</code> and <code>native_share</code> for projections, as for retained habitat</td></tr>
+<tr><td><code>retained</code></td><td>Polygon</td><td>Retained habitat: riparian buffers, corridors, retained stands, prairie or wetland patches. For projections, optional <code>stand_age</code> in years (a stand's age, or years since a prairie was seeded), or <code>remnant: true</code> with <code>remnant_source</code> for ground never plowed or cleared, which counts at old-growth age from the start. Optional <code>stand_origin</code> with <code>origin_source</code>: natural, planted or plantation, as FAO defines them; a plantation never counts at old-growth age. Optional <code>native_share</code> from 0 to 1 with <code>composition_source</code>: the share of cover or basal area in native species</td></tr>
 <tr><td><code>roads</code></td><td>Line or polygon</td><td><code>width_m</code> for a centerline, or the package's <code>roadWidthM</code></td></tr>
 <tr><td><code>water</code></td><td>Polygon</td><td>Open water; buffer stream centerlines into polygons first</td></tr>
 <tr><td><code>crossings</code></td><td>Point</td><td><code>passage</code>: verified, assumed or none</td></tr>
-<tr><td><code>treatments</code></td><td>Polygon</td><td><code>dfm_id</code>, <code>period</code>, <code>intensity</code>; inside a corridor only with <code>corridor_permitted</code>, a light intensity and a <code>reason</code>. Light intensities: single-tree-selection, light-thinning, invasive-removal and restoration-planting, and the upkeep grassland needs: prescribed-burn, prescribed-grazing, late-season-mowing and brush-management</td></tr>
+<tr><td><code>treatments</code></td><td>Polygon</td><td><code>dfm_id</code>, <code>period</code>, <code>intensity</code>; inside a corridor only with <code>corridor_permitted</code>, a light intensity and a <code>reason</code>. Light intensities: single-tree-selection, light-thinning, invasive-removal and restoration-planting, and the upkeep grassland needs: prescribed-burn, prescribed-grazing, late-season-mowing and brush-management. A restoration-planting may list <code>species</code>, each <code>{"name", "native"}</code>, with <code>native_status_source</code>; inside a corridor it stays permitted only if every species is native</td></tr>
 <tr><td><code>boundary</code></td><td>Polygon</td><td>Outline of the planning area; carried for reference, not used by the check</td></tr>
 <tr><td><code>parcels</code></td><td>Polygon</td><td><code>consent</code>: covered or none; corridor on covered parcels counts as committed. Optional <code>consent_year</code> for when consent began, or <code>planned_year</code> for a parcel expected to join</td></tr>
 <tr><td><code>streams</code></td><td>Line</td><td>Optional, for the old-growth spine: <code>dfm_id</code> and <code>stream_order</code>, the Strahler order from 1 to 12</td></tr>
@@ -29,7 +29,7 @@ nav: format
 </tbody>
 </table>
 </div>
-<p>A package without <code>streams</code>, <code>connectors</code> or <code>exits</code> reads exactly as before, with the same checksum.</p>
+<p>A package without <code>streams</code>, <code>connectors</code> or <code>exits</code>, or without stand origin, native share and species records, reads exactly as before, with the same checksum.</p>
 </section>
 <section>
 <h2>Parameters</h2>
@@ -42,6 +42,7 @@ nav: format
 <tr><td><code>roadWidthM</code></td><td>Every check</td><td>Width of road centerlines that have no <code>width_m</code> of their own</td></tr>
 <tr><td><code>pinchFraction</code></td><td>Every check</td><td>Links narrower than the minimum plus this share are flagged as pinch points. Default 0.1</td></tr>
 <tr><td><code>gapCrossingM</code>, <code>gapCrossingSource</code></td><td>Every check</td><td>Stepping stones: patches of habitat at least the minimum width across count as linked when the gap between them is at most this many meters, up to 1,000. A gap never crosses a road without a recorded crossing. Choose it from a dispersal study for the species the corridors serve; leave it unset for corridors only</td></tr>
+<tr><td><code>nativeStatusSource</code></td><td>Every check</td><td>Where the native status of planted species comes from, such as a state flora or the USDA PLANTS database. When set, every restoration planting inside a corridor must list its species</td></tr>
 <tr><td><code>spineWidthByOrderM</code>, <code>spineWidthSource</code></td><td>Spine</td><td>Corridor width by stream order, for example <code>{"1": 115, "2": 140, "3": 180}</code>. Each is at least the minimum and never narrower for a larger river</td></tr>
 <tr><td><code>connectorWidthM</code>, <code>connectorWidthSource</code></td><td>Spine</td><td>Width of links that record no <code>width_m</code> of their own</td></tr>
 <tr><td><code>junctionSnapM</code></td><td>Spine</td><td>A line that ends within this distance of another joins it. Default 5, at most 10</td></tr>
@@ -49,6 +50,7 @@ nav: format
 <tr><td><code>ageAsOfYear</code></td><td>Projections</td><td>The year habitat ages and consent are recorded for</td></tr>
 <tr><td><code>oldGrowthAgeYears</code>, <code>oldGrowthAgeSource</code></td><td>Projections</td><td>The age at which retained habitat counts as old enough; remnants count from the start. Age is not condition</td></tr>
 <tr><td><code>milestoneYears</code></td><td>Projections</td><td>Up to 12 years to project, from <code>ageAsOfYear</code> on</td></tr>
+<tr><td><code>nativeShareMin</code>, <code>nativeShareSource</code></td><td>Projections</td><td>The share of native species, from 0 to 1, that habitat must record to count at old-growth age. Habitat with no recorded <code>native_share</code> never counts. Leave it unset to project by age alone</td></tr>
 <tr><td><code>coreTempSource</code></td><td>Climate routes</td><td>Where the <code>temp_c</code> values of cores and exits come from, such as a 30-year climate normal</td></tr>
 <tr><td><code>climateWarmingC</code>, <code>climateSource</code></td><td>Climate routes</td><td>The warming to plan for: a route must reach a core or exit at least this much cooler</td></tr>
 </tbody>
@@ -84,13 +86,14 @@ const input = fromLandscapePackage(pkg);
 const draft = deriveSpine(input);     // corridors along streams and links
 const network = spineNetwork(input);  // links, loops, single points of failure
 // A steward reviews the draft, records stand_age (or remnant,
-// for never-plowed ground) on each piece and saves it as retained
-// habitat, beside any patches already mapped:
+// for never-plowed ground), and stand_origin and native_share where
+// known, on each piece and saves it as retained habitat, beside any
+// patches already mapped:
 const plan = { ...input, retained: [...draft.features, ...input.retained] };
 const outlook = projectSpine(plan);   // committed and old-age links by year
 const routes = climateRoutes(plan);   // linked routes toward cooler cores or exits
 const next = buildOutFrontier(plan);  // parcels that would extend the spine</code></pre>
-<p>Projections assume no fire, storm or new road, and use ages and join years as recorded. Climate routes use the temperatures you supply. Neither predicts what species will do.</p>
+<p>Projections never count a plantation at old-growth age, and with <code>nativeShareMin</code> they count only habitat recorded as native enough. They assume no fire, storm or new road, and use ages and join years as recorded. Climate routes use the temperatures you supply. Neither predicts what species will do.</p>
 <p><a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-schema">JSON Schemas for the package and the results</a></p>
 </section>
 </main>

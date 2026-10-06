@@ -1,6 +1,6 @@
 # Research status and claim boundaries
 
-Updated 2026-09-13. This document supersedes older completion percentages and claims of global optimality or production readiness. The Python toolkit remains experimental and is not invoked by the web application's screening service.
+Updated 2026-10-06. This document supersedes older completion percentages and claims of global optimality or production readiness. The Python toolkit remains experimental and is not invoked by the web application's screening service.
 
 | Topic | Established implementation behavior | Unresolved interpretation or defect |
 |---|---|---|
@@ -31,3 +31,24 @@ The web application currently operates at the first two levels for geometric scr
 ## Priorities
 
 Rederive the population estimator; distinguish absolute movement from normalized distribution; compare alternatives at equal management objectives and budgets; then seek independent review on a real landscape. Do not connect the experimental algorithms to customer-facing recommendations before these questions are resolved.
+
+## Genetic connectivity: the open question
+
+DFM's aim is to keep working woods working while old growth of each place's own species regrows in a dendritic pattern, linked so that its populations can exchange genes again. What the software establishes today is the structure that aim needs, and nothing more:
+
+| | Established now | Not established |
+|---|---|---|
+| Corridor check (`packages/dfm-core`) | Mapped retained habitat at least the minimum width links the same cores after a plan as before, under recorded roads, crossings, open water and stepping-stone gaps | That animals or plants move through it, or that genes flow |
+| Old-growth projection | Which links run through habitat at or above a recorded old-growth age, never counting plantations, and, with a minimum native share, never counting habitat recorded below it (dfm-core 0.3.0) | Old-growth condition, which needs field evidence; whether recorded origin and composition are correct |
+| Research toolkit (`hdfm-framework/hdfm/genetics.py`) | An island-model calculation that returns a numeric proxy | An effective population size usable for decisions; see the population-estimates row above |
+
+Gene flow along a spine can only be shown in the field. This is the test we propose; it has not started.
+
+1. **Species.** Choose, with field partners, at least one forest-floor species of low mobility that depends on older, closed-canopy habitat, and for prairie landscapes a plant or invertebrate of never-plowed remnants. A species that disperses widely shows little genetic structure at woodlot scale and tests nothing.
+2. **Sites.** In a pilot landscape, sample sites inside the mapped spine and in comparable habitat outside it, at matched straight-line distances.
+3. **Baseline.** Genotype the samples and measure genetic differentiation between sites. Compare models in which differentiation follows straight-line distance, distance through all forest, and distance through the spine. Methods follow landscape genetics (Manel et al. 2003, *Trends in Ecology & Evolution* 18: 189-197).
+4. **Repeat.** Genetic structure lags habitat change by generations, so a single survey describes the landscape as it was, not the spine's effect. Repeat the sampling as the spine is committed and ages, on a schedule set by the species' generation time.
+5. **Report either way.** If differentiation does not follow the spine, that is a result to publish, and a reason to change the method rather than the claim.
+
+Field data from private land is published only with the owner's consent. Until such results exist, DFM's material describes reconnecting old-growth genetics as its aim, never as an outcome. Contributors with landscape-genetics experience: see the open issues labelled `research`.
+
