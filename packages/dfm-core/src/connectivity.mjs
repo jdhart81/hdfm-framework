@@ -32,6 +32,20 @@
 //       between them is at most g without crossing a road (I4: only a recorded crossing
 //       carries a link over a road). Open water and cropland can be crossed. g = 0 or
 //       unset gives exactly the results without it.
+//   N1  Native planting: a corridor-permitted 'restoration-planting' unit that lists its
+//       species stays permitted only when every species is recorded native and a
+//       native-status source is recorded (the unit's native_status_source or
+//       params.nativeStatusSource). A species recorded as not native, or a list without
+//       a source, makes the unit not permitted: it removes habitat like any other unit,
+//       and the check names it and says why.
+//   N2  With params.nativeStatusSource, every corridor-permitted restoration planting must
+//       list its species; one without a list is not permitted.
+//   N3  A species list is an array of {name, native: true | false}; anything else is
+//       'incomplete', naming the unit.
+//   N4  Additive: without a species list on any unit and without
+//       params.nativeStatusSource, results are identical to engine 0.2.0 apart from the
+//       version string. Stand origin and native share (src/outlook.mjs, O1-O6) are never
+//       read here, so they change nothing but the checksum.
 //
 // Method: a minimum-width corridor exists between two cores when a disk of
 // diameter minWidthM can travel from one to the other inside the habitat:
@@ -43,7 +57,7 @@ import * as turf from './turf.mjs';
 import {canonicalHashSync} from './hash.mjs';
 import {fc, isPoly, isLine, id, union, intersect, difference, buffer, close, areaM2, meanWidthM, parts} from './geo.mjs';
 
-export const ENGINE_VERSION = 'dfm-connectivity-0.2.0';
+export const ENGINE_VERSION = 'dfm-connectivity-0.3.0';
 export const CORE_CLASSES = ['old-growth-candidate', 'old-growth-verified', 'riparian-core', 'reserve'];
 export const CROSSING_STATUS = ['verified', 'assumed', 'none'];
 /**
@@ -52,7 +66,14 @@ export const CROSSING_STATUS = ['verified', 'assumed', 'none'];
  * savanna, other grassland) need. Each still needs corridor_permitted and a recorded reason.
  */
 export const LIGHT_INTENSITIES = ['single-tree-selection', 'light-thinning', 'invasive-removal', 'restoration-planting', 'prescribed-burn', 'prescribed-grazing', 'late-season-mowing', 'brush-management'];
-export const LIMITS = {features: 2000, treatments: 100, cores: 50, extentDegrees: 0.5};
+export const LIMITS = {features: 2000, treatments: 100, cores: 50, extentDegrees: 0.5, species: 200};
+/**
+ * How habitat was established, as defined in FAO's Global Forest Resources Assessment 2020:
+ * 'natural' (naturally regenerating), 'planted' (planted or seeded, not a plantation) and
+ * 'plantation' (planted, intensively managed, one or two species, even-aged, regularly spaced).
+ * Read only by projections (src/outlook.mjs, O1-O6).
+ */
+export const STAND_ORIGINS = ['natural', 'planted', 'plantation'];
 /** Largest gap (m) a stepping-stone link may cross. */
 export const MAX_GAP_M = 1000;
 const hasText = s => typeof s === 'string' && s.trim().length > 0;
@@ -119,6 +140,18 @@ export function validateInput(input) {
   if (treatments.length > LIMITS.treatments) errors.push(`Use at most ${LIMITS.treatments} treatment units per check.`);
   if (treatments.some(t => isPoly(t) && !id(t))) errors.push('Every treatment unit needs properties.dfm_id.');
   if (new Set(treatments.map(id)).size !== treatments.length) errors.push('Treatment unit IDs must be unique.');
+  // N3: planting records. Only units that record them are checked, so older packages read as before (N4).
+  if (p.nativeStatusSource != null && !hasText(p.nativeStatusSource)) errors.push('params.nativeStatusSource must record where native status comes from, such as a state flora or the USDA PLANTS database.');
+  for (const t of treatments) {
+    const pr = t?.properties ?? {}, name = id(t) || '(no id)';
+    if (pr.species != null) {
+      const list = pr.species;
+      const ok = Array.isArray(list) && list.length > 0 && list.length <= LIMITS.species
+        && list.every(s => s && typeof s === 'object' && !Array.isArray(s) && hasText(s.name) && typeof s.native === 'boolean');
+      if (!ok) errors.push(`Treatment ${name} species must list each planted species as {name, native: true or false}, from 1 to ${LIMITS.species} species.`);
+    }
+    if (pr.native_status_source != null && !hasText(pr.native_status_source)) errors.push(`Treatment ${name} native_status_source must record where the native status of its species comes from.`);
+  }
 
   const all = ['coreAreas', 'retained', 'roads', 'water', 'crossings', 'treatments', 'parcels'].flatMap(k => input[k] ?? []).filter(f => f?.geometry);
   if (all.length > LIMITS.features) errors.push(`Use at most ${LIMITS.features} features.`);
@@ -133,12 +166,32 @@ export function validateInput(input) {
   return {errors, warnings, cores};
 }
 
-/** Recorded light treatment that may stay inside corridors and cores (I2). */
-export function isPermittedLight(f, warnings) {
+/**
+ * Why a restoration planting may not stay inside corridors and cores (N1, N2), or null when it
+ * may. Without a species list and without params.nativeStatusSource the answer is null, as in
+ * engine 0.2.0 (N4).
+ */
+export function nativePlantingProblem(f, params) {
+  const pr = f?.properties ?? {};
+  if (pr.intensity !== 'restoration-planting') return null;
+  const policy = hasText(params?.nativeStatusSource);
+  if (pr.species == null) return policy ? 'lists no species, and params.nativeStatusSource requires a species list for planting inside corridors and cores' : null;
+  if (!policy && !hasText(pr.native_status_source)) return 'lists its species without a native-status source (native_status_source or params.nativeStatusSource)';
+  const introduced = (Array.isArray(pr.species) ? pr.species : []).filter(s => s?.native !== true).map(s => s?.name ?? '(unnamed)');
+  return introduced.length ? `plants species recorded as not native (${introduced.join(', ')}), and only native planting is permitted inside corridors and cores` : null;
+}
+
+/** Recorded light treatment that may stay inside corridors and cores (I2, N1, N2). */
+export function isPermittedLight(f, warnings, params = {}) {
   const pr = f.properties ?? {};
   if (pr.corridor_permitted !== true) return false;
   if (!LIGHT_INTENSITIES.includes(pr.intensity) || !pr.reason) {
     warnings.push(`Treatment ${id(f)} is marked corridor_permitted but needs an intensity from ${LIGHT_INTENSITIES.join(', ')} and a recorded reason; treated as not permitted.`);
+    return false;
+  }
+  const problem = nativePlantingProblem(f, params);
+  if (problem) {
+    warnings.push(`Treatment ${id(f)} is marked corridor_permitted but ${problem}; treated as not permitted.`);
     return false;
   }
   return true;
@@ -239,7 +292,7 @@ export function effectiveHabitat(input, treatments, warnings) {
   // Closing runs once more in every case (roads are at least 1 m wide, so it cannot heal one).
   let habitat = close(union([difference(habitatGross, roads), ...bridges].filter(Boolean)));
   habitat = difference(habitat, union(input.water ?? []));
-  const removed = treatments.filter(t => !isPermittedLight(t, warnings));
+  const removed = treatments.filter(t => !isPermittedLight(t, warnings, input.params ?? {}));
   if (removed.length) habitat = difference(habitat, union(removed));
   return {habitat, removed, barrier};
 }
@@ -317,8 +370,9 @@ function consentStatus(input) {
  * Check corridor connectivity for a proposed set of treatment units.
  * @param {object} input - {coreAreas, retained, roads?, water?, crossings?, treatments?, parcels?, params}
  *   params: {minWidthM, minWidthSource, roadWidthM?, pinchFraction? (default 0.1),
- *   gapCrossingM? + gapCrossingSource (stepping stones, B2)}
- *   treatments are the PROPOSED units; the current state is checked without them.
+ *   gapCrossingM? + gapCrossingSource (stepping stones, B2), nativeStatusSource? (N2)}
+ *   treatments are the PROPOSED units; the current state is checked without them. A
+ *   restoration planting may list species: [{name, native}] with native_status_source (N1).
  * Synchronous: safe to call inside a host's synchronous command handler.
  * @returns {object} check result (schema: dfm-schema/connectivity-result.schema.json)
  */
@@ -379,7 +433,14 @@ export function checkConnectivitySync(input) {
       status,
       reasons: [
         ...breaks.map(b => `Link ${b.a}–${b.b} is lost ${b.causes.length ? `(caused by ${b.causes.join(', ')})` : `(by the combined effect of ${b.contributing.join(', ') || 'the plan'})`}.`),
-        ...violations.map(v => `Treatment ${v.unit} overlaps retained habitat or a core by ${v.overlapM2.toFixed(0)} m² without a recorded light-treatment permission.`),
+        ...violations.map(v => {
+          // N1, N2: say why a recorded permission for planting did not hold. Without planting records the wording is as in 0.2.0 (N4).
+          const t = treatments.find(x => id(x) === v.unit), pr = t?.properties ?? {};
+          const why = pr.corridor_permitted === true && LIGHT_INTENSITIES.includes(pr.intensity) && pr.reason ? nativePlantingProblem(t, p) : null;
+          return why
+            ? `Treatment ${v.unit} overlaps retained habitat or a core by ${v.overlapM2.toFixed(0)} m²; its light-treatment permission does not hold because it ${why}.`
+            : `Treatment ${v.unit} overlaps retained habitat or a core by ${v.overlapM2.toFixed(0)} m² without a recorded light-treatment permission.`;
+        }),
       ],
       warnings: [...new Set(warnings)],
       cores: cores.map(c => ({id: c.id, coreClass: c.coreClass, areaM2: areaM2(c.feature), remainingM2: areaM2(intersect(c.feature, after.habitat))})),

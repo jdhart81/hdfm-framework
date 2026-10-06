@@ -2,11 +2,12 @@
 
 Pure analysis functions for Dendritic Forest Management (DFM). No storage, no network, no UI. Used by the DFM workspace and by VergeCommon's woodland projects, so both run the same calculation.
 
-**Status: 0.2.0, experimental.** Not yet published to npm. Structural connectivity only; it does not establish species movement, genetic viability, regulatory compliance or old-growth condition.
+**Status: 0.3.0, experimental.** Not yet published to npm. Structural connectivity only; it does not establish species movement, genetic viability, regulatory compliance or old-growth condition.
 
 - [Corridor connectivity check](#corridor-connectivity-check): does a treatment plan break a link between core areas?
 - [The old-growth spine](#the-old-growth-spine): draft the spine from streams, ridges and other natural lines, test it as a network, project it forward in time, find climate routes and the next holdings to join.
 - [Any biome](#any-biome-forest-prairie-and-flat-country): forest, prairie, savanna, wetland and flat country, with stepping stones, flat-land links, remnants, upkeep by fire and grazing, and exits to the next landscape.
+- [Native old growth, not plantations](#native-old-growth-not-plantations): stand origin, native composition and native-only planting, so a plantation or a stand of introduced species is never projected as old growth and a corridor is never replanted with introduced species.
 - [Landscape Package](#landscape-package): the exchange file.
 
 ## Corridor connectivity check
@@ -21,12 +22,15 @@ const result = await checkConnectivity({
   roads,       // centerlines (with params.roadWidthM) or road-surface polygons
   water,       // open-water polygons
   crossings,   // points: properties.passage = verified | assumed | none
-  treatments,  // PROPOSED units: dfm_id, period, intensity, corridor_permitted?, reason?
+  treatments,  // PROPOSED units: dfm_id, period, intensity, corridor_permitted?, reason?,
+               //   and for a restoration planting, species?: [{name, native}] + native_status_source?
   parcels,     // polygons: dfm_id, consent = covered | none
   params: {
     minWidthM: 100, minWidthSource: 'Co-op charter 2026, section 4', roadWidthM: 6,
     // Optional stepping stones (see "Any biome"):
     // gapCrossingM: 100, gapCrossingSource: 'Dispersal study for the species the corridors serve',
+    // Optional native-planting policy (see "Native old growth, not plantations"):
+    // nativeStatusSource: 'USDA PLANTS native status for Vermont',
   },
 });
 // result.status: 'pass' | 'fail' | 'incomplete'
@@ -36,7 +40,7 @@ The check compares the current state (no proposed treatments) with the proposed 
 
 1. Habitat = retained polygons and core areas, unioned; seams under 0.8 m between adjacent polygons are closed.
 2. Road surfaces and open water are removed. A crossing recorded as `verified` or `assumed` (assumed warns) restores the road strip only on the road part it sits on, and only where habitat lies straight across the road on both sides.
-3. Proposed treatment units are removed, except permitted light treatments: `corridor_permitted: true`, an `intensity` from `LIGHT_INTENSITIES` and a `reason`. The list holds forest treatments (`single-tree-selection`, `light-thinning`, `invasive-removal`, `restoration-planting`) and the upkeep that fire- and grazing-dependent habitat needs (`prescribed-burn`, `prescribed-grazing`, `late-season-mowing`, `brush-management`).
+3. Proposed treatment units are removed, except permitted light treatments: `corridor_permitted: true`, an `intensity` from `LIGHT_INTENSITIES` and a `reason`. The list holds forest treatments (`single-tree-selection`, `light-thinning`, `invasive-removal`, `restoration-planting`) and the upkeep that fire- and grazing-dependent habitat needs (`prescribed-burn`, `prescribed-grazing`, `late-season-mowing`, `brush-management`). A restoration planting that lists its species stays permitted only when every species is native, with a recorded source for native status (N1).
 4. Two cores are linked when a disk `minWidthM` across can travel between them inside the habitat (morphological erosion by half the width). A core counts only while at least half of it remains. With stepping stones (`params.gapCrossingM`), pieces of habitat at least the minimum width across also link when the gap between them is at most that distance and crosses no road.
 5. The check fails when a link is lost, naming each unit that alone breaks it (`causes`) and the units overlapping the lost corridor (`contributing`). Any unpermitted overlap with retained habitat or a core also fails, even when every link holds.
 6. Links that hold at the minimum but not at the minimum + 10% are reported as `pinchedLinks`.
@@ -162,6 +166,29 @@ Choose `gapCrossingM` from what the species the corridors serve will cross, from
 - Saura, S., Bodin, Ö., & Fortin, M.-J. (2014). Stepping stones are crucial for species' long-distance dispersal and range expansion through habitat networks. *Journal of Applied Ecology* 51(1), 171–182.
 - Veldman, J. W., et al. (2015). Toward an old-growth concept for grasslands, savannas, and woodlands. *Frontiers in Ecology and the Environment* 13(3), 154–162.
 
+## Native old growth, not plantations
+
+Less than a third of the world's forest is primary forest (FAO 2025), and much of what is planted is plantation: one or two species, even-aged and regularly spaced. A plantation does not become old growth by standing long enough, and neither does a stand made up mostly of species that do not belong to the place. The spine's aim is old growth of the place's own species, so the engine records how habitat was established and what it is made of, and uses that in the old-growth projection. None of it changes whether a link holds today.
+
+| | Invariant | Where |
+|---|---|---|
+| **O1** | Stand origin. `stand_origin` is `natural` (naturally regenerating), `planted` (planted or seeded, not a plantation) or `plantation` (planted, intensively managed, one or two species, even-aged, regularly spaced), as defined in FAO's Global Forest Resources Assessment, with `origin_source`. Any other value, or no source, is `incomplete`. | `projectSpine` |
+| **O2** | A plantation never reaches old-growth age, whatever its `stand_age`; where it overlaps other habitat it carves the old-age area, as a younger stand does (PJ3). A remnant cannot also be a plantation. Planted habitat counts by its recorded age, as restoration plantings of native species can grow old. | `projectSpine` |
+| **O3** | Native composition. `native_share` (0 to 1, with `composition_source`) is the share of a feature's cover or basal area in species native to the place. With `params.nativeShareMin` (and `nativeShareSource`), habitat counts at old-growth age only where it records a share at or above the minimum; habitat without a recorded share never counts, like habitat without an age. A never-plowed remnant overrun by introduced grasses does not count either. | `projectSpine` |
+| **O4** | Structure is unchanged: origin and composition are never read by the check, the network, climate routes or the frontier. A plantation still carries today's structural link. | Every other function |
+| **O5** | Each milestone reports `plantationM2` when any feature records `stand_origin`, and `belowNativeShareM2` when `nativeShareMin` is set: committed habitat outside cores that is plantation, or below the native share. Old-age links still nest and never decrease (PJ4, PJ5). | `projectSpine` |
+| **N1** | Native planting. A corridor-permitted `restoration-planting` that lists `species: [{name, native}]` stays permitted only when every species is native and a source for native status is recorded (`native_status_source` on the unit, or `params.nativeStatusSource`). An introduced species, or a list without a source, makes the unit not permitted: it removes habitat like any other unit, and the check names it and says why. | Check, projections, climate routes |
+| **N2** | With `params.nativeStatusSource`, every corridor-permitted restoration planting must list its species. | Check, projections, climate routes |
+| **N3** | A species list is 1 to 200 entries of `{name, native: true \| false}`; anything else is `incomplete`, naming the unit. | Every function |
+| **O6, N4** | Additive. Without these records and parameters, results are identical to 0.2.0 apart from the engine version strings, so checks VergeCommon stored with 0.2.0 still reproduce (`test/vergecommon-contract.test.mjs`). | Every function |
+
+What these records establish is what was recorded, with its source: the engine does not identify species, survey composition or judge whether a planting is suitable for the site. Native status comes from the source you record, such as a state flora or the [USDA PLANTS database](https://plants.usda.gov/), which gives native status by state.
+
+**References**
+
+- FAO (2025). *Global Forest Resources Assessment 2025.* Food and Agriculture Organization of the United Nations, Rome. 4.14 billion hectares of forest, of which at least 1.18 billion are primary forest.
+- FAO. *Global Forest Resources Assessment 2020: Terms and definitions* (naturally regenerating forest, planted forest, plantation forest, other planted forest). Food and Agriculture Organization of the United Nations, Rome. https://fra-data.fao.org/definitions/fra/2020/en/tad
+
 ## Landscape Package
 
 `toLandscapePackage(input, meta)` and `fromLandscapePackage(pkg)` read and write the exchange file defined in [`../dfm-schema`](../dfm-schema/README.md). The optional `streams`, `connectors` and `exits` layers are written only when they hold features and read back only when present, so a package without them, and its checksum, are unchanged from 0.1.0.
@@ -183,4 +210,4 @@ npm ci
 npm test
 ```
 
-Tests use fictional fixtures placed at the equator: a woodlot (`fixtures/woodlot.mjs`), a watershed (`fixtures/watershed.mjs`, the illustration on dendriticforest.com, at 5 m per drawing unit) and a flat prairie (`fixtures/prairie.mjs`: a creek, a railroad right-of-way, a moraine, a chain of wet-meadow stepping stones and an exit north). Each test names the DFM Build Spec invariant it checks. Soundness tests compare every "robust" claim with an independent exact check at sampled disturbance positions, with and without stepping stones. Turf.js computes buffers in a local azimuthal projection around each feature, which is accurate for woodlot and watershed-scale extents (a few kilometers); larger landscapes need a projected-CRS engine.
+Tests use fictional fixtures placed at the equator (`test/origin.test.mjs` adds a two-reserve corridor for stand origin, native share and native planting): a woodlot (`fixtures/woodlot.mjs`), a watershed (`fixtures/watershed.mjs`, the illustration on dendriticforest.com, at 5 m per drawing unit) and a flat prairie (`fixtures/prairie.mjs`: a creek, a railroad right-of-way, a moraine, a chain of wet-meadow stepping stones and an exit north). Each test names the DFM Build Spec invariant it checks. Soundness tests compare every "robust" claim with an independent exact check at sampled disturbance positions, with and without stepping stones. Turf.js computes buffers in a local azimuthal projection around each feature, which is accurate for woodlot and watershed-scale extents (a few kilometers); larger landscapes need a projected-CRS engine.

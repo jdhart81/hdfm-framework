@@ -6,6 +6,19 @@ JSON Schemas (draft 2020-12) for data exchanged between DFM tools and VergeCommo
 - `connectivity-result.schema.json`: the result of `checkConnectivity` in `@viridis/dfm-core`, including status, lost links with responsible units, pinch points, consent coverage, the engine version and an input checksum.
 - `spine-results.schema.json`: the results of the old-growth spine functions in `@viridis/dfm-core`, one `$defs` entry each: `derivation` (`deriveSpine`), `network` (`spineNetwork`), `projection` (`projectSpine`), `climate` (`climateRoutes`) and `frontier` (`buildOutFrontier`). Validate a result against `spine-results.schema.json#/$defs/<name>`.
 
+## Version 0.3.0: additive
+
+Stand origin, native composition and native planting, for old growth of the place's own species. `dfm_package` is still `1.0`, and a package without these records is unchanged, with the same checksum.
+
+- New optional properties on core areas and retained features:
+  - `stand_origin`: `natural` (naturally regenerating), `planted` (planted or seeded, not a plantation) or `plantation` (planted, intensively managed, one or two species, even-aged, regularly spaced), as defined in FAO's Global Forest Resources Assessment 2020. Needs `origin_source`. A remnant cannot also be a plantation.
+  - `native_share`: the share (0 to 1) of the feature's cover or basal area in species native to the place. Needs `composition_source`.
+- New optional properties on treatment units: `species`, a list of 1 to 200 `{name, native}` entries for a restoration planting, and `native_status_source`.
+- New optional parameters: `nativeShareMin` (above 0, at most 1), which needs `nativeShareSource`, and `nativeStatusSource`.
+- `spine-results.schema.json`: projection milestones may report `plantationM2` and `belowNativeShareM2`.
+
+A 0.2.0 engine ignores all of these. It projects a plantation as old growth once its recorded age passes the threshold, and it permits a corridor planting of introduced species; read such a package with dfm-core 0.3.0 or later.
+
 ## Version 0.2.0: additive
 
 The spine and biome additions do not change `dfm_package` (still `1.0`):

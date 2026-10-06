@@ -1,5 +1,16 @@
 # Releases
 
+## dfm-core 0.3.0 — unreleased
+
+Native old growth, not plantations. The spine's aim is old growth of the place's own species, regrown along its rivers, valleys and ridges; this release records how habitat was established and what it is made of, and keeps plantations and introduced species out of the old-growth projection and out of corridor plantings. Whether a link holds today is unchanged.
+
+- Stand origin (O1, O2): `stand_origin` (`natural`, `planted` or `plantation`, as defined in FAO's Global Forest Resources Assessment 2020) with `origin_source`, on retained habitat and cores. A plantation never reaches old-growth age in `projectSpine`, whatever its recorded age, and carves the old-age area where it overlaps other habitat. A remnant cannot also be a plantation.
+- Native composition (O3): `native_share` (0 to 1, with `composition_source`). With `params.nativeShareMin` and `nativeShareSource`, habitat counts at old-growth age only where it records a share at or above the minimum; habitat without one never counts. A never-plowed remnant overrun by introduced grasses does not count either.
+- Native planting (N1-N3): a corridor-permitted `restoration-planting` that lists `species: [{name, native}]` stays permitted only when every species is native and a native-status source is recorded (`native_status_source`, or `params.nativeStatusSource`). Otherwise it removes habitat like any other unit, and the check names it and says why. With `params.nativeStatusSource` every corridor planting must list its species.
+- Structure is unchanged (O4): origin and composition are never read by the check, the network, climate routes or the frontier. Projections report `plantationM2` and `belowNativeShareM2` per milestone when these are recorded (O5).
+- Additive (O6, N4): without the new records and parameters, every result is identical to 0.2.0 apart from the engine versions (`dfm-connectivity-0.3.0`, `dfm-spine-0.3.0`, `dfm-outlook-0.3.0`). Checked on every fixture against 0.2.0 before release, and the VergeCommon contract test still reproduces the stored check. `packages/dfm-schema` 0.3.0 adds the properties and parameters.
+- 133 tests: 17 new in `test/origin.test.mjs`.
+
 ## dfm-core 0.2.0 — unreleased
 
 Adds the old-growth spine to `packages/dfm-core`: the dendritic network of retained forest that follows a watershed's streams, valleys and ridges, mapped whole and built woodlot by woodlot.
@@ -25,6 +36,8 @@ Any biome: the same rules run in forest, prairie, savanna, wetland and flat coun
 - Used by VergeCommon v0.10.0, which vendors a tarball byte-identical to `npm pack` of this package. A contract test (`test/vergecommon-contract.test.mjs`) reads the check package a steward downloads from a VergeCommon plan and must reproduce the result and input checksum VergeCommon stored, so a change here cannot silently break plans stored there.
 
 ## Site — unreleased
+
+dendriticforest.com states the project's aim: keep the woods working, and reconnect old-growth genetics in a dendritic pattern. The hero says plainly that gene flow along the spine is a question for field study. A new section, "Old growth of the place's own species", covers plantations, native share and native planting as dfm-core 0.3.0 implements them, and the data format page documents the new properties and parameters (the schema test keeps it in step). The research section asks ecologists and geneticists to help with the field test in `docs/RESEARCH_STATUS.md`. CI's container smoke test looks for the new hero line.
 
 dendriticforest.com: the home-page map shows the spine mapped along a watershed's rivers, built out woodlot by woodlot in four directions, aging toward old growth and keeping a route to cooler ground as climate lines move upslope. One orchestrated time-lapse that respects reduced motion, four static stages, and a section on the method. A section on prairie, savanna and flat country covers stepping stones, links on flat land, never-plowed ground, fire and grazing, and exits to the next landscape. The data format page documents the new layers, parameters, link kinds and treatments, and a test keeps it in step with the schema. The VergeCommon links go to its woodland page, which says whether woodland projects are open there, and the Unbroken Woods pilot offer goes to that page's first-woodlot contact.
 

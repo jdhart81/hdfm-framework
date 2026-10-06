@@ -1,6 +1,6 @@
 {
   "name": "@viridis/dfm-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pure analysis functions for Dendritic Forest Management: corridor connectivity checks, the old-growth spine (derivation, network, projections, climate routes, build-out) and the DFM Landscape Package.",
   "type": "module",
   "license": "MIT",
