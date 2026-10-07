@@ -168,7 +168,7 @@ Choose `gapCrossingM` from what the species the corridors serve will cross, from
 
 ## Native old growth, not plantations
 
-Less than a third of the world's forest is primary forest (FAO 2025), and much of what is planted is plantation: one or two species, even-aged and regularly spaced. A plantation does not become old growth by standing long enough, and neither does a stand made up mostly of species that do not belong to the place. The spine's aim is old growth of the place's own species, so the engine records how habitat was established and what it is made of, and uses that in the old-growth projection. None of it changes whether a link holds today.
+Only about a third of the world's forest is still primary forest (FAO 2025), and nearly half of planted forest is plantation (FAO 2020): one or two species, even-aged and regularly spaced. A plantation does not become old growth by standing long enough, and neither does a stand made up mostly of species that do not belong to the place. The spine's aim is old growth of the place's own species, so the engine records how habitat was established and what it is made of, and uses that in the old-growth projection. None of it changes whether a link holds today.
 
 | | Invariant | Where |
 |---|---|---|
@@ -187,6 +187,7 @@ What these records establish is what was recorded, with its source: the engine d
 **References**
 
 - FAO (2025). *Global Forest Resources Assessment 2025.* Food and Agriculture Organization of the United Nations, Rome. 4.14 billion hectares of forest, of which at least 1.18 billion are primary forest.
+- FAO (2020). *Global Forest Resources Assessment 2020.* Plantation forests cover about 131 million hectares, 45% of planted forests.
 - FAO. *Global Forest Resources Assessment 2020: Terms and definitions* (naturally regenerating forest, planted forest, plantation forest, other planted forest). Food and Agriculture Organization of the United Nations, Rome. https://fra-data.fao.org/definitions/fra/2020/en/tad
 
 ## Landscape Package
