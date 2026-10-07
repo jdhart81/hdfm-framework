@@ -204,3 +204,19 @@ test('the spine section claims only what the engine tests', () => {
   assert.match(home, /shows where one disturbance/);
   assert.match(home, /Age is not condition/);
 });
+
+test('the hero states the aim, and the native section says what the engine does with plantations, native share and planting', () => {
+  const h = html['index.html'];
+  assert.match(h, /<h1>Keep the woods working\. <span class="sub">Reconnect old-growth genetics in a dendritic pattern\.<\/span><\/h1>/);
+  // Genetics is the aim, not a result: the page says it is a question for field study (RESEARCH_STATUS.md).
+  assert.match(h, /Whether genes then flow along the spine is a question for field study/);
+  assert.match(h, /the check measures structure, not movement/);
+  const section = h.slice(h.indexOf('<section id="native">'), h.indexOf('</section>', h.indexOf('<section id="native">')));
+  assert.ok(section.length > 100, 'the home page has a native section');
+  assert.deepEqual([...section.matchAll(/<dt>([^<]+)<\/dt>/g)].map(m => m[1]), ['Plantations', 'Native share', 'Native planting']);
+  // O2: a plantation keeps today's link but never counts as old; O3: below the native share never counts; N1: introduced species are refused and named.
+  assert.match(section, /A plantation still counts as a corridor today, but never counts at old-growth age/);
+  assert.match(section, /Habitat below it never counts at old-growth age/);
+  assert.match(section, /If one species is introduced, the planting is not permitted there, and the check names the unit/);
+  assert.doesNotMatch(h, /Cut the woods/);
+});

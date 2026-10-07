@@ -6,6 +6,8 @@
 
 **Open-source landscape planning, beginning with existing roads and waterways.**
 
+**Aim: keep the woods working, and reconnect old-growth genetics in a dendritic pattern.** Old growth of each place's own species, regrown along its rivers, valleys and ridges and linked through working woodlots, farms and ranches so that its populations can exchange genes again. The [dfm-core engine](packages/dfm-core/README.md) checks the structure that aim needs: corridors that hold through every harvest plan, and an old-growth spine that never counts a plantation, or habitat recorded as mostly introduced species, as old growth. Whether genes then flow along the spine is an open field question ([research status](docs/RESEARCH_STATUS.md#genetic-connectivity-the-open-question)). Public site: [dendriticforest.com](https://dendriticforest.com).
+
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
 
 ## Start with the working application
@@ -60,7 +62,7 @@ Code adoption and GitHub activity are not evidence of customer demand or ecologi
 
 ## Contribute
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). Useful contributions include reproducible bug reports, geometry fixtures, source documentation, GIS interoperability and independent scientific review. Keep tests of implementation separate from claims about conservation outcomes.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). Useful contributions include reproducible bug reports, geometry fixtures, source documentation, GIS interoperability and independent scientific review: foresters testing the check on a woodlot they know, ecologists and geneticists helping design the [field test of gene flow](docs/RESEARCH_STATUS.md#genetic-connectivity-the-open-question), and botanists building per-region native-status sources for planting records. Keep tests of implementation separate from claims about conservation outcomes.
 
 ## License and attribution
 

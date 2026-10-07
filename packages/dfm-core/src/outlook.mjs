@@ -42,14 +42,33 @@
 //   FR2 Each lists the core pairs that would become linked through committed forest if it alone
 //       joined now, its spine area, and its direction from the committed piece it adjoins.
 //   FR3 Ordered by links completed, then spine area, then ID. Parcel IDs must be unique.
+//   O1 Stand origin. Retained habitat and cores may record stand_origin: 'natural', 'planted' or
+//      'plantation' (STAND_ORIGINS, as defined in FAO's Global Forest Resources Assessment), with
+//      origin_source. Any other value, or an origin without a source, is 'incomplete'.
+//   O2 A plantation never reaches old-growth age, whatever its stand_age: it never counts as old,
+//      and where it overlaps other habitat it carves the old-age area like a younger stand (PJ3).
+//      A remnant (never plowed or clear-cut) cannot also be a plantation; that is 'incomplete'.
+//   O3 Native composition. native_share is the share (0-1) of a feature's cover or basal area in
+//      species native to the place, with composition_source. With params.nativeShareMin (0-1,
+//      with nativeShareSource), habitat counts at old-growth age only where it records a
+//      native_share at or above it; habitat without a recorded share never counts as old.
+//   O4 Structure is unchanged: stand origin and native share are never read by the check, the
+//      spine network, climate routes or the frontier. They change what the spine can become in a
+//      projection, not whether a link holds today.
+//   O5 Each milestone reports plantationM2 (committed habitat outside cores recorded as plantation)
+//      when any feature records stand_origin, and belowNativeShareM2 (committed habitat outside
+//      cores that does not record a native_share at or above the minimum) when
+//      params.nativeShareMin is set. Old-age links still nest and never decrease (PJ4, PJ5).
+//   O6 Additive: without stand_origin, native_share or params.nativeShareMin, results are identical
+//      to outlook 0.2.0 apart from the version string.
 //   I7, I8 Invalid inputs return 'incomplete' with reasons; results are deterministic.
 
 import * as turf from './turf.mjs';
 import {canonicalHashSync} from './hash.mjs';
 import {id, isPoly, union, intersect, difference, areaM2, buffer, parts, centroid, compass} from './geo.mjs';
-import {validateInput, effectiveHabitat, linkedPairs, pairObj, checkConnectivitySync, gapOf, LIMITS} from './connectivity.mjs';
+import {validateInput, effectiveHabitat, linkedPairs, pairObj, checkConnectivitySync, gapOf, LIMITS, STAND_ORIGINS} from './connectivity.mjs';
 
-export const OUTLOOK_VERSION = 'dfm-outlook-0.2.0';
+export const OUTLOOK_VERSION = 'dfm-outlook-0.3.0';
 const MAX_MILESTONES = 12;
 const isYear = y => Number.isInteger(y) && y >= 1800 && y <= 3000;
 const hasText = s => typeof s === 'string' && s.trim().length > 0;
@@ -58,6 +77,18 @@ const hasAge = f => Number.isFinite(f?.properties?.stand_age);
 /** Never plowed or clear-cut, as recorded: at old-growth age in every year (PJ3). */
 const isRemnant = f => f?.properties?.remnant === true;
 const hasAgeRecord = f => hasAge(f) || isRemnant(f);
+/** Planted, intensively managed, one or two species, even-aged, regularly spaced: never old (O2). */
+const isPlantation = f => f?.properties?.stand_origin === 'plantation';
+const hasOrigin = f => f?.properties?.stand_origin != null;
+const hasNativeShare = f => Number.isFinite(f?.properties?.native_share);
+/** O3: with a minimum native share, only habitat that records one at or above it can count as old. */
+const meetsNative = (f, min) => min == null || (hasNativeShare(f) && f.properties.native_share >= min);
+
+/** Feature IDs for a warning: the first ten, then how many more. */
+function names(features) {
+  const ids = features.map(f => id(f) || '(no id)');
+  return ids.length > 10 ? `${ids.slice(0, 10).join(', ')} and ${ids.length - 10} more` : ids.join(', ');
+}
 
 /** Clip features to an area, keeping their properties. */
 function clip(features, area) {
@@ -135,12 +166,27 @@ function validateProjection(input, years, errors, warnings) {
     for (let i = 1; i < years.length; i++) if (!(years[i] > years[i - 1])) errors.push('Milestone years must increase.');
     if (isYear(p.ageAsOfYear) && years.some(y => y < p.ageAsOfYear)) errors.push(`Milestone years must be ${p.ageAsOfYear} (params.ageAsOfYear) or later; the projection runs forward only.`);
   }
+  if (p.nativeShareMin != null) {
+    if (!(Number.isFinite(p.nativeShareMin) && p.nativeShareMin > 0 && p.nativeShareMin <= 1)) errors.push('params.nativeShareMin must be a share above 0 and at most 1, such as 0.9 for nine-tenths native.');
+    if (!hasText(p.nativeShareSource)) errors.push('params.nativeShareSource must record where the minimum native share comes from, such as a state natural community classification or a co-op policy.');
+  }
   for (const f of [...(input?.retained ?? []), ...(input?.coreAreas ?? [])]) {
-    const a = f?.properties?.stand_age, rem = f?.properties?.remnant, name = id(f) || '(no id)';
+    const pr = f?.properties ?? {}, a = pr.stand_age, rem = pr.remnant, name = id(f) || '(no id)';
     if (a != null && !(Number.isFinite(a) && a >= 0 && a <= 3000)) errors.push(`Feature ${name} has stand_age ${a}; use an age in years from 0 to 3,000.`);
     if (rem != null && typeof rem !== 'boolean') errors.push(`Feature ${name} remnant must be true or false.`);
-    else if (rem === true && !hasText(f.properties.remnant_source)) errors.push(`Feature ${name} is marked remnant; record remnant_source, such as a survey or land record showing it was never plowed or clear-cut.`);
+    else if (rem === true && !hasText(pr.remnant_source)) errors.push(`Feature ${name} is marked remnant; record remnant_source, such as a survey or land record showing it was never plowed or clear-cut.`);
     else if (rem === true && a != null) warnings.push(`Feature ${name} is marked remnant and also records stand_age ${a}; remnant status applies.`);
+    // O1, O2: how the habitat was established, with its source.
+    if (pr.stand_origin != null) {
+      if (!STAND_ORIGINS.includes(pr.stand_origin)) errors.push(`Feature ${name} has stand_origin "${pr.stand_origin}"; use ${STAND_ORIGINS.join(', ')}.`);
+      else if (!hasText(pr.origin_source)) errors.push(`Feature ${name} records stand_origin; record origin_source, such as a stand inventory or planting record.`);
+      else if (pr.stand_origin === 'plantation' && rem === true) errors.push(`Feature ${name} is marked both remnant (never plowed or clear-cut) and plantation; it cannot be both.`);
+    }
+    // O3: native composition, with its source.
+    if (pr.native_share != null) {
+      if (!(Number.isFinite(pr.native_share) && pr.native_share >= 0 && pr.native_share <= 1)) errors.push(`Feature ${name} has native_share ${pr.native_share}; use a share from 0 to 1.`);
+      else if (!hasText(pr.composition_source)) errors.push(`Feature ${name} records native_share; record composition_source, such as a vegetation survey or stand inventory.`);
+    }
   }
   for (const f of input?.parcels ?? []) {
     const pr = f?.properties ?? {}, name = id(f) || '(no id)';
@@ -157,10 +203,12 @@ function validateProjection(input, years, errors, warnings) {
 }
 
 /**
- * Project the spine forward (PJ1-PJ5).
+ * Project the spine forward (PJ1-PJ5, O1-O6).
  * @param {object} input - connectivity input plus params.ageAsOfYear, optional
- *   params.oldGrowthAgeYears + oldGrowthAgeSource, params.milestoneYears; retained features and
- *   cores may carry stand_age; parcels may carry consent_year (covered) or planned_year (joining later).
+ *   params.oldGrowthAgeYears + oldGrowthAgeSource, params.milestoneYears, params.nativeShareMin +
+ *   nativeShareSource; retained features and cores may carry stand_age, remnant, stand_origin
+ *   (+ origin_source) and native_share (+ composition_source); parcels may carry consent_year
+ *   (covered) or planned_year (joining later).
  * @param {{years?: number[]}} [options] milestone years (default params.milestoneYears)
  * Areas are retained habitat outside core areas, after the plan's treatment units, roads and open water.
  */
@@ -171,13 +219,20 @@ export function projectSpine(input, {years} = {}) {
   if (!errors.length) validateProjection(input, list, errors, warnings);
   if (errors.length) return {...base, status: 'incomplete', reasons: errors, warnings};
   try {
-    const p = input.params, asOf = p.ageAsOfYear, ogAge = p.oldGrowthAgeYears ?? null;
+    const p = input.params, asOf = p.ageAsOfYear, ogAge = p.oldGrowthAgeYears ?? null, nMin = p.nativeShareMin ?? null;
     const parcels = (input.parcels ?? []).slice().sort(byId);
     const startOf = f => (f.properties?.consent === 'covered' ? (f.properties.consent_year ?? asOf) : (f.properties?.planned_year ?? null));
     if (!parcels.length) warnings.push('No parcels are mapped, so nothing is committed and no link is projected.');
     for (const f of parcels) if (f.properties?.consent === 'covered' && f.properties.planned_year != null) warnings.push(`Parcel ${id(f)} already has covering consent; its planned_year is ignored.`);
     if (ogAge == null) warnings.push('params.oldGrowthAgeYears is not set, so only committed links are projected.');
     else if (![...input.retained, ...input.coreAreas].some(hasAgeRecord)) warnings.push('No retained habitat or core records a stand_age or remnant status, so no habitat reaches old-growth age in the projection.');
+    // O2, O3: what can never count as old, named once.
+    const everything = [...input.retained, ...input.coreAreas];
+    const tracksOrigin = everything.some(hasOrigin);
+    const plantations = everything.filter(isPlantation);
+    const short = nMin == null ? [] : everything.filter(f => !meetsNative(f, nMin));
+    if (plantations.length) warnings.push(`${names(plantations)} ${plantations.length === 1 ? 'is' : 'are'} recorded as plantation, which never counts at old-growth age whatever its stand_age.`);
+    if (short.length) warnings.push(`${names(short)} ${short.length === 1 ? 'does' : 'do'} not record a native_share of at least ${nMin} (params.nativeShareMin), so ${short.length === 1 ? 'it never counts' : 'they never count'} at old-growth age.`);
 
     const links = linker(input, cores);
     const coresUnion = union(input.coreAreas);
@@ -185,6 +240,8 @@ export function projectSpine(input, {years} = {}) {
     const eAfter = effectiveHabitat(input, input.treatments ?? [], []);
     const after = new Set(linkedPairs(eAfter.habitat, cores, p.minWidthM, {gapM: gapOf(p), barrier: eAfter.barrier}).pairs);
     const unknownGross = union(input.retained.filter(f => !hasAgeRecord(f)));
+    const plantationGross = plantations.length ? union(plantations) : null;
+    const shortGross = short.length ? union(short) : null;
     const conflicts = [];
     const milestones = [];
     let prevCommitted = new Set(), prevOld = new Set();
@@ -198,10 +255,12 @@ export function projectSpine(input, {years} = {}) {
       const committedPairs = committed.pairs.filter(k => after.has(k) || (anomalies.push(k), false));
       let old = null;
       if (ogAge != null) {
-        const qualifies = f => isRemnant(f) || (hasAge(f) && f.properties.stand_age + (year - asOf) >= ogAge);
-        const all = [...input.retained, ...input.coreAreas];
-        const young = union(all.filter(f => hasAgeRecord(f) && !qualifies(f)));
-        if (young && areaM2(intersect(union(all.filter(qualifies)), young)) >= 1) conflicts.push(year);
+        // PJ3 by recorded age; O2 a plantation never qualifies; O3 nor does habitat below the native share.
+        const ageQualifies = f => isRemnant(f) || (hasAge(f) && f.properties.stand_age + (year - asOf) >= ogAge);
+        const qualifies = f => ageQualifies(f) && !isPlantation(f) && meetsNative(f, nMin);
+        const all = everything;
+        const young = union(all.filter(f => hasAgeRecord(f) && !ageQualifies(f)));
+        if (young && areaM2(intersect(union(all.filter(ageQualifies)), young)) >= 1) conflicts.push(year);
         const keep = all.map((f, i) => (qualifies(f) ? i : -1)).filter(i => i >= 0).join(',');
         const r = links.old(`${joinedKey}:${keep}`, area, qualifies, committed.habitat);
         old = {pairs: r.pairs.filter(k => committedPairs.includes(k) || (anomalies.push(k), false)), m2: outsideCores(r.habitat)};
@@ -210,16 +269,20 @@ export function projectSpine(input, {years} = {}) {
       const cSet = new Set(committedPairs), oSet = new Set(old?.pairs ?? []);
       if ([...prevCommitted].some(k => !cSet.has(k)) || [...prevOld].some(k => !oSet.has(k))) warnings.push(`Year ${year}: a link projected earlier is missing; check consent and planned years.`);
       prevCommitted = cSet; prevOld = oSet;
-      milestones.push({
+      const milestone = {
         year, committedParcels: joined.map(id), committedLinks: committedPairs.map(pairObj), committedM2: outsideCores(committed.habitat),
         oldGrowthAgeLinks: old ? old.pairs.map(pairObj) : null, oldGrowthAgeM2: old ? old.m2 : null,
         unknownAgeM2: unknownGross && committed.habitat ? outsideCores(intersect(committed.habitat, unknownGross)) : 0,
-      });
+      };
+      // O5: reported only when recorded, so results without these records are unchanged (O6).
+      if (tracksOrigin) milestone.plantationM2 = plantationGross && committed.habitat ? outsideCores(intersect(committed.habitat, plantationGross)) : 0;
+      if (nMin != null) milestone.belowNativeShareM2 = shortGross && committed.habitat ? outsideCores(intersect(committed.habitat, shortGross)) : 0;
+      milestones.push(milestone);
     }
     if (conflicts.length) warnings.push(`Features with different recorded ages overlap (milestones ${conflicts.join(', ')}); the youngest age applies where they overlap.`);
     return {
       ...base, status: 'ok', reasons: [], warnings: [...new Set(warnings)],
-      parameters: {ageAsOfYear: asOf, oldGrowthAgeYears: ogAge, oldGrowthAgeSource: p.oldGrowthAgeSource ?? null, minWidthM: p.minWidthM},
+      parameters: {ageAsOfYear: asOf, oldGrowthAgeYears: ogAge, oldGrowthAgeSource: p.oldGrowthAgeSource ?? null, minWidthM: p.minWidthM, ...(nMin != null ? {nativeShareMin: nMin, nativeShareSource: p.nativeShareSource} : {})},
       linkedAfter: [...after].sort().map(pairObj),
       milestones,
       assumptions: [
@@ -231,6 +294,8 @@ export function projectSpine(input, {years} = {}) {
         'Old-growth age means a recorded age at or above the threshold, or recorded remnant status; where features overlap the youngest age applies, and features with neither never count. Old-growth condition needs field evidence.',
         'Areas are retained habitat outside core areas, after the treatment units, roads and open water.',
         gapOf(p) ? `Structural connectivity at the minimum width, with stepping stones up to ${gapOf(p)} m apart; not species movement or genetics.` : 'Structural connectivity at the minimum width only; not species movement or genetics.',
+        ...(tracksOrigin ? ['Stand origin is as recorded: a plantation never counts at old-growth age; planted and naturally regenerating habitat count by recorded age.'] : []),
+        ...(nMin != null ? [`Native share is as recorded: habitat counts at old-growth age only where at least ${nMin} of its cover or basal area is recorded as native species.`] : []),
       ],
     };
   } catch (e) {

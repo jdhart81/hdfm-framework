@@ -58,7 +58,7 @@ import {fc, isPoly, isLine, id, buffer, intersect, areaM2, lineParts} from './ge
 import {CROSSING_STATUS, LIMITS, effectiveHabitat, linkedPairs, pairObj, gapOf, validateGap} from './connectivity.mjs';
 import {disturbanceModel, searchDisturbances, zones, exactCut, CHORD_SHORTFALL} from './robust.mjs';
 
-export const SPINE_VERSION = 'dfm-spine-0.2.0';
+export const SPINE_VERSION = 'dfm-spine-0.3.0';
 /**
  * Kinds of non-stream links in the spine. Landforms: ridge, valley, saddle, swale, escarpment,
  * moraine (and other glacial ridges), shoreline. Land use: right-of-way (road or rail verges),

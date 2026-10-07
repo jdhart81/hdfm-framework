@@ -472,6 +472,16 @@
               "unknownAgeM2": {
                 "type": "number",
                 "minimum": 0
+              },
+              "plantationM2": {
+                "description": "Committed habitat outside cores recorded as plantation; present when any feature records stand_origin.",
+                "type": "number",
+                "minimum": 0
+              },
+              "belowNativeShareM2": {
+                "description": "Committed habitat outside cores that does not record a native_share at or above params.nativeShareMin; present when it is set.",
+                "type": "number",
+                "minimum": 0
               }
             }
           }
