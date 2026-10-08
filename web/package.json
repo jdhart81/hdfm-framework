@@ -23,5 +23,10 @@
     "drizzle-kit": "0.31.11",
     "drizzle-orm": "0.45.3",
     "esbuild": "0.28.2"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "$esbuild"
+    }
   }
 }

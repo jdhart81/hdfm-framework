@@ -32,6 +32,12 @@ The current Sites deployment serves a bundled Worker with a D1 database. Authent
 
 Register your own Sites project and put its identity in `.openai/hosting.json`; the public template intentionally contains no Viridis project ID. Run `npm run db:generate` after a schema change, inspect the SQL, then build with the Sites build script. Do not edit migrations already deployed.
 
+### Schema-tool dependency maintenance
+
+Stable `drizzle-kit` 0.31.11 still declares the retired `@esbuild-kit/esm-loader`, whose `core-utils` dependency pins vulnerable esbuild 0.18.20. The scoped npm override makes only `core-utils` use the application's pinned esbuild 0.28.2. It keeps the existing loader entrypoints and stable Drizzle versions. Remove this override and its legacy-loader compatibility test when a stable Drizzle release removes that dependency; the 1.0 release candidate requires a different migration format.
+
+`npm test` checks the legacy loader's CommonJS and ESM transforms, TypeScript imports through its Node loader, and actual Drizzle generation through an ESM TypeScript config. Generation runs in a temporary fixture: an unchanged schema must leave every migration byte intact, and an added table must produce one executable SQLite migration without rewriting the old SQL or snapshots.
+
 ## Independent service
 
 The same Node API supports an optional PostgreSQL database: apply `db/postgres.sql` once, set `DATABASE_URL`, and start the server. It stores validated GeoJSON snapshots in text columns; it does not yet run spatial queries in PostGIS. The PostgreSQL adapter is supplied but has not been integration-tested against a running database here.
