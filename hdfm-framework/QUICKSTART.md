@@ -14,8 +14,8 @@ Get started with the HDFM Framework in 5 minutes.
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR-USERNAME/hdfm-framework.git
-cd hdfm-framework
+git clone https://github.com/jdhart81/hdfm-framework.git
+cd hdfm-framework/hdfm-framework
 
 # Install with dependencies
 pip install -e .
@@ -74,29 +74,17 @@ This will:
 - Validate dendritic optimality
 - Save results to `validation_results/`
 
-Expected runtime: 2-5 minutes
+Expected runtime: a few seconds.
 
-Expected output:
+Expected output with the default seed (42), numpy 2.5.4, scipy 1.18.1 and networkx 3.7; see the [repository quickstart](../QUICKSTART.md#3-research-toolkit-synthetic-topology-comparison-python-38) for how to read it:
 ```
-HDFM SYNTHETIC LANDSCAPE VALIDATION
-================================================================================
-
-Validation parameters:
-  - Landscapes: 100
-  - Patches per landscape: 15
-  - Extent: 10.0 km
-  
-NETWORK TOPOLOGY VALIDATION RESULTS
-================================================================================
-Topology             Mean H       Std H        vs. Dendritic        p-value   
+Topology             Mean H       Std H        vs. Dendritic        p-value
 --------------------------------------------------------------------------------
-Dendritic (MST)      2.284        0.043        (reference)          —         
-Gabriel              2.873        0.062        +25.8%               <0.0001   
-Delaunay             3.118        0.078        +36.5%               <0.0001   
-Knn                  2.936        0.071        +28.6%               <0.0001   
-Threshold            3.046        0.087        +33.4%               <0.0001   
-
-✓ VALIDATION PASSED: Dendritic networks minimize entropy
+Dendritic (MST)      1.321        0.129        (reference)          —
+Gabriel              8.719        2.042        +559.8%              <0.0001
+Delaunay             22.312       1.124        +1588.5%             <0.0001
+Knn                  17.117       4.101        +1195.3%             <0.0001
+Threshold            24.920       8.999        +1785.8%             <0.0001
 ```
 
 ### 3. Backwards Climate Optimization

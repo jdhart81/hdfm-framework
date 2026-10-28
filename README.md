@@ -12,6 +12,8 @@ Viridis DFM helps land managers compare forest-retention options with traceable 
 
 ## Start with the working application
 
+To reproduce the worked examples step by step, with the output you should see, follow [QUICKSTART.md](QUICKSTART.md). To cite the software, use [CITATION.cff](CITATION.cff).
+
 The [web application](web/README.md) includes:
 
 - Draw or import roads, waterways, planning boundaries, forest, open-water polygons and management units.
