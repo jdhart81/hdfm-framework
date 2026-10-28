@@ -63,7 +63,10 @@ from .visualization import (
     plot_landscape,
     plot_network,
     plot_entropy_surface,
-    plot_optimization_trace
+    plot_optimization_trace,
+    plot_topology_comparison,
+    plot_climate_trajectory,
+    create_validation_figure
 )
 from .genetics import (
     calculate_effective_population_size,
@@ -148,4 +151,7 @@ __all__ = [
     'plot_network',
     'plot_entropy_surface',
     'plot_optimization_trace',
+    'plot_topology_comparison',
+    'plot_climate_trajectory',
+    'create_validation_figure',
 ]
