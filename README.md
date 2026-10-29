@@ -66,6 +66,32 @@ Code adoption and GitHub activity are not evidence of customer demand or ecologi
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md). Useful contributions include reproducible bug reports, geometry fixtures, source documentation, GIS interoperability and independent scientific review: foresters testing the check on a woodlot they know, ecologists and geneticists helping design the [field test of gene flow](docs/RESEARCH_STATUS.md#genetic-connectivity-the-open-question), and botanists building per-region native-status sources for planting records. Keep tests of implementation separate from claims about conservation outcomes.
 
+## Part of the Viridis open-source commons
+
+Taking a retention option to the people who share the land? [VergeCommon](https://github.com/jdhart81/verge-common) handles consent-based mapping and group decisions, and [GSIP](https://github.com/global-soil-intelligence/gsip) adds soil observations. The handoff between them is manual today.
+
+This project is one of a connected set of open tools from Viridis. Each stands on its own; together they run from field evidence to checked decisions.
+
+**Conservation commons**
+
+- [VergeCommon](https://github.com/jdhart81/verge-common): community conservation co-ops with consent-based land mapping, field evidence and group decisions
+- **Dendritic Forest Management (DFM)** (this repository): compare forest-retention options around roads and waterways, with traceable inputs and portable reports
+- [Global Soil Intelligence Project (GSIP)](https://github.com/global-soil-intelligence/gsip): contribute soil observations and explore open soil maps with explicit uncertainty
+
+**Verifiable science**
+
+- [Viridis Canon](https://github.com/jdhart81/viridis-canon): machine-checked Lean 4 mathematics for ecological decisions, with a DOI for every result
+- [ViridisOS](https://github.com/jdhart81/viridisos): open reference runtime for DOI-backed decision modules and recomputable results
+- [Viridis Research](https://github.com/jdhart81/viridis-research): the nightly public research record, each claim labeled by what a verifier actually checked
+- [ProofLens](https://github.com/jdhart81/prooflens): see what a Lean statement means before reading the proof
+
+**Agent tools**
+
+- [Viridis Agent Fleet](https://github.com/jdhart81/viridis-agent-fleet): open-source MCP agents with deterministic, auditable cores
+- [EnergyAI MCP](https://github.com/jdhart81/energyai-mcp): energy-planning estimates and incentive sources for AI agents
+
+Browse every project on the [Viridis profile](https://github.com/jdhart81). If this one is useful to you, a star helps other people find it.
+
 ## License and attribution
 
 Application code uses the [MIT license](LICENSE); third-party notices remain with vendored libraries. Dataset licenses and project branding are separate. Research materials describe the HDFM agenda of Justin Hart / Viridis and remain available in the repository; this release does not independently validate manuscript claims.
