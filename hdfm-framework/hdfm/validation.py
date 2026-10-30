@@ -320,7 +320,7 @@ def validate_dendritic_optimality(
     Prints detailed validation report.
     """
     print("\n" + "="*80)
-    print("VALIDATING DENDRITIC OPTIMALITY THEOREM")
+    print("CHECKING WHETHER THE MST HAS THE LOWEST COMPOSITE SCORE")
     print("="*80)
     print(f"\nGenerating {n_landscapes} random landscapes with {n_patches} patches each...")
     
@@ -358,9 +358,9 @@ def validate_dendritic_optimality(
     
     print("\n" + "="*80)
     if all_better:
-        print("✓ VALIDATION PASSED: Dendritic networks minimize entropy")
+        print("✓ MST had the lowest composite score in >=95% of landscapes against every alternative")
     else:
-        print("✗ VALIDATION FAILED: Some alternatives occasionally better")
+        print("✗ Some alternatives had a lower composite score in more than 5% of landscapes")
     print("="*80 + "\n")
     
     return all_better

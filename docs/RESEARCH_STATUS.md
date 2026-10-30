@@ -6,6 +6,7 @@ Updated 2026-10-06. This document supersedes older completion percentages and cl
 |---|---|---|
 | MST construction | Finds a tree minimizing summed edge weight on the supplied graph | Does not minimize the composite entropy objective; Euclidean edges are not terrain-routed corridors |
 | Entropy comparisons | Computes a weighted score on synthetic networks | The cycle penalty favors trees by construction; a score improvement is not independent evidence of biological benefit |
+| Manuscript topology table | `hdfm-framework/examples/reproduce_topology_table.py` regenerates it (MST 0.423 ± 0.004 nats, Gabriel +68.3%; added 2026-10-30) | The manuscript's values (MST 2.28, Gabriel +27.6%, Table 3) were never produced by the code and are impossible for a 15-patch tree under the stated definition; the MST is not the minimum-entropy tree. See [HDFM_MANUSCRIPT_ERRATUM.md](HDFM_MANUSCRIPT_ERRATUM.md) |
 | Width budgets | Patch hectares are converted to m² before comparison with corridor length × width (fixed 2026-10-03; regression tests) | Synthetic landscapes at default guild widths are often infeasible under a 20–30% budget; that is now reported, not hidden |
 | Optimizers | Width solvers check feasibility first, verify returned widths independently, and return them on the result; `success=False` with a message on any failure (fixed 2026-10-03) | Topology search remains a local heuristic; the composite objective is still unvalidated |
 | Movement | Relative weights are normalized | Normalization can conceal uniformly poor movement success |

@@ -211,7 +211,7 @@ print(message)
 
 ##### 5. Robustness Analysis with Loop Budgets ✅ COMPLETE
 
-**Paper Specification (Table 3, p. 21-22):**
+**Paper Specification (Table 3, p. 21-22):** [Corrected 2026-10-30: these are the manuscript's values, not output of this code, and they do not reproduce. The code gives MST 0.423 nats and, with 1–5 loops, ρ₂ 0.35–0.55 at +28% to +137% extra corridor length; see `results/topology_table.md` and `../docs/HDFM_MANUSCRIPT_ERRATUM.md`.]
 
 | Loops | H_mov | ΔH (%) | ρ₂ (2-edge-connectivity) | Area Overhead | P_fail(1) |
 |-------|-------|--------|--------------------------|---------------|-----------|
@@ -431,10 +431,10 @@ Can the current code reproduce paper results?
 
 | Paper Result | Reproducible? | Notes |
 |--------------|---------------|-------|
-| Table 1: Topology comparison (H values) | ✅ Yes | Full width-dependent entropy available |
+| Table 1: Topology comparison (H values) | ❌ No (corrected 2026-10-30) | Reported values (MST 2.28, Gabriel +27.6%) were never produced by this code; see `../docs/HDFM_MANUSCRIPT_ERRATUM.md` |
 | Table 2: Species parameters | ✅ Yes | All 4 guilds implemented with exact values |
-| Table 3: Robustness-entropy tradeoff | ✅ Yes | Loop budgets, ρ₂, P_fail all implemented |
-| Figure 1: Network topology comparison | ✅ Yes | Works with examples/synthetic_landscape_validation.py |
+| Table 3: Robustness-entropy tradeoff | ❌ No (corrected 2026-10-30) | Functions exist; the reported values do not reproduce (area overhead +28% to +137%, not +1.8% to +5.1%) |
+| Figure 1: Network topology comparison | ❌ No (corrected 2026-10-30) | Caption values do not reproduce; regenerate from landscape seed 42 with `examples/reproduce_topology_table.py` |
 | Figure 2: Width/allocation effects | ✅ Yes | Width optimization and allocation constraints |
 | Figure 3: Parameter sensitivity | ✅ Yes | Can vary α, γ, widths, species guilds |
 | Figure 4A: Convergence trace | ✅ Yes | Optimization history available |
@@ -442,7 +442,7 @@ Can the current code reproduce paper results?
 | Figure 4C: Pareto frontier | ✅ Yes | `pareto_frontier_analysis()` implemented |
 | Figure 4D: Failure probability | ✅ Yes | Catastrophic failure probability implemented |
 
-**Overall Reproducibility:** ~95% of quantitative results can be reproduced with current code
+**Overall Reproducibility:** [Corrected 2026-10-30] The earlier "~95%" figure is withdrawn. Having a function for a quantity is not reproducing its reported value. The topology table, Table 3 and the values in Figures 1–4 that rest on H_mov(MST) = 2.28 do not reproduce; see `../docs/HDFM_MANUSCRIPT_ERRATUM.md`.
 
 ---
 

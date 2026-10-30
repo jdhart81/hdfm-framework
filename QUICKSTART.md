@@ -92,7 +92,13 @@ Threshold            24.920       8.999        +1785.8%             <0.0001
 
 Drop `--no-save` to also write figures and a text summary to `validation_results/`. The seed fixes the landscapes, so a second run prints the same table. These values were produced with numpy 2.5.4, scipy 1.18.1 and networkx 3.7; other library versions may shift the last digit.
 
-How to read this: the dendritic network is a minimum spanning tree, which minimizes summed edge length on the supplied graph, not necessarily the composite score. A lower score on synthetic landscapes is a property of the score and the generator. It does not show that dendritic corridors work better in a real forest. These are also not the figures in the HDFM manuscript, which reports a 100 km region and the movement-entropy term alone; that table has not yet been reproduced from this code.
+How to read this: the dendritic network is a minimum spanning tree, which minimizes summed edge length on the supplied graph, not necessarily the composite score. A lower score on synthetic landscapes is a property of the score and the generator. It does not show that dendritic corridors work better in a real forest. These are also not the figures in the HDFM manuscript, which reports a 100 km region and the movement-entropy term alone. That table does not reproduce from this code at any version. To regenerate what the code gives for it:
+
+```sh
+MPLBACKEND=Agg python examples/reproduce_topology_table.py --tree-checks --out-dir results
+```
+
+It takes about 100 seconds and writes `results/topology_table.md` (MST 0.423 ± 0.004 nats, Gabriel +68.3%, against the manuscript's 2.28 and +27.6%). [The erratum](docs/HDFM_MANUSCRIPT_ERRATUM.md) explains the difference and gives corrected text for the manuscript.
 
 ## Cite this work
 

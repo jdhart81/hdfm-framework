@@ -60,7 +60,7 @@ You should see:
 - Console output with entropy values
 - A plot showing patches and corridors
 
-### 2. Reproduce Paper Validation
+### 2. Composite-score topology comparison
 
 Run the full synthetic landscape validation:
 
@@ -86,6 +86,8 @@ Delaunay             22.312       1.124        +1588.5%             <0.0001
 Knn                  17.117       4.101        +1195.3%             <0.0001
 Threshold            24.920       8.999        +1785.8%             <0.0001
 ```
+
+This is not the manuscript's topology table. To regenerate that table (with corrected values) run `MPLBACKEND=Agg python examples/reproduce_topology_table.py --tree-checks --out-dir results`; see [the erratum](../docs/HDFM_MANUSCRIPT_ERRATUM.md).
 
 ### 3. Backwards Climate Optimization
 

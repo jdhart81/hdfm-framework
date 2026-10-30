@@ -96,22 +96,9 @@ This is a **production-ready, open-source Python framework** implementing the al
 ✅ **Extensible**: Modular design for future enhancements  
 ✅ **Open Source**: MIT License for maximum adoption  
 
-## Validation Results (Expected)
+## Validation Results
 
-When you run `python examples/synthetic_landscape_validation.py`:
-
-```
-Network Topology Comparison:
-- Dendritic (MST):      H = 2.28 ± 0.04  (reference)
-- Gabriel Graph:        H = 2.87 ± 0.06  (+25.9%, p < 0.001)
-- Delaunay:             H = 3.12 ± 0.08  (+36.8%, p < 0.001)
-- k-Nearest Neighbors:  H = 2.94 ± 0.07  (+28.9%, p < 0.001)
-- Threshold Distance:   H = 3.05 ± 0.09  (+33.8%, p < 0.001)
-
-✓ VALIDATION PASSED: Dendritic networks minimize entropy
-```
-
-These match the values in your perspectives paper.
+[Corrected 2026-10-30.] This section used to list "expected" values (MST H = 2.28 ± 0.04, Gabriel +25.9%, ...) and said they matched the paper. They were copied from the paper; the code never produced them. What `python examples/synthetic_landscape_validation.py --seed 42` actually prints is a composite score (MST 1.321, Gabriel 8.719, +559.8%; see [QUICKSTART.md](QUICKSTART.md)). The manuscript's movement-entropy table is regenerated, with corrected values, by `examples/reproduce_topology_table.py`; see [the erratum](../docs/HDFM_MANUSCRIPT_ERRATUM.md).
 
 ## How to Use This for Your EcoEvoRxiv Submission
 
