@@ -2,24 +2,30 @@
 """
 Synthetic Landscape Validation for HDFM Framework
 
-Reproduces the validation experiments from:
-Hart, J. (2024). "Hierarchical Dendritic Forest Management: A Vision for 
-Technology-Enabled Landscape Conservation." EcoEvoRxiv.
-
 This script:
-1. Generates 100 random 15-patch landscapes
+1. Generates 100 random 15-patch landscapes (10 km x 10 km, the package default)
 2. Compares 5 network topologies (Dendritic, Gabriel, Delaunay, k-NN, Threshold)
-3. Validates that dendritic networks minimize entropy
+3. Reports the package's composite score H_total = H_mov + C + F + D
 4. Produces statistical analysis and visualizations
 
-Expected results:
-- Dendritic (MST): H = 2.28 ± 0.04
-- Gabriel: H = 2.87 ± 0.06 (+25.9%)
-- Delaunay: H = 3.12 ± 0.08 (+36.8%)
-- k-NN: H = 2.94 ± 0.07 (+28.9%)
-- Threshold: H = 3.05 ± 0.09 (+33.8%)
+Output with --seed 42 (numpy 2.5.4, scipy 1.18.1, networkx 3.7); "Std H" is
+the standard deviation across landscapes, not a standard error:
+- Dendritic (MST): H_total = 1.321, SD 0.129
+- Gabriel: 8.719, SD 2.042 (+559.8%)
+- Delaunay: 22.312, SD 1.124 (+1588.5%)
+- k-NN: 17.117, SD 4.101 (+1195.3%)
+- Threshold: 24.920, SD 8.999 (+1785.8%)
 
-Runtime: ~2-5 minutes depending on hardware
+The composite includes F, a count of edges beyond n - 1, so every graph with
+loops is penalised by construction; a lower score here is not independent
+evidence that dendritic networks are better. This is NOT the manuscript's
+topology table. Earlier versions of this docstring listed "expected results"
+(MST 2.28 +/- 0.04, Gabriel +25.9%, ...) that were copied from the manuscript
+and never produced by this code. The manuscript table is regenerated, and
+corrected, by examples/reproduce_topology_table.py; see
+docs/HDFM_MANUSCRIPT_ERRATUM.md at the repository root.
+
+Runtime: a few seconds.
 """
 
 import numpy as np
@@ -63,7 +69,7 @@ def run_full_validation(
     """
     print("\n" + "="*80)
     print("HDFM SYNTHETIC LANDSCAPE VALIDATION")
-    print("Reproducing results from Hart (2024)")
+    print("Composite-score comparison on the package's default synthetic landscapes")
     print("="*80)
     
     # Create output directory
@@ -220,12 +226,12 @@ def run_full_validation(
             f.write("-"*80 + "\n\n")
             
             if dendritic_is_optimal:
-                f.write("✓ VALIDATION PASSED\n")
-                f.write("Dendritic networks consistently minimize landscape entropy.\n")
-                f.write("Theoretical predictions confirmed across 100 random landscapes.\n")
+                f.write("Dendritic (MST) had the lowest composite score in at least 95% of\n")
+                f.write("landscapes against every alternative. The score penalises loops by\n")
+                f.write("construction, so this is not independent evidence of optimality.\n")
             else:
-                f.write("✗ VALIDATION FAILED\n")
-                f.write("Dendritic networks did not consistently minimize entropy.\n")
+                f.write("Dendritic (MST) did not have the lowest composite score in at least\n")
+                f.write("95% of landscapes against every alternative.\n")
             
             f.write("\n" + "="*80 + "\n")
         
@@ -237,8 +243,8 @@ def run_full_validation(
     print("="*80)
     
     if dendritic_is_optimal:
-        print("\n✓ Result: Dendritic networks minimize entropy")
-        print("  Theoretical predictions CONFIRMED")
+        print("\n✓ Result: Dendritic (MST) networks have the lowest composite score")
+        print("  (composite score, which penalises loops by construction; not a test of the theory)")
     else:
         print("\n✗ Result: Validation inconclusive")
         print("  Further investigation recommended")

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The manuscript's topology comparison (MST H_mov = 2.28 ± 0.04, Gabriel +27.6%, ...) was never produced by this code; it had been copied into the example docstring, README and REPOSITORY_SUMMARY as "expected results". Added `examples/reproduce_topology_table.py`, which regenerates the table from seeds 42–141 (MST 0.423 ± 0.004 nats, Gabriel +68.3%, Delaunay +141.7%), its output in `results/`, a regression test, and `docs/HDFM_MANUSCRIPT_ERRATUM.md` with corrected statements. Docs that repeated the old numbers now give the reproduced ones.
+- Validation messages no longer say "Theoretical predictions CONFIRMED" or "VALIDATION PASSED: Dendritic networks minimize entropy"; the composite score penalises loops by construction.
 - Width allocation budgets convert patch areas from hectares to m² before comparing them with corridor length × width. Previously the budget was 10,000× too small, so every width solve was infeasible.
 - `WidthOptimizer` and `BackwardsOptimizer` check feasibility before solving, verify returned widths against bounds and budget, and report `success=False` with a `message` instead of returning failed solver output as a plan.
 - `WidthOptimizer.optimize()` now returns the solved widths in `optimal_widths` (previously discarded).
@@ -280,7 +282,7 @@ This release represents a **major milestone** for the HDFM framework, bringing p
 1. **Complete genetic population dynamics** with the full island model, enabling rigorous assessment of genetic viability
 2. **Comprehensive robustness analysis** with strategic loops, failure probability, and Pareto frontier exploration
 
-Nearly all tables and figures from Hart (2024) can now be reproduced. The framework is ready for scientific use in landscape ecology, conservation biology, and corridor design research.
+Nearly all tables and figures from Hart (2024) can now be reproduced. The framework is ready for scientific use in landscape ecology, conservation biology, and corridor design research. [Corrected 2026-10-30: this was not so. The topology table, Table 3 and Figure 1–4 values do not reproduce; see `../docs/HDFM_MANUSCRIPT_ERRATUM.md`.]
 
 ### What's Next (v0.3.0)
 
