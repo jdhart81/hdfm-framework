@@ -6,6 +6,8 @@
 
 **Open-source landscape planning, beginning with existing roads and waterways.**
 
+**Status: software pilot and working research, not peer reviewed and not field-validated.**
+
 **Aim: keep the woods working, and reconnect old-growth genetics in a dendritic pattern.** Old growth of each place's own species, regrown along its rivers, valleys and ridges and linked through working woodlots, farms and ranches so that its populations can exchange genes again. The [dfm-core engine](packages/dfm-core/README.md) checks the structure that aim needs: corridors that hold through every harvest plan, and an old-growth spine that never counts a plantation, or habitat recorded as mostly introduced species, as old growth. Whether genes then flow along the spine is an open field question ([research status](docs/RESEARCH_STATUS.md#genetic-connectivity-the-open-question)). Public site: [dendriticforest.com](https://dendriticforest.com).
 
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
@@ -69,3 +71,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md). Useful contributions include repr
 ## License and attribution
 
 Application code uses the [MIT license](LICENSE); third-party notices remain with vendored libraries. Dataset licenses and project branding are separate. Research materials describe the HDFM agenda of Justin Hart / Viridis and remain available in the repository; this release does not independently validate manuscript claims.
+
+Archived releases are on Zenodo: concept DOI [10.5281/zenodo.23112435](https://doi.org/10.5281/zenodo.23112435), which resolves to the latest release (v0.5.0, git tag `v0.5.0`). Cite with [CITATION.cff](CITATION.cff).
+
+**AI use.** Much of the code and documentation was written with AI coding assistants, mainly Claude (Anthropic) and some OpenAI Codex; those commits carry a `Co-Authored-By` trailer or a `claude/` or `codex/` branch name in the history. Justin D. Hart (Viridis LLC, ORCID [0009-0008-3082-2482](https://orcid.org/0009-0008-3082-2482)) reviews the changes and is the accountable author. No AI tool is listed as an author.

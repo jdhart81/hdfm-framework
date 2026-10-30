@@ -18,5 +18,6 @@
     "riparian buffers",
     "reproducible research"
   ],
-  "access_right": "open"
+  "access_right": "open",
+  "notes": "Status: software pilot and working research, not peer reviewed and not field-validated. The geometric screening tools do not establish ecological viability, regulatory compliance or an optimal plan. AI use: much of the code and documentation was written with AI coding assistants (mainly Claude by Anthropic, some OpenAI Codex); Justin D. Hart reviews the changes and is the accountable author. No AI tool is listed as an author."
 }

@@ -8,6 +8,12 @@ authors:
     affiliation: "Viridis LLC, Columbia Falls, Montana, USA"
     orcid: "https://orcid.org/0009-0008-3082-2482"
 repository-code: "https://github.com/jdhart81/hdfm-framework"
+version: "0.5.0"
+date-released: "2026-10-03"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23112435
+    description: "Concept DOI; resolves to the latest archived release"
 url: "https://dendriticforest.com"
 abstract: "Open-source landscape planning around roads and waterways: reproducible geometric assessments, a self-hosted web workspace and experimental Hierarchical Dendritic Forest Management research tools."
 license: MIT
