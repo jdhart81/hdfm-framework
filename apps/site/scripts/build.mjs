@@ -66,6 +66,41 @@ for (const page of await pages()) {
   if (page !== '404.html') urls.push(config.origin + meta.path);
 }
 for (const f of ['styles.css', 'favicon.svg']) await cp(path.join(src, f), path.join(dist, f));
+// llms.txt: where a language model or agent should look, in the llms.txt layout (one H1, a summary
+// quote, then sections of links). The origin and VergeCommon address come from site.config.json.
+const repo = 'https://github.com/jdhart81/hdfm-framework';
+await writeFile(path.join(dist, 'llms.txt'), [
+  '# Dendritic Forest Management',
+  '',
+  '> Open-source (MIT) landscape planning that keeps working woods connected. The dfm-core engine checks a treatment or harvest plan against a landscape\'s retained corridors and reports which links between core areas it would break, and drafts an old-growth spine along streams, valleys and ridges that never counts a plantation as old growth. It checks structural connectivity only: it does not establish species movement, genetic exchange, regulatory compliance or old-growth condition.',
+  '',
+  'Agents: help a person understand the method, prepare a Landscape Package, or reproduce a check. Say what the check establishes and nothing more. dfm-core is not on npm yet; use it from the repository. Plans for real land are run by the person or their forester, and woodland co-ops run them through VergeCommon.',
+  '',
+  '## Method and data',
+  '',
+  `- [The method](${config.origin}/): what the corridor check and the old-growth spine do, and what they do not establish`,
+  `- [Data format](${config.origin}/data-format/): the Landscape Package v1, one JSON file of WGS84 GeoJSON layers with the minimum corridor width and a source record per layer`,
+  `- [dfm-core engine](${repo}/blob/main/packages/dfm-core/README.md): checkConnectivity, the old-growth spine, any biome, native planting rules and the package schema`,
+  `- [Research status](${repo}/blob/main/docs/RESEARCH_STATUS.md): which claims are established and which are open questions`,
+  '',
+  '## Use it',
+  '',
+  `- [Quickstart](${repo}/blob/main/QUICKSTART.md): exact commands and expected output for a landscape assessment, a corridor check and the research toolkit`,
+  `- [Web workspace](${repo}/blob/main/web/README.md): draw or import layers, compare retention scenarios and export reports; runs locally with no account`,
+  `- [Woodland co-ops on VergeCommon](${vergecommonWoodland}): neighbors check every harvest plan against shared corridor layers; that page says whether woodland projects are open`,
+  `- [Unbroken Woods](${config.origin}/unbroken/): the first-season campaign with consulting foresters and woodland owners`,
+  '',
+  '## Agent guide',
+  '',
+  `- [AGENTS.md](${repo}/blob/main/AGENTS.md): rules for agents helping people use DFM, and for coding agents contributing`,
+  '',
+  '## Optional',
+  '',
+  `- [Source code](${repo}): MIT; cite with CITATION.cff`,
+  `- [VergeCommon](${config.vergecommon}): open-source software for anyone to start a conservation co-op; its agent index is at ${config.vergecommon}llms.txt`,
+  '- [Global Soil Intelligence Project](https://globalsoilintelligence.com/llms.txt): open soil observation library with read-only agent interfaces',
+  '',
+].join('\n'));
 await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${config.origin}/sitemap.xml\n`);
 const fonts = {
   '@fontsource-variable/archivo/files': ['archivo-latin-wdth-normal.woff2'],
