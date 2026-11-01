@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The complete tutorial now uses the current network, genetics and robustness APIs, reads optimized widths from `optimal_widths`, and reports failed width or climate solves instead of using missing results. The notebook can be executed top to bottom; dependent schedules and plots are skipped when a solve fails.
 - The manuscript's topology comparison (MST H_mov = 2.28 ± 0.04, Gabriel +27.6%, ...) was never produced by this code; it had been copied into the example docstring, README and REPOSITORY_SUMMARY as "expected results". Added `examples/reproduce_topology_table.py`, which regenerates the table from seeds 42–141 (MST 0.423 ± 0.004 nats, Gabriel +68.3%, Delaunay +141.7%), its output in `results/`, a regression test, and `docs/HDFM_MANUSCRIPT_ERRATUM.md` with corrected statements. Docs that repeated the old numbers now give the reproduced ones.
 - Validation messages no longer say "Theoretical predictions CONFIRMED" or "VALIDATION PASSED: Dendritic networks minimize entropy"; the composite score penalises loops by construction.
 - Width allocation budgets convert patch areas from hectares to m² before comparing them with corridor length × width. Previously the budget was 10,000× too small, so every width solve was infeasible.
@@ -225,8 +226,10 @@ optimizer = WidthOptimizer(
 )
 
 result = optimizer.optimize()
-print(f"Optimal widths: {result.corridor_widths}")
-print(f"Total allocation: {result.total_allocation:.1f}%")
+if result.success:
+    print(f"Optimal widths: {result.optimal_widths}")
+else:
+    print(f"Width optimization failed: {result.message}")
 ```
 
 ### Breaking Changes
