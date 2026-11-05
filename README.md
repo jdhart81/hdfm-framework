@@ -12,6 +12,8 @@
 
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
 
+Agents can start at [dendriticforest.com/llms.txt](https://dendriticforest.com/llms.txt) and [AGENTS.md](AGENTS.md).
+
 ## Start with the working application
 
 To reproduce the worked examples step by step, with the output you should see, follow [QUICKSTART.md](QUICKSTART.md). To cite the software, use [CITATION.cff](CITATION.cff).

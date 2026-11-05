@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile, readdir, stat} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const dist = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'dist');
@@ -219,4 +220,26 @@ test('the hero states the aim, and the native section says what the engine does 
   assert.match(section, /Habitat below it never counts at old-growth age/);
   assert.match(section, /If one species is introduced, the planting is not permitted there, and the check names the unit/);
   assert.doesNotMatch(h, /Cut the woods/);
+});
+
+test('llms.txt tells agents where to look, in the llms.txt layout, and claims no more than the site', async () => {
+  const {origin, vergecommon} = JSON.parse(await readFile(path.join(dist, '..', 'site.config.json'), 'utf8'));
+  const llms = await readFile(path.join(dist, 'llms.txt'), 'utf8');
+  const lines = llms.split('\n');
+  assert.equal(lines[0], '# Dendritic Forest Management');
+  assert.equal(lines.filter(l => l.startsWith('# ')).length, 1);
+  assert.ok(lines.findIndex(l => l.startsWith('> ')) < lines.findIndex(l => l.startsWith('## ')), 'summary quote before sections');
+  for (const l of lines.filter(l => l.startsWith('- '))) assert.match(l, /^- \[[^\]]+\]\(https:\/\/[^)\s]+\)/, l);
+  // Links to this site name built pages; links into the repository name files that exist.
+  // Repository links are checked from a full checkout; the container build copies apps/site alone.
+  const repoRoot = path.join(dist, '..', '..', '..');
+  const inRepo = existsSync(path.join(repoRoot, 'packages', 'dfm-core', 'package.json'));
+  for (const [, url] of llms.matchAll(/\]\((https:\/\/[^)\s]+)\)/g)) {
+    if (url.startsWith(origin)) assert.ok(html[path.join(new URL(url).pathname.slice(1), 'index.html')], `${url} is a built page`);
+    const blob = url.match(/^https:\/\/github\.com\/jdhart81\/hdfm-framework\/blob\/main\/([^#]+)/);
+    if (blob && inRepo) assert.ok((await stat(path.join(repoRoot, blob[1]))).isFile(), `${blob[1]} exists`);
+  }
+  assert.ok(llms.includes(new URL('woodland/', vergecommon).href), 'points to VergeCommon\'s woodland page');
+  assert.match(llms, /does not establish species movement/);
+  for (const b of [/guarantee/i, /certif/i, /proven/i, /npm install @viridis/i, /Start a woodland project/i]) assert.doesNotMatch(llms, b);
 });
