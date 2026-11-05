@@ -120,6 +120,6 @@ Browse every project on the [Viridis profile](https://github.com/jdhart81). If t
 
 Application code uses the [MIT license](LICENSE); third-party notices remain with vendored libraries. Dataset licenses and project branding are separate. Research materials describe the HDFM agenda of Justin Hart / Viridis and remain available in the repository; this release does not independently validate manuscript claims.
 
-Archived releases are on Zenodo: concept DOI [10.5281/zenodo.23112435](https://doi.org/10.5281/zenodo.23112435), which resolves to the latest release (v0.5.0, git tag `v0.5.0`). Cite with [CITATION.cff](CITATION.cff).
+Archived releases are on Zenodo: concept DOI [10.5281/zenodo.23112435](https://doi.org/10.5281/zenodo.23112435), which resolves to the latest release (v0.6.0, git tag `v0.6.0`). Cite with [CITATION.cff](CITATION.cff).
 
 **AI use.** Much of the code and documentation was written with AI coding assistants, mainly Claude (Anthropic) and some OpenAI Codex; those commits carry a `Co-Authored-By` trailer or a `claude/` or `codex/` branch name in the history. Justin D. Hart (Viridis LLC, ORCID [0009-0008-3082-2482](https://orcid.org/0009-0008-3082-2482)) reviews the changes and is the accountable author. No AI tool is listed as an author.
