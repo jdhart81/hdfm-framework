@@ -1,6 +1,6 @@
 # Agents and Dendritic Forest Management
 
-Dendritic Forest Management (DFM) is open-source landscape planning that keeps working woods connected. This file is for two kinds of agent: one helping a person use DFM, and a coding agent working on this repository. The short machine-readable index is served at https://dendriticforest.com/llms.txt (built by `apps/site/scripts/build.mjs`).
+Dendritic Forest Management (DFM) is open-source landscape planning that keeps working woods connected. This file is for two kinds of agent: one helping a person use DFM, and a coding agent working on this repository. The short machine-readable index is served at https://dendriticforest.com/llms.txt (built by `apps/site/scripts/build.mjs`); this repository has its own at [llms.txt](llms.txt), and the README's [Try it from your agent](README.md#try-it-from-your-agent) section has commands that run a corridor check on a bundled example.
 
 ## Helping a person use DFM
 

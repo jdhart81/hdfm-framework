@@ -61,8 +61,8 @@ npm test
 Expected last lines:
 
 ```
-# tests 133
-# pass 133
+# tests 135
+# pass 135
 # fail 0
 ```
 

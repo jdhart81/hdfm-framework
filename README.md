@@ -12,7 +12,7 @@
 
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
 
-Agents can start at [dendriticforest.com/llms.txt](https://dendriticforest.com/llms.txt) and [AGENTS.md](AGENTS.md).
+Agents can start at [llms.txt](llms.txt) (this repository), [dendriticforest.com/llms.txt](https://dendriticforest.com/llms.txt) and [AGENTS.md](AGENTS.md), then [try it from your agent](#try-it-from-your-agent).
 
 ## Start with the working application
 
@@ -39,6 +39,51 @@ npm run dev
 Open **http://127.0.0.1:4173/map**. Local projects are stored in `.data/dfm.sqlite`; no hosted account is required. A fictional watershed is included for exploration. See [self-hosting and deployment instructions](web/README.md) for Docker, PostgreSQL and authentication requirements.
 
 The [Viridis-hosted pilot](https://dendritic-forest-management.jdhart.chatgpt.site/map) currently requires owner access; it is not a public signup service. Self-hosting remains available independently.
+
+## Try it from your agent
+
+A coding agent, or you, can install the engine and check harvest plans against the corridors of a bundled fictional woodlot. This needs Node 22 or later and no account.
+
+```sh
+git clone https://github.com/jdhart81/hdfm-framework.git
+cd hdfm-framework/packages/dfm-core
+npm ci
+node --input-type=module -e "
+import {checkConnectivitySync} from './src/index.mjs';
+import {woodlot} from './fixtures/woodlot.mjs';
+for (const plan of [[], ['harvest-3'], ['thin-3']]) {
+  const r = checkConnectivitySync(woodlot({treatments: plan}));
+  console.log([plan[0] ?? 'no plan', r.status, ...r.reasons, ...r.warnings].join(' '));
+}"
+```
+
+Expected output:
+
+```
+no plan pass
+harvest-3 fail Link core-A–core-B is lost (caused by harvest-3). Treatment harvest-3 overlaps retained habitat or a core by 12000 m² without a recorded light-treatment permission.
+thin-3 pass Treatment thin-3 overlaps retained habitat or a core as a permitted light treatment (12000 m²).
+```
+
+The woodlot has two cores joined by a 120 m corridor that crosses a road at a verified crossing, checked at a 100 m minimum width. A clearcut across the corridor (`harvest-3`) breaks the link, and the check names it. The same footprint recorded as a permitted single-tree selection (`thin-3`) keeps the link and is reported as a warning. `packages/dfm-core/test/agent-try-it.test.mjs` fails if this output changes.
+
+To check a [Landscape Package](packages/dfm-schema/README.md) of your own, run this from the same folder with the path to your file:
+
+```sh
+node --input-type=module -e "
+import {readFileSync} from 'node:fs';
+import {fromLandscapePackage, checkConnectivitySync} from './src/index.mjs';
+const r = checkConnectivitySync(fromLandscapePackage(JSON.parse(readFileSync(process.argv[1], 'utf8'))));
+console.log(r.status, JSON.stringify({reasons: r.reasons, lostLinks: r.lostLinks, pinchedLinks: r.pinchedLinks, warnings: r.warnings}, null, 1));" path/to/landscape.json
+```
+
+A `pass` means mapped retained habitat at least the minimum width still links the same cores after the plan. It does not establish species movement, gene flow, regulatory compliance or old-growth condition ([research status](docs/RESEARCH_STATUS.md)). dfm-core is not on npm yet, so run it from this checkout. `npm test` in `packages/dfm-core` runs the full engine suite in about 3 minutes.
+
+Prompts to paste into a coding agent (for example Claude Code) opened in this repository:
+
+1. `Read AGENTS.md and docs/RESEARCH_STATUS.md. Then run the dfm-core corridor check on the woodlot fixture with no plan, with harvest-3 and with thin-3, using the commands in the README section "Try it from your agent". Tell me which link each plan keeps or loses, which unit is responsible, and what a pass does not establish.`
+2. `I have a DFM Landscape Package at ./my-woodlot.json. Validate it against packages/dfm-schema/landscape-package.schema.json, run checkConnectivitySync from packages/dfm-core on it, and list the status, lost and pinched links, and every warning about missing sources or dates. Keep the file on this machine and do not commit it.`
+3. `Using packages/dfm-core/fixtures/watershed.mjs, draft the old-growth spine with deriveSpine and test it with spineNetwork. Explain the core links, the single points of failure and the warnings in plain language, and say which results rest on assumed rather than verified crossings.`
 
 ## The foundation
 
