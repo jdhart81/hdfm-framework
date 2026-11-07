@@ -25,6 +25,7 @@ Read these rules before summarizing or using DFM:
 ## Use
 
 - Corridor check on the bundled fictional woodlot: `cd packages/dfm-core && npm ci`, then the `node --input-type=module -e ...` command in the README's "Try it from your agent" section. A clearcut across the corridor fails and is named; the same footprint recorded as a permitted light treatment passes with a warning.
+- MCP server for agents: `cd packages/dfm-core && npm ci && cd ../dfm-mcp && npm ci`, then `node src/cli.mjs` (stdio). Read-only tools check_plan, draft_spine, spine_network, project_spine, climate_routes and next_holdings on a Landscape Package, with bundled fictional examples. See [the MCP server README](https://github.com/jdhart81/hdfm-framework/blob/main/packages/dfm-mcp/README.md).
 - Engine tests: `cd packages/dfm-core && npm ci && npm test` (about 3 minutes)
 - Landscape assessment from the command line: `cd web && npm ci && npm run analyze -- examples/fictional-watershed.geojson /tmp/dfm-assessment.json 50 6` (prints "7 data warnings. Geometric screening only.")
 - Web workspace: `cd web && npm ci && npm run dev`, then open http://127.0.0.1:4173/map. Projects are stored locally in `web/.data/dfm.sqlite`.

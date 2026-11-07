@@ -14,6 +14,7 @@ Dendritic Forest Management (DFM) is open-source landscape planning that keeps w
 - Prepare data: the [Landscape Package v1](https://dendriticforest.com/data-format/), one JSON file of WGS84 GeoJSON layers with the minimum corridor width, its source, and a source record per layer.
 - Reproduce a check or an assessment: [QUICKSTART.md](QUICKSTART.md) has exact commands and the output to expect.
 - Work on a real landscape: the [web workspace](web/README.md) runs locally with no account.
+- From an AI agent: the [local MCP server](packages/dfm-mcp/README.md) runs every check and spine analysis on the person's machine, with bundled fictional examples to try first.
 
 **Rules for agents.**
 
@@ -28,6 +29,7 @@ Dendritic Forest Management (DFM) is open-source landscape planning that keeps w
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/RESEARCH_STATUS.md](docs/RESEARCH_STATUS.md) first.
 
 - Engine: `cd packages/dfm-core && npm ci && npm test`. Geometry changes need a hand-checkable fixture covering units, overlaps and exclusions. VergeCommon vendors this engine, so behavior changes there follow a release here.
+- MCP server: `cd packages/dfm-core && npm ci && cd ../dfm-mcp && npm ci && npm test`. It adds protocol only; every number comes from dfm-core. Keep its tools read-only and offline (invariants H1 to H7 in `src/server.mjs`).
 - Web workspace: `cd web && npm ci && npm test && npm run build`.
 - Site: `cd apps/site && npm ci && npm test`. The site tests fail on common overclaims; keep claims within what the engine tests.
 - Research toolkit: `cd hdfm-framework && python -m pip install -e . && python -m pytest -q`. A passing test is not field validation.

@@ -1,0 +1,36 @@
+{
+  "name": "@viridis/dfm-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server for Dendritic Forest Management: corridor checks on harvest plans and old-growth spine planning, for AI agents.",
+  "type": "module",
+  "license": "MIT",
+  "mcpName": "io.github.jdhart81/dfm",
+  "bin": {
+    "dfm-mcp": "src/cli.mjs"
+  },
+  "exports": {
+    ".": "./src/server.mjs"
+  },
+  "files": [
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "examples": "node scripts/build-examples.mjs"
+  },
+  "dependencies": {
+    "@viridis/dfm-core": "file:../dfm-core"
+  },
+  "keywords": ["mcp", "model-context-protocol", "forest", "conservation", "connectivity", "corridors", "old-growth"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jdhart81/hdfm-framework.git",
+    "directory": "packages/dfm-mcp"
+  }
+}
