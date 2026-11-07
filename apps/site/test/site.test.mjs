@@ -243,3 +243,23 @@ test('llms.txt tells agents where to look, in the llms.txt layout, and claims no
   assert.match(llms, /does not establish species movement/);
   for (const b of [/guarantee/i, /certif/i, /proven/i, /npm install @viridis/i, /Start a woodland project/i]) assert.doesNotMatch(llms, b);
 });
+
+test('the repository llms.txt is in the llms.txt layout, links to files that exist, and keeps the limits', async t => {
+  // The repository's own llms.txt sits at the root of a full checkout; the container build copies apps/site alone.
+  const repoRoot = path.join(dist, '..', '..', '..');
+  if (!existsSync(path.join(repoRoot, 'llms.txt'))) return t.skip('not a full checkout');
+  const llms = await readFile(path.join(repoRoot, 'llms.txt'), 'utf8');
+  const lines = llms.split('\n');
+  assert.equal(lines[0], '# Dendritic Forest Management');
+  assert.equal(lines.filter(l => l.startsWith('# ')).length, 1);
+  assert.ok(lines.findIndex(l => l.startsWith('> ')) < lines.findIndex(l => l.startsWith('## ')), 'summary quote before sections');
+  assert.deepEqual(lines.filter(l => l.startsWith('## ')), ['## Start here', '## Use', '## Optional']);
+  for (const [, file] of llms.matchAll(/\]\(https:\/\/github\.com\/jdhart81\/hdfm-framework\/blob\/main\/([^)#\s]+)/g))
+    assert.ok((await stat(path.join(repoRoot, file))).isFile(), `${file} exists`);
+  // The honest limits the README states travel with the index.
+  for (const m of [/not peer reviewed and not field-validated/, /does not establish species movement/, /not an outcome/, /experimental and separate from the engine/, /not on npm yet/, /owner access/])
+    assert.match(llms, m);
+  for (const b of [/guarantee/i, /certif/i, /proven/i, /npm install @viridis/i, /\u2014/]) assert.doesNotMatch(llms, b);
+  // The README section it points to exists.
+  assert.match(await readFile(path.join(repoRoot, 'README.md'), 'utf8'), /\n## Try it from your agent\n/);
+});

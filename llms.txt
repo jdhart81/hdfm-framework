@@ -1,0 +1,41 @@
+# Dendritic Forest Management
+
+> Open-source (MIT) landscape planning that keeps working woods connected, by Justin Hart / Viridis LLC. The dfm-core engine (JavaScript, Node 22+) checks a treatment or harvest plan against a landscape's retained corridors and reports which links between core areas the plan would break or pinch. It also drafts an old-growth spine along streams, valleys and ridges that never counts a plantation as old growth. A local web workspace compares retention scenarios, and a separate Python research toolkit is experimental. Status: software pilot and working research, not peer reviewed and not field-validated.
+
+Read these rules before summarizing or using DFM:
+
+- The corridor check establishes structural connectivity only: mapped retained habitat at least the minimum width links the same cores after a plan as before. It does not establish species movement, gene flow, regulatory compliance, carbon outcomes or old-growth condition. Old-growth results are candidates by recorded age, never condition.
+- Reconnecting old-growth genetics is the aim, not an outcome. The field test of gene flow in the research status is proposed and has not started.
+- The web workspace is geometric screening. It does not establish ecological viability, regulatory compliance or an optimal forest plan. Road width is assumed, and missing open-water polygons stay a warning.
+- The Python research toolkit in `hdfm-framework/` is experimental and separate from the engine. A minimum spanning tree minimizes summed edge length, not the composite entropy score. Synthetic comparisons and passing tests do not show ecological superiority. The population estimate is a proxy, not usable for viability decisions. The manuscript's topology table does not reproduce from the code; see the erratum. Read the research status before repeating any of its numbers.
+- A check is only as good as its inputs. Record the source, date and reuse terms of each layer; the engine and the workspace warn when they are missing.
+- Never upload or share a person's private landowner data without their instruction. Keep real parcel data out of issues and examples.
+- dfm-core is not on npm yet. Run it from this repository.
+- The Viridis-hosted pilot requires owner access; it is not a public signup service. The web workspace runs locally with no account.
+
+## Start here
+
+- [README](https://github.com/jdhart81/hdfm-framework/blob/main/README.md): what DFM is, the web workspace, local commands for agents in "Try it from your agent", and related projects
+- [AGENTS.md](https://github.com/jdhart81/hdfm-framework/blob/main/AGENTS.md): rules for agents helping a person use DFM, and for coding agents changing this repository
+- [Quickstart](https://github.com/jdhart81/hdfm-framework/blob/main/QUICKSTART.md): three worked examples with exact commands and the output to expect
+- [Research status](https://github.com/jdhart81/hdfm-framework/blob/main/docs/RESEARCH_STATUS.md): which claims are established and which are open questions
+- [dfm-core engine](https://github.com/jdhart81/hdfm-framework/blob/main/packages/dfm-core/README.md): checkConnectivity, the old-growth spine, any biome, native planting rules and known limits
+- [Landscape Package v1](https://github.com/jdhart81/hdfm-framework/blob/main/packages/dfm-schema/README.md): the exchange file and JSON Schemas for inputs and results
+
+## Use
+
+- Corridor check on the bundled fictional woodlot: `cd packages/dfm-core && npm ci`, then the `node --input-type=module -e ...` command in the README's "Try it from your agent" section. A clearcut across the corridor fails and is named; the same footprint recorded as a permitted light treatment passes with a warning.
+- Engine tests: `cd packages/dfm-core && npm ci && npm test` (about 3 minutes)
+- Landscape assessment from the command line: `cd web && npm ci && npm run analyze -- examples/fictional-watershed.geojson /tmp/dfm-assessment.json 50 6` (prints "7 data warnings. Geometric screening only.")
+- Web workspace: `cd web && npm ci && npm run dev`, then open http://127.0.0.1:4173/map. Projects are stored locally in `web/.data/dfm.sqlite`.
+- Research toolkit: `cd hdfm-framework && python -m pip install -e . pytest && python -m pytest -q`
+
+## Optional
+
+- [Manuscript erratum](https://github.com/jdhart81/hdfm-framework/blob/main/docs/HDFM_MANUSCRIPT_ERRATUM.md): why the manuscript's topology table differs from what the code gives
+- [System map](https://github.com/jdhart81/hdfm-framework/blob/main/docs/SYSTEM_MAP.md): target architecture and acceptance gates; proposed, not a claim of implemented functionality
+- [Pilot assessment scope](https://github.com/jdhart81/hdfm-framework/blob/main/docs/PILOT_ASSESSMENT.md)
+- [Contributing](https://github.com/jdhart81/hdfm-framework/blob/main/CONTRIBUTING.md): geometry fixtures, source documentation and independent scientific review are most wanted
+- [Public site](https://dendriticforest.com/) ([agent index](https://dendriticforest.com/llms.txt)): the method in plain language and the Landscape Package format
+- [VergeCommon](https://github.com/jdhart81/verge-common) ([agent index](https://vergecommon.com/llms.txt)): open-source conservation co-ops; runs DFM checks on woodland co-ops
+- [Viridis Conservation](https://viridisconservation.com): the company that stewards this project
