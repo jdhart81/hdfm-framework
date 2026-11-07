@@ -79,6 +79,8 @@ console.log(r.status, JSON.stringify({reasons: r.reasons, lostLinks: r.lostLinks
 
 A `pass` means mapped retained habitat at least the minimum width still links the same cores after the plan. It does not establish species movement, gene flow, regulatory compliance or old-growth condition ([research status](docs/RESEARCH_STATUS.md)). dfm-core is not on npm yet, so run it from this checkout. `npm test` in `packages/dfm-core` runs the full engine suite in about 3 minutes.
 
+An MCP client (Claude Desktop, Cursor and others) can run the same check and the spine analyses through the local [MCP server](packages/dfm-mcp/README.md) instead.
+
 Prompts to paste into a coding agent (for example Claude Code) opened in this repository:
 
 1. `Read AGENTS.md and docs/RESEARCH_STATUS.md. Then run the dfm-core corridor check on the woodlot fixture with no plan, with harvest-3 and with thin-3, using the commands in the README section "Try it from your agent". Tell me which link each plan keeps or loses, which unit is responsible, and what a pass does not establish.`

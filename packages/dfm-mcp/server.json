@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jdhart81/dfm",
+  "title": "Dendritic Forest Management",
+  "description": "Check harvest plans against forest corridors and plan an old-growth spine, on your own data.",
+  "repository": {
+    "url": "https://github.com/jdhart81/hdfm-framework",
+    "source": "github",
+    "subfolder": "packages/dfm-mcp"
+  },
+  "websiteUrl": "https://dendriticforest.com/",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@viridis/dfm-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "npx",
+      "transport": {"type": "stdio"},
+      "environmentVariables": [
+        {
+          "name": "DFM_MCP_TIMEOUT_MS",
+          "description": "Time limit per analysis in milliseconds (default 120000)",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

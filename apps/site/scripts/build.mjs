@@ -87,6 +87,7 @@ await writeFile(path.join(dist, 'llms.txt'), [
   '',
   `- [Quickstart](${repo}/blob/main/QUICKSTART.md): exact commands and expected output for a landscape assessment, a corridor check and the research toolkit`,
   `- [Web workspace](${repo}/blob/main/web/README.md): draw or import layers, compare retention scenarios and export reports; runs locally with no account`,
+  `- [MCP server](${repo}/blob/main/packages/dfm-mcp/README.md): run the corridor check and spine analyses from an AI agent on your own machine; read-only, with fictional examples to try`,
   `- [Woodland co-ops on VergeCommon](${vergecommonWoodland}): neighbors check every harvest plan against shared corridor layers; that page says whether woodland projects are open`,
   `- [Unbroken Woods](${config.origin}/unbroken/): the first-season campaign with consulting foresters and woodland owners`,
   '',

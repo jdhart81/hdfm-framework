@@ -46,6 +46,17 @@ jobs:
           cache-dependency-path: packages/dfm-core/package-lock.json
       - run: npm ci
       - run: npm test
+  dfm-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - run: npm ci
+        working-directory: packages/dfm-core
+      - run: npm ci && npm test
+        working-directory: packages/dfm-mcp
   site:
     runs-on: ubuntu-latest
     defaults:
