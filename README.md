@@ -105,7 +105,7 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-The research package and web application have independent versions. Web release 0.5.0 does not certify or change the research package's scientific claims.
+The research package and web application have independent versions. Web release 0.6.0 does not certify or change the research package's scientific claims.
 
 ## Open source and the Viridis service
 
