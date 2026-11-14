@@ -263,3 +263,18 @@ test('the repository llms.txt is in the llms.txt layout, links to files that exi
   // The README section it points to exists.
   assert.match(await readFile(path.join(repoRoot, 'README.md'), 'utf8'), /\n## Try it from your agent\n/);
 });
+
+test('every page links the related open projects and one labelled Viridis service link, with no price', async () => {
+  // The method is free here; paid work lives on viridisconservation.com, never on this site.
+  const {vergecommon} = JSON.parse(await readFile(path.join(dist, '..', 'site.config.json'), 'utf8'));
+  for (const [name, h] of Object.entries(html)) {
+    const foot = h.slice(h.indexOf('<footer class="site-foot">'));
+    for (const url of ['https://globalsoilintelligence.com/', 'https://viridisconservation.com/ecosystem', 'https://viridisconservation.com/organizations', vergecommon]) {
+      assert.ok(foot.includes(`href="${url}"`), `${name} footer links ${url}`);
+    }
+    assert.equal(foot.match(/Ask Viridis to run and review a check/g)?.length, 1, `${name}: one service link`);
+    assert.doesNotMatch(h, /[$€£]\s?\d|per month|subscribe|buy now|checkout/i, `${name}: no price or purchase language`);
+    assert.doesNotMatch(foot, /[?&]utm_|[?&]ref=/, `${name}: footer links carry no tracking`);
+  }
+});
+

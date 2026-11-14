@@ -29,6 +29,7 @@ img,svg{max-width:100%;height:auto}
 .site-head nav a[aria-current="page"]{text-decoration:underline}
 .wordmark{font-family:var(--display);font-weight:700;font-stretch:112%;font-size:1.05rem;text-decoration:none;letter-spacing:-.01em}
 .site-foot{border-top:1px solid var(--rule);margin-top:5rem;color:var(--muted);font-size:.95rem}
+.site-foot .related{flex-basis:100%;font-size:.9rem}
 
 /* Type scale (1.25) */
 h1,h2,h3{font-family:var(--display);color:var(--hemlock);line-height:1.08;margin:0 0 1rem}
