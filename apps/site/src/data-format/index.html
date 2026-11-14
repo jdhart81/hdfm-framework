@@ -96,4 +96,11 @@ const next = buildOutFrontier(plan);  // parcels that would extend the spine</co
 <p>Projections never count a plantation at old-growth age, and with <code>nativeShareMin</code> they count only habitat recorded as native enough. They assume no fire, storm or new road, and use ages and join years as recorded. Climate routes use the temperatures you supply. Neither predicts what species will do.</p>
 <p><a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-schema">JSON Schemas for the package and the results</a></p>
 </section>
+<section>
+<h2>Moving a package to other tools</h2>
+<p>A Landscape Package converts to a <a href="https://viridisconservation.com/ecosystem/land-package">Land Package</a>, an open file format shared with the other Viridis tools, and back again without any change. The converter is one Python file in the open-source <a href="https://github.com/viridisconservation/land-package">land-package repository</a>.</p>
+<pre><code>python land_package.py from-dfm my-landscape.json my-land-package.json
+python land_package.py to-dfm my-land-package.json my-landscape.json</code></pre>
+<p>Dendritic Forest Management itself reads and writes Landscape Packages only. A converted package keeps every layer and parameter; a package that records no sources is flagged as such.</p>
+</section>
 </main>

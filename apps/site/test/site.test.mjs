@@ -278,3 +278,12 @@ test('every page links the related open projects and one labelled Viridis servic
   }
 });
 
+
+test('the data format page says how a package moves to other tools, and what this tool does not do', () => {
+  const page = html['data-format/index.html'];
+  assert.ok(page.includes('href="https://viridisconservation.com/ecosystem/land-package"'));
+  assert.ok(page.includes('href="https://github.com/viridisconservation/land-package"'));
+  assert.ok(page.includes('land_package.py from-dfm') && page.includes('land_package.py to-dfm'));
+  assert.match(page, /itself reads and writes Landscape Packages only/);
+  assert.match(page, /records no sources is flagged/);
+});
