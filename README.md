@@ -10,6 +10,8 @@
 
 **Aim: keep the woods working, and reconnect old-growth genetics in a dendritic pattern.** Old growth of each place's own species, regrown along its rivers, valleys and ridges and linked through working woodlots, farms and ranches so that its populations can exchange genes again. The [dfm-core engine](packages/dfm-core/README.md) checks the structure that aim needs: corridors that hold through every harvest plan, and an old-growth spine that never counts a plantation, or habitat recorded as mostly introduced species, as old growth. Whether genes then flow along the spine is an open field question ([research status](docs/RESEARCH_STATUS.md#genetic-connectivity-the-open-question)). Public site: [dendriticforest.com](https://dendriticforest.com).
 
+**Core output: the old-growth spine.** The engine's central result is the [old-growth spine](packages/dfm-core#the-old-growth-spine): the corridor of retained forest along a landscape's streams, valleys and ridges, mapped whole, tested as a network and projected as it ages toward old growth. Structural connectivity only; not a claim about species movement, genetics, regulatory compliance or old-growth condition. Age is reported, never condition. Viridis Conservation ([viridisconservation.com](https://viridisconservation.com)) offers professional old-growth corridor mapping for land trusts, towns and landowner groups, built on this same open engine.
+
 Viridis DFM helps land managers compare forest-retention options with traceable inputs, explicit assumptions, maps and portable reports. It is currently a geometric screening pilot. It does not establish ecological viability, regulatory compliance or an optimal forest plan.
 
 Agents can start at [llms.txt](llms.txt) (this repository), [dendriticforest.com/llms.txt](https://dendriticforest.com/llms.txt) and [AGENTS.md](AGENTS.md), then [try it from your agent](#try-it-from-your-agent).
@@ -125,7 +127,7 @@ DFM is one of five open projects that build on each other. Each one is useful al
 | ViridisOS | Turns verified results into recomputable conservation modules and certificates anyone can check. Apache-2.0. | [viridisos](https://github.com/jdhart81/viridisos) |
 | Viridis Research | The public, machine-checked research record behind the methods. CC BY 4.0. | [viridis-research](https://github.com/jdhart81/viridis-research) |
 
-How they connect: DFM finds where a corridor runs. The corridor almost always crosses property lines, so VergeCommon gives the neighbours along it a private place to organize and consent. GSIP adds soil evidence from the same ground. ViridisOS lets anyone recompute what was claimed, and Viridis Research holds the proofs those checks rest on. Viridis Conservation ([viridisconservation.com](https://viridisconservation.com)) offers paid data preparation, assessments and support for teams that want help.
+How they connect: DFM finds where a corridor runs. The corridor almost always crosses property lines, so VergeCommon gives the neighbours along it a private place to organize and consent. GSIP adds soil evidence from the same ground. ViridisOS lets anyone recompute what was claimed, and Viridis Research holds the proofs those checks rest on. Viridis Conservation ([viridisconservation.com](https://viridisconservation.com)) offers professional old-growth corridor mapping for land trusts, towns and landowner groups, built on this same open engine.
 
 Built something with one of these? Add the badge and tell us in an issue, so we can link back:
 
