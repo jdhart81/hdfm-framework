@@ -83,6 +83,8 @@ A `pass` means mapped retained habitat at least the minimum width still links th
 
 An MCP client (Claude Desktop, Cursor and others) can run the same check and the spine analyses through the local [MCP server](packages/dfm-mcp/README.md) instead.
 
+Listed on Glama: [Dendritic Forest Management MCP server](https://glama.ai/mcp/servers/jdhart81/hdfm-framework)
+
 Prompts to paste into a coding agent (for example Claude Code) opened in this repository:
 
 1. `Read AGENTS.md and docs/RESEARCH_STATUS.md. Then run the dfm-core corridor check on the woodlot fixture with no plan, with harvest-3 and with thin-3, using the commands in the README section "Try it from your agent". Tell me which link each plan keeps or loses, which unit is responsible, and what a pass does not establish.`
