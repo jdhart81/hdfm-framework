@@ -111,6 +111,13 @@ python -m pytest -q
 
 The research package and web application have independent versions. Web release 0.6.0 does not certify or change the research package's scientific claims.
 
+### Try it in ChatGPT
+
+Two related Viridis tools are published ChatGPT apps. Open one in ChatGPT, add it and ask in plain words; there is no account, key or setup, and the first 10 calls a day are free. They are separate hosted services, not part of this repository.
+
+- [Viridis GHG Ledger](https://chatgpt.com/plugins/plugin_asdk_app_6aebb509f8d8819196202a14ab8627b5): Scope 1, 2 and 3 emissions from activity data such as kWh, therms or fuel, with the factor and source on every line. Try: `Calculate our 2025 footprint: 12,000 kWh purchased electricity in California (eGRID CAMX) and 800 therms of natural gas.`
+- [Viridis Regulatory Radar](https://chatgpt.com/plugins/plugin_asdk_app_6aebb404b6c48191a42638fe14367e6b): which climate disclosure rules (California SB 253 and SB 261, EU CSRD, ISSB and others) may apply to an organization, with dates and official sources. Results are a screening, not a legal determination.
+
 ## Open source and the Viridis service
 
 The software is MIT licensed. Users can inspect methods, self-host and export their work. Viridis's proposed paid service adds data preparation, managed project operation, assessment delivery and support. Pricing and scope should be agreed for each initial pilot. Billing, subscriptions, teams, public signup and large-scale PostGIS processing are not enabled in this release.
