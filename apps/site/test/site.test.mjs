@@ -104,12 +104,11 @@ test('every page links to VergeCommon, and nothing promises what is not live yet
   const {vergecommon} = JSON.parse(await readFile(path.join(dist, '..', 'site.config.json'), 'utf8'));
   for (const [name, h] of Object.entries(html)) {
     assert.ok(h.includes(`href="${vergecommon}"`), `${name} links to VergeCommon`);
-    // Woodland projects are behind a feature flag in VergeCommon; dfm-core is not on npm yet.
+    // Woodland projects are behind a feature flag in VergeCommon.
     assert.doesNotMatch(h, /Start a woodland project/i, name);
-    assert.doesNotMatch(h, /npm install @viridis/i, name);
     assert.doesNotMatch(h, /with the VergeCommon conservation co-ops/i, name);
   }
-  assert.match(html['data-format/index.html'], /not on npm yet/);
+  assert.match(html['data-format/index.html'], /@viridisconservation\/dfm-core/);
   // Whether woodland projects are open is said in one place, VergeCommon's woodland page (it
   // reads the service's flag), so this site stays true when they open.
   const woodland = new URL('woodland/', vergecommon).href;
@@ -241,7 +240,7 @@ test('llms.txt tells agents where to look, in the llms.txt layout, and claims no
   }
   assert.ok(llms.includes(new URL('woodland/', vergecommon).href), 'points to VergeCommon\'s woodland page');
   assert.match(llms, /does not establish species movement/);
-  for (const b of [/guarantee/i, /certif/i, /proven/i, /npm install @viridis/i, /Start a woodland project/i]) assert.doesNotMatch(llms, b);
+  for (const b of [/guarantee/i, /certif/i, /proven/i, /Start a woodland project/i]) assert.doesNotMatch(llms, b);
 });
 
 test('the repository llms.txt is in the llms.txt layout, links to files that exist, and keeps the limits', async t => {
@@ -257,9 +256,9 @@ test('the repository llms.txt is in the llms.txt layout, links to files that exi
   for (const [, file] of llms.matchAll(/\]\(https:\/\/github\.com\/jdhart81\/hdfm-framework\/blob\/main\/([^)#\s]+)/g))
     assert.ok((await stat(path.join(repoRoot, file))).isFile(), `${file} exists`);
   // The honest limits the README states travel with the index.
-  for (const m of [/not peer reviewed and not field-validated/, /does not establish species movement/, /not an outcome/, /experimental and separate from the engine/, /not on npm yet/, /owner access/])
+  for (const m of [/not peer reviewed and not field-validated/, /does not establish species movement/, /not an outcome/, /experimental and separate from the engine/, /@viridisconservation\/dfm-core/, /experimental \(0\.x\)/, /owner access/])
     assert.match(llms, m);
-  for (const b of [/guarantee/i, /certif/i, /proven/i, /npm install @viridis/i, /\u2014/]) assert.doesNotMatch(llms, b);
+  for (const b of [/guarantee/i, /certif/i, /proven/i, /\u2014/]) assert.doesNotMatch(llms, b);
   // The README section it points to exists.
   assert.match(await readFile(path.join(repoRoot, 'README.md'), 'utf8'), /\n## Try it from your agent\n/);
 });

@@ -1,0 +1,60 @@
+name: Publish to MCP Registry
+
+# Lists the dfm-mcp server (io.github.jdhart81/dfm) on the official MCP Registry
+# from packages/dfm-mcp/server.json. Authenticates with this repository's GitHub
+# OIDC identity, so no token or secret is stored. Runs when server.json changes
+# on main, or by hand from the Actions tab. The npm package named in server.json
+# must already be published at that version; the registry checks it.
+
+on:
+  push:
+    branches: [main]
+    paths: [packages/dfm-mcp/server.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: mcp-registry
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.15
+      MCP_PUBLISHER_SHA256: 8beca8143ae8a034c87c99a57e8cb1b6c2cee7874fcf8a20a8adbda84b291b5e
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install mcp-publisher (pinned, checksum verified)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  mcp-publisher.tar.gz" | sha256sum -c -
+          tar -xzf mcp-publisher.tar.gz mcp-publisher
+          ./mcp-publisher --version
+
+      - name: Skip if this version is already listed
+        id: check
+        working-directory: packages/dfm-mcp
+        run: |
+          set -euo pipefail
+          name=$(jq -r .name server.json); version=$(jq -r .version server.json)
+          listed=$(curl -fsSL "https://registry.modelcontextprotocol.io/v0/servers?search=${name}" \
+            | jq --arg n "$name" --arg v "$version" '[.servers[]? | (.server // .) | select(.name == $n and .version == $v)] | length')
+          echo "listed=${listed}" >> "$GITHUB_OUTPUT"
+          echo "${name} ${version}: listed=${listed}"
+
+      - name: Publish
+        if: steps.check.outputs.listed == '0'
+        working-directory: packages/dfm-mcp
+        run: |
+          set -euo pipefail
+          ../../mcp-publisher login github-oidc
+          ../../mcp-publisher publish

@@ -79,9 +79,9 @@ const r = checkConnectivitySync(fromLandscapePackage(JSON.parse(readFileSync(pro
 console.log(r.status, JSON.stringify({reasons: r.reasons, lostLinks: r.lostLinks, pinchedLinks: r.pinchedLinks, warnings: r.warnings}, null, 1));" path/to/landscape.json
 ```
 
-A `pass` means mapped retained habitat at least the minimum width still links the same cores after the plan. It does not establish species movement, gene flow, regulatory compliance or old-growth condition ([research status](docs/RESEARCH_STATUS.md)). dfm-core is not on npm yet, so run it from this checkout. `npm test` in `packages/dfm-core` runs the full engine suite in about 3 minutes.
+A `pass` means mapped retained habitat at least the minimum width still links the same cores after the plan. It does not establish species movement, gene flow, regulatory compliance or old-growth condition ([research status](docs/RESEARCH_STATUS.md)). dfm-core is on npm as [`@viridisconservation/dfm-core`](https://www.npmjs.com/package/@viridisconservation/dfm-core) (`npm install @viridisconservation/dfm-core`); the commands above run it from this checkout. `npm test` in `packages/dfm-core` runs the full engine suite in about 3 minutes.
 
-An MCP client (Claude Desktop, Cursor and others) can run the same check and the spine analyses through the local [MCP server](packages/dfm-mcp/README.md) instead.
+An MCP client (Claude Desktop, Cursor and others) can run the same check and the spine analyses through the local [MCP server](packages/dfm-mcp/README.md) instead: `npx -y @viridisconservation/dfm-mcp`.
 
 Listed on Glama: [Dendritic Forest Management MCP server](https://glama.ai/mcp/servers/jdhart81/hdfm-framework)
 

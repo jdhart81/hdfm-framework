@@ -8,7 +8,7 @@ import {PassThrough} from 'node:stream';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import * as core from '@viridis/dfm-core';
+import * as core from '@viridisconservation/dfm-core';
 import {buildServer, EXAMPLES_DIR, loadExample} from '../src/server.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');

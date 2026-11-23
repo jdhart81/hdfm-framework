@@ -72,8 +72,8 @@ nav: format
   "layers": { "coreAreas": [], "retained": [], "roads": [], "water": [],
               "crossings": [], "treatments": [], "parcels": [], "boundary": [] }
 }</code></pre>
-<p>Run the check with the open-source <a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-core">dfm-core package</a>. It is not on npm yet; install it from the repository until it is published.</p>
-<pre><code>import { checkConnectivity, fromLandscapePackage } from '@viridis/dfm-core';
+<p>Run the check with the open-source <a href="https://github.com/jdhart81/hdfm-framework/tree/main/packages/dfm-core">dfm-core package</a>. It is on npm as <code>@viridisconservation/dfm-core</code> (experimental, 0.x): <code>npm install @viridisconservation/dfm-core</code>.</p>
+<pre><code>import { checkConnectivity, fromLandscapePackage } from '@viridisconservation/dfm-core';
 const result = await checkConnectivity(fromLandscapePackage(pkg));
 // result.status is 'pass', 'fail' or 'incomplete', with reasons</code></pre>
 </section>
@@ -81,7 +81,7 @@ const result = await checkConnectivity(fromLandscapePackage(pkg));
 <h2>The old-growth spine</h2>
 <p>Five functions work from the same package. Each returns <code>ok</code> or <code>incomplete</code> with reasons, records its engine version and an input checksum, and states its limits.</p>
 <pre><code>import { deriveSpine, spineNetwork, projectSpine,
-         climateRoutes, buildOutFrontier } from '@viridis/dfm-core';
+         climateRoutes, buildOutFrontier } from '@viridisconservation/dfm-core';
 const input = fromLandscapePackage(pkg);
 const draft = deriveSpine(input);     // corridors along streams and links
 const network = spineNetwork(input);  // links, loops, single points of failure
