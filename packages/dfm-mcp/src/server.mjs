@@ -3,7 +3,7 @@
 // Agents can check a harvest or treatment plan against a landscape's retained corridors,
 // draft the old-growth spine, test it as a network, project it forward, find climate
 // routes and list the next holdings that would extend it. Every analysis is the
-// @viridis/dfm-core engine, unchanged; this package only adds the protocol.
+// @viridisconservation/dfm-core engine, unchanged; this package only adds the protocol.
 //
 // Invariants (each tested in test/server.test.mjs):
 // - H1 Every successful answer carries `source` (repository, versions, licence, how to cite)
@@ -22,7 +22,7 @@ import {readFile, stat} from 'node:fs/promises';
 import {Worker} from 'node:worker_threads';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import * as core from '@viridis/dfm-core';
+import * as core from '@viridisconservation/dfm-core';
 import {StdioServer, ToolError} from './stdio.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

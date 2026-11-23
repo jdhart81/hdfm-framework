@@ -1,7 +1,7 @@
 // Runs one dfm-core analysis off the main thread, so the stdio server stays responsive
 // and a call over the time limit can be stopped (invariant H6).
 import {parentPort, workerData} from 'node:worker_threads';
-import * as core from '@viridis/dfm-core';
+import * as core from '@viridisconservation/dfm-core';
 
 const RUNNERS = {
   check: (input) => core.checkConnectivitySync(input),

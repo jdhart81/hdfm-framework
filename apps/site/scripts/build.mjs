@@ -74,7 +74,7 @@ await writeFile(path.join(dist, 'llms.txt'), [
   '',
   '> Open-source (MIT) landscape planning that keeps working woods connected. The dfm-core engine checks a treatment or harvest plan against a landscape\'s retained corridors and reports which links between core areas it would break, and drafts an old-growth spine along streams, valleys and ridges that never counts a plantation as old growth. It checks structural connectivity only: it does not establish species movement, genetic exchange, regulatory compliance or old-growth condition.',
   '',
-  'Agents: help a person understand the method, prepare a Landscape Package, or reproduce a check. Say what the check establishes and nothing more. dfm-core is not on npm yet; use it from the repository. Plans for real land are run by the person or their forester, and woodland co-ops run them through VergeCommon.',
+  'Agents: help a person understand the method, prepare a Landscape Package, or reproduce a check. Say what the check establishes and nothing more. dfm-core is on npm as @viridisconservation/dfm-core, and the MCP server runs with npx -y @viridisconservation/dfm-mcp; both are experimental 0.x releases. Plans for real land are run by the person or their forester, and woodland co-ops run them through VergeCommon.',
   '',
   '## Method and data',
   '',

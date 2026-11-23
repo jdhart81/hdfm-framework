@@ -1,8 +1,8 @@
-# @viridis/dfm-core
+# @viridisconservation/dfm-core
 
 Pure analysis functions for Dendritic Forest Management (DFM). No storage, no network, no UI. Used by the DFM workspace and by VergeCommon's woodland projects, so both run the same calculation.
 
-**Status: 0.3.0, experimental.** Not yet published to npm. Structural connectivity only; it does not establish species movement, genetic viability, regulatory compliance or old-growth condition.
+**Status: 0.3.0, experimental.** Install with `npm install @viridisconservation/dfm-core` (Node 22+). Structural connectivity only; it does not establish species movement, genetic viability, regulatory compliance or old-growth condition.
 
 - [Corridor connectivity check](#corridor-connectivity-check): does a treatment plan break a link between core areas?
 - [The old-growth spine](#the-old-growth-spine): draft the spine from streams, ridges and other natural lines, test it as a network, project it forward in time, find climate routes and the next holdings to join.
@@ -13,7 +13,7 @@ Pure analysis functions for Dendritic Forest Management (DFM). No storage, no ne
 ## Corridor connectivity check
 
 ```js
-import {checkConnectivity, checkConnectivitySync} from '@viridis/dfm-core';
+import {checkConnectivity, checkConnectivitySync} from '@viridisconservation/dfm-core';
 
 // checkConnectivitySync gives the same result without a Promise, for synchronous command handlers.
 const result = await checkConnectivity({
@@ -58,7 +58,7 @@ The spine is the dendritic network of retained habitat that follows a landscape'
 Five functions, all synchronous. Each returns `status: 'ok' | 'incomplete'` with `reasons` and `warnings`, the engine version, an input checksum and its `limitations`; none throws on bad input. Result shapes are in [`../dfm-schema/spine-results.schema.json`](../dfm-schema/spine-results.schema.json).
 
 ```js
-import {deriveSpine, spineNetwork, projectSpine, climateRoutes, buildOutFrontier} from '@viridis/dfm-core';
+import {deriveSpine, spineNetwork, projectSpine, climateRoutes, buildOutFrontier} from '@viridisconservation/dfm-core';
 
 const input = {
   streams,     // lines: dfm_id, stream_order (Strahler, 1-12)

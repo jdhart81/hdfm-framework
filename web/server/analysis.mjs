@@ -1,5 +1,5 @@
 import * as t from '@turf/turf';
-import {checkConnectivitySync, toLandscapePackage} from '@viridis/dfm-core';
+import {checkConnectivitySync, toLandscapePackage} from '@viridisconservation/dfm-core';
 import {normalize,empty,fc,mergePolygons,riparianStudy} from '../public/map-core.mjs';
 export const VERSION='dfm-geometric-0.3.0';
 export function validate(data){
@@ -42,7 +42,7 @@ export function analyze(state,params,sources){
  return {method:VERSION,parameters:{waterWidth:width,roadWidth},issues,metrics:{boundaryHa:area(boundary),bufferHa:area(zone),forestHa:area(forest),netForestHa:area(netForest),retainedForestHa:area(retained),roadSurfaceHa:area(roads),openWaterHa:area(water),managementOverlapHa:area(overlap),crossingCandidates:inside.length},geometry:geo,limitations:['Geometric screening only; no ecological viability, compliance, genetic outcome or optimality is established.','Road surface is modeled from a constant assumed full width; inspect actual widths and bridges.','Waterways are centerlines. Open-water exclusion requires the optional waterbody polygons.','Scenario differences are comparable only when their saved project revision is identical.','Areas are approximate geodesic hectares; no road surface is counted as retained forest.']};
 }
 
-// Corridor connectivity (DFM Build Spec phase 2). The same @viridis/dfm-core check that
+// Corridor connectivity (DFM Build Spec phase 2). The same @viridisconservation/dfm-core check that
 // VergeCommon runs on treatment plans, fed from a saved workspace project.
 const pick=(f,keys)=>({type:'Feature',geometry:f.geometry,properties:Object.fromEntries(keys.filter(k=>f.properties?.[k]!==undefined).map(k=>[k,f.properties[k]]))});
 /** Build dfm-core inputs from a saved project. Retained habitat = proposed connections + riparian buffer (when boundary and waterways exist). */

@@ -50,7 +50,7 @@ To open the same project in the map workspace instead, run `npm run dev` and vis
 
 ## 2. The dfm-core engine test suite (Node 22+)
 
-`@viridis/dfm-core` holds the corridor connectivity checks and the old-growth spine. Its tests run woodlot, prairie and watershed fixtures and re-derive a stored VergeCommon result and checksum.
+`@viridisconservation/dfm-core` holds the corridor connectivity checks and the old-growth spine. Its tests run woodlot, prairie and watershed fixtures and re-derive a stored VergeCommon result and checksum.
 
 ```sh
 cd packages/dfm-core

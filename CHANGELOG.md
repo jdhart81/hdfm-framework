@@ -1,5 +1,10 @@
 # Releases
 
+## npm release: dfm-core 0.3.0, dfm-mcp 0.1.0
+
+- Published to npm under the `@viridisconservation` scope as `@viridisconservation/dfm-core` and `@viridisconservation/dfm-mcp` (`npx -y @viridisconservation/dfm-mcp`). The `@viridis` npm scope belongs to another account, so the earlier `@viridis/dfm-*` names in this file were never published. Imports change from `@viridis/dfm-core` to `@viridisconservation/dfm-core`; results are unchanged.
+- dfm-mcp depends on the published `@viridisconservation/dfm-core` `^0.3.0` instead of `file:../dfm-core`.
+
 ## dfm-core 0.3.0 — unreleased
 
 Native old growth, not plantations. The spine's aim is old growth of the place's own species, regrown along its rivers, valleys and ridges; this release records how habitat was established and what it is made of, and keeps plantations and introduced species out of the old-growth projection and out of corridor plantings. Whether a link holds today is unchanged.

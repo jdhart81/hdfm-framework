@@ -1,4 +1,4 @@
-# @viridis/dfm-mcp
+# @viridisconservation/dfm-mcp
 
 A local [Model Context Protocol](https://modelcontextprotocol.io) server for Dendritic Forest Management (DFM). It lets Claude, Cursor or any MCP client check a harvest or treatment plan against a landscape's retained corridors and plan an old-growth spine, using the [dfm-core](../dfm-core/README.md) engine unchanged. It runs on your machine, reads only the files you point it at, and sends nothing anywhere.
 
@@ -6,17 +6,23 @@ A local [Model Context Protocol](https://modelcontextprotocol.io) server for Den
 
 ## Run it
 
-Not on npm yet; run it from this repository (Node 22+):
+From npm (Node 22+):
+
+```sh
+npx -y @viridisconservation/dfm-mcp   # MCP over stdio
+```
+
+Client config (Claude Desktop, Cursor and others):
+
+```json
+{"mcpServers": {"dfm": {"command": "npx", "args": ["-y", "@viridisconservation/dfm-mcp"]}}}
+```
+
+From this repository instead:
 
 ```sh
 cd packages/dfm-core && npm ci && cd ../dfm-mcp && npm ci
 node src/cli.mjs          # MCP over stdio
-```
-
-Client config (Claude Desktop, Cursor and others), with your own path:
-
-```json
-{"mcpServers": {"dfm": {"command": "node", "args": ["/path/to/hdfm-framework/packages/dfm-mcp/src/cli.mjs"]}}}
 ```
 
 ## Tools

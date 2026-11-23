@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@turf/turf": "7.4.0",
-    "@viridis/dfm-core": "file:vendor/viridis-dfm-core-0.3.0.tgz",
+    "@viridisconservation/dfm-core": "file:vendor/viridisconservation-dfm-core-0.3.0.tgz",
     "maplibre-gl": "6.16.0",
     "pg": "8.23.1",
     "sql.js": "1.15.1"

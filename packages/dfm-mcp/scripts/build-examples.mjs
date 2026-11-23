@@ -1,7 +1,7 @@
 // Regenerate examples/*.json from the dfm-core fixtures. Deterministic: a fixed creation
 // date, so rerunning gives byte-identical files.  node scripts/build-examples.mjs
 import {writeFile, readFile} from 'node:fs/promises';
-import {toLandscapePackage, deriveSpine} from '@viridis/dfm-core';
+import {toLandscapePackage, deriveSpine} from '@viridisconservation/dfm-core';
 import {woodlot} from '../../dfm-core/fixtures/woodlot.mjs';
 import {watershed, withAges} from '../../dfm-core/fixtures/watershed.mjs';
 import {prairie} from '../../dfm-core/fixtures/prairie.mjs';

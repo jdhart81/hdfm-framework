@@ -1,10 +1,10 @@
-# @viridis/dfm-schema
+# @viridisconservation/dfm-schema
 
 JSON Schemas (draft 2020-12) for data exchanged between DFM tools and VergeCommon.
 
 - `landscape-package.schema.json`: **DFM Landscape Package v1**. One JSON object with WGS84 (EPSG:4326) GeoJSON features grouped by layer (`boundary`, `parcels`, `coreAreas`, `retained`, `roads`, `water`, `crossings`, `treatments`, and the optional spine layers `streams`, `connectors` and `exits`), parameters with a recorded source for every width, distance, age and temperature that changes a result, and a source record per layer. Lengths in meters, areas in square meters.
-- `connectivity-result.schema.json`: the result of `checkConnectivity` in `@viridis/dfm-core`, including status, lost links with responsible units, pinch points, consent coverage, the engine version and an input checksum.
-- `spine-results.schema.json`: the results of the old-growth spine functions in `@viridis/dfm-core`, one `$defs` entry each: `derivation` (`deriveSpine`), `network` (`spineNetwork`), `projection` (`projectSpine`), `climate` (`climateRoutes`) and `frontier` (`buildOutFrontier`). Validate a result against `spine-results.schema.json#/$defs/<name>`.
+- `connectivity-result.schema.json`: the result of `checkConnectivity` in `@viridisconservation/dfm-core`, including status, lost links with responsible units, pinch points, consent coverage, the engine version and an input checksum.
+- `spine-results.schema.json`: the results of the old-growth spine functions in `@viridisconservation/dfm-core`, one `$defs` entry each: `derivation` (`deriveSpine`), `network` (`spineNetwork`), `projection` (`projectSpine`), `climate` (`climateRoutes`) and `frontier` (`buildOutFrontier`). Validate a result against `spine-results.schema.json#/$defs/<name>`.
 
 ## Version 0.3.0: additive
 

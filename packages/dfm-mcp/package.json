@@ -1,5 +1,5 @@
 {
-  "name": "@viridis/dfm-mcp",
+  "name": "@viridisconservation/dfm-mcp",
   "version": "0.1.0",
   "description": "Local MCP server for Dendritic Forest Management: corridor checks on harvest plans and old-growth spine planning, for AI agents.",
   "type": "module",
@@ -25,7 +25,7 @@
     "examples": "node scripts/build-examples.mjs"
   },
   "dependencies": {
-    "@viridis/dfm-core": "file:../dfm-core"
+    "@viridisconservation/dfm-core": "^0.3.0"
   },
   "keywords": ["mcp", "model-context-protocol", "forest", "conservation", "connectivity", "corridors", "old-growth"],
   "repository": {

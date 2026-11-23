@@ -40,7 +40,7 @@ sourceForm();await action(refresh);
 
 window.dfmProjectMeta=()=>({name:$('project-name').value,sources});window.addEventListener('dfm-import',e=>{project=null;sources=e.detail.sources||{};$('project-name').value=e.detail.name||'';sourceForm();scenarios=[];renderScenarios();$('save-status').textContent='Imported map · save as a new project';});
 
-// Corridor check (DFM Build Spec phase 2): runs @viridis/dfm-core on the saved project.
+// Corridor check (DFM Build Spec phase 2): runs @viridisconservation/dfm-core on the saved project.
 let lastCorridor=null;
 function corridorParams(){return {revision:project?.revision,waterWidth:Number($('buffer-width').value),roadWidth:Number($('road-width').value),minWidthM:Number($('min-width').value),minWidthSource:$('min-width-source').value.trim()};}
 async function corridorCall(){if(!project)throw Error('Save the project first.');if(dfm.isDirty())throw Error('Save your map changes before checking corridors.');lastCorridor=await call(`projects/${project.id}/connectivity`,'POST',corridorParams());return lastCorridor;}

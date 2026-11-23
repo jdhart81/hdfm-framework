@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jdhart81/hdfm-framework/packages/dfm-schema/spine-results.schema.json",
   "title": "DFM old-growth spine results",
-  "description": "Results of deriveSpine, spineNetwork, projectSpine, climateRoutes and buildOutFrontier in @viridis/dfm-core. Each result type is a $defs entry; lengths in meters, areas in square meters.",
+  "description": "Results of deriveSpine, spineNetwork, projectSpine, climateRoutes and buildOutFrontier in @viridisconservation/dfm-core. Each result type is a $defs entry; lengths in meters, areas in square meters.",
   "$defs": {
     "pair": {
       "type": "object",

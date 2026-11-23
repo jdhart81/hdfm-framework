@@ -21,7 +21,7 @@ Dendritic Forest Management (DFM) is open-source landscape planning that keeps w
 - Say what the check establishes and nothing more: corridors kept connected at the minimum width, and old-growth *candidates*. It does not establish species movement, genetic exchange, regulatory compliance, carbon outcomes or old-growth condition.
 - Record where each layer came from. A check is only as good as its inputs, and the engine warns when sources, dates or reuse terms are missing.
 - Never upload or share a person's private landowner data without their instruction. Keep real parcel data out of issues and examples.
-- dfm-core is not on npm yet. Use it from this repository; do not tell people to `npm install` it.
+- dfm-core is on npm as `@viridisconservation/dfm-core` and the MCP server as `@viridisconservation/dfm-mcp` (`npx -y @viridisconservation/dfm-mcp`). Both are experimental 0.x releases; say so when recommending them.
 - The Python research toolkit in `hdfm-framework/` is experimental and separate from the engine. Read the research status before repeating any of its numbers.
 
 ## Working on this repository
