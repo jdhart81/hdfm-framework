@@ -114,7 +114,7 @@ Sheets support at most 120 clipped centerline sections. Inspect label overlap, i
 
 ## Release 0.6.0 — corridor connectivity check
 
-Three new layers: **core areas** (old-growth candidates, riparian cores, reserves), **road crossings** and **proposed treatment units**. **Check corridors** runs the `@viridis/dfm-core` connectivity check on the latest saved project: do the core areas stay linked by retained habitat at least the minimum width, before and after the proposed treatment units?
+Three new layers: **core areas** (old-growth candidates, riparian cores, reserves), **road crossings** and **proposed treatment units**. **Check corridors** runs the `@viridisconservation/dfm-core` connectivity check on the latest saved project: do the core areas stay linked by retained habitat at least the minimum width, before and after the proposed treatment units?
 
 - Retained habitat = proposed forest connections plus the riparian buffer at the distance set above (when a boundary and waterways exist). Road surfaces (assumed width) and open-water polygons are removed. A road keeps a corridor only at a recorded crossing.
 - The result is **pass**, **fail** (a link is lost, a core is cleared, or a treatment overlaps retained habitat without a recorded light-treatment permission) or **incomplete** (missing inputs, or no source recorded for the minimum width). Lost corridor is drawn in red, with the units that caused it named.
@@ -122,4 +122,4 @@ Three new layers: **core areas** (old-growth candidates, riparian cores, reserve
 - **Download Landscape Package** exports the same inputs as a DFM Landscape Package v1 file. A VergeCommon steward can upload it as woodland corridor layers, and `checkConnectivity(fromLandscapePackage(pkg))` reproduces the result and its input checksum.
 - API: `POST /api/projects/:id/connectivity` with `revision`, `waterWidth`, `roadWidth`, `minWidthM`, `minWidthSource`. Returns `{result, package, revision}`; nothing is stored.
 
-The check is structural connectivity only. It does not establish species movement, genetic viability or old-growth condition. `@viridis/dfm-core` is vendored as `vendor/viridis-dfm-core-0.1.0.tgz` from `packages/dfm-core`; CI fails if the two differ.
+The check is structural connectivity only. It does not establish species movement, genetic viability or old-growth condition. `@viridisconservation/dfm-core` is vendored as `vendor/viridisconservation-dfm-core-<version>.tgz` from `packages/dfm-core`; CI fails if the two differ.

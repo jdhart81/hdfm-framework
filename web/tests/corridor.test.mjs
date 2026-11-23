@@ -1,10 +1,10 @@
-// Phase 2: corridor check in the workspace, using @viridis/dfm-core on saved projects.
+// Phase 2: corridor check in the workspace, using @viridisconservation/dfm-core on saved projects.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile, readdir} from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
 import * as turf from '@turf/turf';
-import {fromLandscapePackage, checkConnectivitySync} from '@viridis/dfm-core';
+import {fromLandscapePackage, checkConnectivitySync} from '@viridisconservation/dfm-core';
 import {sqlite} from '../server/sqlite.mjs';
 import {api} from '../server/api.mjs';
 import {normalize} from '../public/map-core.mjs';
